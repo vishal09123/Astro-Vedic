@@ -1,0 +1,10 @@
+*.pdf
+*.txt
+!requirements.txt
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+.DS_Store
+*.swp
