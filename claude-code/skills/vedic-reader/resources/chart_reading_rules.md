@@ -1,40 +1,40 @@
-### 南印度盘(South Indian Chart)读取规则
+### South Indian Chart Reading Rules
 
-**核心特征**：南印盘是**星座固定、宫位移动**。12个格子的星座位置永远不变。
+**Core Structure**: The South Indian chart features **fixed signs and moving houses**. The 12 signs occupy permanent positions on the chart grid.
 
 ```
-南印度盘固定星座位置（永远不变）：
+South Indian Fixed Sign Layout (Never Changes):
 +------+------+------+------+
 |  Pi  |  Ar  |  Ta  |  Ge  |
-| 双鱼 | 白羊 | 金牛 | 双子 |
+|Pisces|Aries |Taurus|Gemini|
 +------+------+------+------+
 |  Aq  |             |  Cn  |
-| 水瓶 |             | 巨蟹 |
+|Aquar |             |Cancer|
 +------+             +------+
 |  Cp  |             |  Le  |
-| 摩羯 |             | 狮子 |
+|Capri |             | Leo  |
 +------+------+------+------+
 |  Sg  |  Sc  |  Li  |  Vi  |
-| 射手 | 天蝎 | 天秤 | 处女 |
+|Sagit |Scorp |Libra |Virgo |
 +------+------+------+------+
 ```
 
-**关键**：找到 **As** 或 **Asc** 标记 -> 那个格子的固定星座就是上升星座(Lagna)
-**计数方向**：从Lagna所在格子开始，**顺时针**数 = 1宫->2宫->3宫...->12宫
+**Key**: Locate the **As** or **Asc** mark -> that box's fixed sign is the Ascendant (Lagna).
+**Counting Direction**: Beginning from the Lagna sign box, count **clockwise**: House 1 -> House 2 -> ... -> House 12.
 
 ```
-示例：如果Lagna在Cancer(右边第2格):
-1宫=Cn -> 2宫=Le -> 3宫=Vi -> 4宫=Li
--> 5宫=Sc -> 6宫=Sg -> 7宫=Cp -> 8宫=Aq
--> 9宫=Pi -> 10宫=Ar -> 11宫=Ta -> 12宫=Ge
+Example: Lagna in Cancer (2nd box down on right):
+House 1=Cn -> House 2=Le -> House 3=Vi -> House 4=Li
+-> House 5=Sc -> House 6=Sg -> House 7=Cp -> House 8=Aq
+-> House 9=Pi -> House 10=Ar -> House 11=Ta -> House 12=Ge
 ```
 
-### 北印度盘(North Indian Chart)读取规则
+### North Indian Chart Reading Rules
 
-**核心区别**：北印盘是**宫位固定、星座移动**（和南印盘正好相反）。
+**Core Structure**: The North Indian chart features **fixed houses and moving signs** (opposite of South Indian style).
 
 ```
-钻石形布局（宫位固定位置）：
+Diamond Layout (Fixed Houses):
 
        12  |  2
     11     | 1   | 3
@@ -43,54 +43,53 @@
         9  | 7   | 5
         8  |  6
 
-1宫 = 上方中间（Ascendant，固定位置）
-格子里的数字 = 星座编号（1=Aries, 2=Taurus ... 12=Pisces）
+House 1 = Top center diamond (Ascendant, permanent position).
+Numbers inside boxes = Sign numerals (1=Aries, 2=Taurus ... 12=Pisces).
 ```
 
-**计数方向：逆时针！**（和南印盘的顺时针相反）
+**Counting Direction**: **Counter-clockwise!**
 
-**读取步骤**：
-1. 看1宫格子里的星座数字/缩写 -> 这就是上升星座
-2. 按宫位编号(1->12)，**逆时针方向**逐格读取行星
-3. 每个格子里的数字代表星座（不是宫位）
-4. 输出结果表，等待用户确认
+**Reading Sequence**:
+1. Check the numeral/abbreviation in House 1 -> this identifies the Ascendant sign.
+2. Follow houses 1 through 12 in a **counter-clockwise direction**, reading resident planets.
+3. Box numerals denote zodiac signs, not house numbers.
+4. Output extracted planetary placements for verification.
 
-### 行星缩写对照表
+### Planetary Abbreviation Glossary
 
-| 行星 | 常见缩写 | 印地语别名 |
-|------|---------|----------|
-| Sun 太阳 | Su, Sy | Surya |
-| Moon 月亮 | Mo, Ch | Chandra |
-| Mars 火星 | Ma, Ku | Kuja, Mangal |
-| Mercury 水星 | Me, Bu | Budha |
-| Jupiter 木星 | Ju, Gu | Guru |
-| Venus 金星 | Ve, Sk | Shukra |
-| Saturn 土星 | Sa, Sh | Shani |
-| Rahu 罗睺 | Ra | - |
-| Ketu 计都 | Ke | - |
-| Lagna 上升点 | As, Asc, Lg | - |
+| Planet | Common Abbreviations | Sanskrit Names |
+|--------|---------------------|----------------|
+| Sun    | Su, Sy              | Surya          |
+| Moon   | Mo, Ch              | Chandra        |
+| Mars   | Ma, Ku              | Kuja, Mangal   |
+| Mercury| Me, Bu              | Budha          |
+| Jupiter| Ju, Gu              | Guru           |
+| Venus  | Ve, Sk              | Shukra         |
+| Saturn | Sa, Sh              | Shani          |
+| Rahu   | Ra                  | Rahu           |
+| Ketu   | Ke                  | Ketu           |
+| Lagna  | As, Asc, Lg         | Lagna          |
 
-**逆行标记（极重要，不可遗漏！）**：
-- 行星旁标有 **(R)** 或 **Rx** 表示逆行
-- 逆行会根本性改变行星的表现方式
-- AI最容易在此处遗漏，必须特别注意小括号或上标
-- 在structured_data.md中必须标注每颗行星是否逆行
+**Retrograde Indicators (Critical)**:
+- Indicated by **(R)**, **Rx**, or underlined glyphs.
+- Retrograde status significantly modifies planetary strength and results.
+- Must be recorded accurately in `structured_data.md`.
 
-### 特殊标记（⚠️ AL/UL 必须提取，其余记录备用）
+### Special Sensitive Points (AL / UL Required)
 
-| 缩写 | 含义 | 提取优先级 | 下游使用 |
-|------|------|-----------|---------|
-| AL | Arudha Lagna 象微宫 | **必须提取** | core板块8（社会形象） |
-| UL | Upapada Lagna 后世宫 | **必须提取** | love（婚姻/配偶来源） |
-| GL | Ghatika Lagna | 记录备用 | 暂无下游引用 |
-| HL | Hora Lagna | 记录备用 | 暂无下游引用 |
-| SL | Sree Lagna 吉祥点 | 记录备用 | 暂无下游引用 |
-| PP | Pranapada | 记录备用 | — |
-| BB | Bhrigu Bindu | 记录备用 | — |
-| Md/Gk | Mandi/Gulika | 记录备用 | — |
-| A2-A12 | 各宫Arudha Padas | 记录备用 | — |
+| Abbr | Sanskrit Name | Extraction Priority | Downstream Usage |
+|------|---------------|---------------------|------------------|
+| AL   | Arudha Lagna  | **Mandatory**       | core Section 8 (social standing/image) |
+| UL   | Upapada Lagna | **Mandatory**       | love (marriage & partner manifestation) |
+| GL   | Ghatika Lagna | Optional / Reference | — |
+| HL   | Hora Lagna    | Optional / Reference | — |
+| SL   | Sree Lagna    | Optional / Reference | — |
+| PP   | Pranapada     | Optional / Reference | — |
+| BB   | Bhrigu Bindu  | Optional / Reference | — |
+| Md/Gk| Mandi/Gulika  | Optional / Reference | — |
+| A2-A12| House Arudhas | Optional / Reference| — |
 
-> **AL/UL 提取规则**：
-> - 图中有标记 → 记录其所在星座格子
-> - 图中无标记 → 用BPHS公式从宫主表+行星位置计算（参考data_contract）
-> - calc engine 可用时 → 优先用 `special_points['AL'/'UL']`
+> **AL/UL Extraction Rules**:
+> - If marked on chart image/PDF -> record residing sign.
+> - If missing -> compute via BPHS formula from house lords and positions.
+> - When computational engine is available -> obtain directly from `special_points['AL']` / `special_points['UL']`.

@@ -1,43 +1,28 @@
-# 合作框架 (business-framework)
+# Commercial Partnership Framework (`business-framework`)
 
-> 适用：事业搭档、合伙、同事、商业合作。
-> 进入：Layer 0.5 平扫后 intake 选「合作」。
-> **性别**：合作关系无性别角色，纯 A/B 方向，不涉及性别 Karaka。
-
----
-
-## Layer 0 双盘资格：读什么
-
-- **D1**：3宫(主动/沟通)、6宫(执行/服务)、7宫(伙伴/合约)、10宫(事业/地位)、11宫(收益/网络)、2宫(资源)
-- **关键星**：Mercury(沟通/商业)、Mars(执行/驱动)、Saturn(责任/结构)、Jupiter(扩张/资源)、**AmK(事业指示星)**
-- **分盘**：D10(事业盘)
-- **Dasha**：当前是否激活 10/11/6/3宫、AmK
-- 承载卡四问：能带来的技能/资源/执行力 / 需要对方补什么 / 压力下如何（甩锅？失约？）/ 当前事业阶段是否适合协作
-
-## Layer 2 重点叠盘信号
-
-- 协作落地：Mercury-Mercury(沟通)、Saturn-Mercury(责任成形)、Jupiter 互照(格局/资源)
-- 动力/竞争：Mars-Mars、Mars-Mercury、1/10宫冲突
-- 责任结构：Saturn 触对方 10/6宫、AmK 交互
-- 资源/收益：10/11/2宫互落
-- 修复：Jupiter/Mercury 建设性接触
-
-## 六维矩阵侧重
-
-最重：**现实协作**。其次：沟通修复、长期承载（合作能否存续）。
-- "吸引与亲密"**降权**——改看"能量/驱动是否互补"。
-- "情绪安全"改看"信任度/可靠度"。
-
-## 本框架关系类型词
-
-互补协同 / 竞争内耗 / 责任失衡 / 资源互补(短期项目) / 强执行高摩擦 / 稳定长期搭档
+> Scope: Business partners, co-founders, corporate colleagues, professional alliances.
+> Invocation: Selected during intake after Layer 0.5 neutral screening.
+> Gender: Non-gendered framework, analyzed strictly as directional Person A <-> Person B dynamics.
 
 ---
 
-## 关系阶段/形态适配（可选；未指定 → 通用读法）
+## Layer 0 Individual Capacity: Core Metrics
 
-- **评估考虑中**：若一方想拉另一方入伙 = 方向不对称；重点"值不值得合作"（互补 vs 内耗）。
-- **刚起步**：磨合期，看 Mercury/Saturn 责任分工是否成形。
-- **稳定合作**：看长期承载 + 收益分配（11/2宫）。
-- **考虑拆伙**：看 6/8宫摩擦 + Saturn 是否已成负担。
-- **竞争对手**：Mars-Mars / 1/10宫冲突为主。
+- **D1 Focus**: 3rd house (initiative/courage), 6th house (execution/service), 7th house (partners/contracts), 10th house (career/standing), 11th house (revenue/networks), 2nd house (capital/assets).
+- **Core Grahas**: Mercury (commerce/negotiation), Mars (execution/drive), Saturn (responsibility/structure), Jupiter (expansion/capital), **Amatyakaraka (AmK - career significator)**.
+- **Divisional Chart**: D10 Dasamsa.
+- **Dasha Timing**: Whether active Dashas stimulate 10th, 11th, 6th, or 3rd houses or the AmK.
+
+## Layer 2 Inter-Chart Overlay Signals
+
+- Operational Alignment: Mercury-to-Mercury (communication), Saturn-to-Mercury (structural discipline), Jupiter mutual aspects (vision/capital).
+- Friction & Competition: Mars-to-Mars, Mars-to-Mercury, 1st/10th house tension.
+- Structural Accountability: Saturn aspecting counterpart's 10th or 6th house, AmK-to-AmK interactions.
+- Profit & Gains: 10th, 11th, and 2nd houses cross-overlays.
+- Conflict Resolution: Constructive Jupiter or Mercury cross-aspects.
+
+## Six-Dimensional Priority Matrix
+
+- **Primary Weight**: Practical Collaboration.
+- **Secondary Weights**: Communication & Repair, Long-Term Endurance.
+- Adjustments: "Attraction & Intimacy" is reinterpreted as "Energetic Drive Complementarity"; "Emotional Safety" is reinterpreted as "Fiduciary Trust & Reliability".

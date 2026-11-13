@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""calc_timing.py — Prashna 时间副层纯函数(沙箱内，只依赖标准库)
+"""calc_timing.py — Prashna timing overlay pure functions (sandboxed, standard library only)
 
-四个原典时间候选，来源、适用题型与边界见 resources/timing-layer.md：
+Four classical timing candidates; sources, applicable matter types, and boundaries in resources/timing-layer.md:
 
-  T1  P-V.5     归来/到达题：Lagna 顺数到第一个有七曜的宫(Lagna 有星=1)，宫数 × 12 天
-  T2  M-XIV.85  事项宫数到其宫主所在宫(含首尾)；宫主在 7–12 宫按天、1–6 宫按月
-                (天/月分法是 Raman 注的假设，原文未定)
-  T3  M-XIV.85  Moon 下次进入事项宫主所在星座
-  T4  M-XIV.82  上升 Navamsa 主星的时间单位(XIV.81) × 该星在本座第几个 Navamsa，只作参考
+  T1  P-V.5     Return/arrival queries: Count houses from Lagna to the first house containing a classical graha
+                (graha in Lagna = 1); house count * 12 days.
+  T2  M-XIV.85  Count houses from matter house to its lord's house (inclusive); lord in houses 7-12 gives days,
+                in houses 1-6 gives months (days/months division is Raman's commentary convention).
+  T3  M-XIV.85  Moon's next ingress into the sign occupied by the matter lord.
+  T4  M-XIV.82  Time unit of rising Navamsa lord (XIV.81) * that lord's Navamsa ordinal within its sign (reference only).
 
-本模块不导入 engine、Tajika 或 KP；行星数据由 build_timing_overlay.py 传入。
-不生成成败结论；几个候选结果不同时并列，不平均、不投票。
+Does not import engine, Tajika, or KP; planetary data is passed in by build_timing_overlay.py.
+Does not generate success/failure verdicts; multiple candidates are listed side by side without averaging or voting.
 """
 from __future__ import annotations
 
@@ -21,18 +22,18 @@ from zoneinfo import ZoneInfo
 SEVEN_GRAHAS = ("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn")
 NAVAMSA_SPAN = 30.0 / 9.0
 
-# M-XIV.81 Raman 注引 Brihat Jataka：(每单位数量, 单位, 原名)
+# M-XIV.81 Raman commentary citing Brihat Jataka: (amount per unit, unit label, Sanskrit name)
 PERIOD_UNITS = {
-    "Sun": (6, "个月", "Ayana"),
-    "Moon": (48, "分钟", "Kshana"),
-    "Mars": (1, "周", "Vasara"),
-    "Mercury": (2, "个月", "Rithu"),
-    "Jupiter": (1, "个月", "Masa"),
-    "Venus": (0.5, "个月", "Ardha"),
-    "Saturn": (1, "年", "Sama"),
+    "Sun": (6, "months", "Ayana"),
+    "Moon": (48, "minutes", "Kshana"),
+    "Mars": (1, "weeks", "Vasara"),
+    "Mercury": (2, "months", "Rithu"),
+    "Jupiter": (1, "months", "Masa"),
+    "Venus": (0.5, "months", "Ardha"),
+    "Saturn": (1, "years", "Sama"),
 }
 
-VERDICT_PREFIX = {"favorable": "约", "pending": "如果推进顺利，大约"}
+VERDICT_PREFIX = {"favorable": "Approximately", "pending": "If progression proceeds smoothly, approximately"}
 
 _J2000 = 2451545.0
 _J2000_UTC = datetime(2000, 1, 1, 12, tzinfo=timezone.utc)
@@ -42,7 +43,7 @@ _J2000_UTC = datetime(2000, 1, 1, 12, tzinfo=timezone.utc)
 # T1–T4
 # ---------------------------------------------------------------------------
 def t1_return_days(planet_houses: dict) -> dict:
-    """P-V.5：Lagna 顺数到第一个有七曜的宫，宫数 × 12 天。Rahu/Ketu 不计。"""
+    """P-V.5: Count houses from Lagna to the first house with classical grahas * 12 days."""
     for count in range(1, 13):
         names = [n for n in SEVEN_GRAHAS if planet_houses.get(n) == count]
         if names:
@@ -52,11 +53,11 @@ def t1_return_days(planet_houses: dict) -> dict:
                 "planets": names,
                 "days": count * 12,
             }
-    raise ValueError("七曜未落任何宫：planet_houses 缺数据")
+    raise ValueError("No classical grahas found in any house: planet_houses missing data")
 
 
 def t2_house_lord_count(matter_house: int, lord: str, lord_house: int) -> dict:
-    """M-XIV.85：事项宫数到宫主所在宫，含首尾。"""
+    """M-XIV.85: Count houses from matter house to lord house, inclusive."""
     visible = lord_house >= 7
     return {
         "rule_id": "M-XIV.85",
@@ -64,19 +65,19 @@ def t2_house_lord_count(matter_house: int, lord: str, lord_house: int) -> dict:
         "lord": lord,
         "lord_house": lord_house,
         "count": ((lord_house - matter_house) % 12) + 1,
-        "unit": "天" if visible else "个月",
-        "hemisphere": "可见半球(7–12 宫)" if visible else "不可见半球(1–6 宫)",
-        "pace": "较快" if visible else "较慢",
+        "unit": "days" if visible else "months",
+        "hemisphere": "visible hemisphere (houses 7-12)" if visible else "invisible hemisphere (houses 1-6)",
+        "pace": "faster" if visible else "slower",
     }
 
 
 def navamsa_ordinal(degree_in_sign: float) -> int:
-    """行星在本座第几个 Navamsa(1–9)。"""
+    """Navamsa ordinal of planet in sign (1-9)."""
     return min(int(degree_in_sign / NAVAMSA_SPAN), 8) + 1
 
 
 def t4_navamsa_lord_period(lord: str, lord_degree_in_sign: float) -> dict:
-    """M-XIV.82：上升 Navamsa 主星的单位 × 该星在本座第几个 Navamsa。"""
+    """M-XIV.82: Rising Navamsa lord unit * lord's Navamsa ordinal in sign."""
     ordinal = navamsa_ordinal(lord_degree_in_sign)
     amount, unit, name = PERIOD_UNITS[lord]
     return {
@@ -98,11 +99,7 @@ def next_sign_entry(
     max_days: float = 32.0,
     tolerance_days: float = 1.0 / 86400.0,
 ) -> float:
-    """M-XIV.85 T3：Moon 下次进入 target sign 的 JD(UT)。
-
-    longitude_at(jd) 返回恒星黄经。步长 0.25 天(Moon 约 3.3°)小于一个星座，
-    不会跳座；找到进入区间后二分到 1 秒。提问时已在该座的，返回下一次重新进入。
-    """
+    """M-XIV.85 T3: JD(UT) of Moon's next entry into target sign."""
     def in_target(jd):
         return int((longitude_at(jd) % 360.0) / 30.0) == target_sign_idx
 
@@ -120,17 +117,17 @@ def next_sign_entry(
                     lo = mid
             return hi
         prev_jd, prev_in = jd, now_in
-    raise ValueError(f"{max_days} 天内未找到进入 sign_idx={target_sign_idx}")
+    raise ValueError(f"No ingress into sign_idx={target_sign_idx} found within {max_days} days")
 
 
 def jd_to_local(jd: float, tz: str) -> datetime:
-    """JD(UT) → 提问地本地时间，取整到秒。"""
+    """JD(UT) -> local datetime rounded to nearest second."""
     utc = _J2000_UTC + timedelta(days=jd - _J2000)
     return (utc + timedelta(microseconds=500_000)).replace(microsecond=0).astimezone(ZoneInfo(tz))
 
 
 # ---------------------------------------------------------------------------
-# 格式化为 timing_overlay.md
+# Format as timing_overlay.md
 # ---------------------------------------------------------------------------
 def _fmt_number(value) -> str:
     return f"{value:g}"
@@ -143,68 +140,68 @@ def format_timing_section(data: dict) -> str:
     t4 = data["t4"]
 
     if primary["rule_id"] == "P-V.5":
-        primary_text = f"{prefix} {primary['days']} 天后回来/到达"
+        primary_text = f"{prefix} returns / arrives in {primary['days']} days"
     else:
         primary_text = (
-            f"{prefix} {primary['count']} {primary['unit']}内应事"
-            f"（应事节奏{primary['pace']}）"
+            f"{prefix} event manifests within {primary['count']} {primary['unit']} "
+            f"({primary['pace']} pace)"
         )
     t4_text = f"{_fmt_number(t4['value'])} {t4['unit']}"
     if t4["lord"] == "Moon":
-        t4_text += "（Moon 单位是 48 分钟，对需要过程的事项通常过短）"
+        t4_text += " (Moon unit is 48 minutes, usually too short for gradual matters)"
 
-    lines = ["# 时间副层（timing overlay）\n"]
-    lines.append(f"> 提问时刻：{data['judgment_time']}（{data['judgment_timezone']}）")
-    lines.append(f"> 标准层内部档：{'偏成' if data['verdict'] == 'favorable' else '持平'}"
-                 "；本文件不改该结论\n")
+    lines = ["# Timing Overlay (Prashna)\n"]
+    lines.append(f"> Query Time: {data['judgment_time']} ({data['judgment_timezone']})")
+    lines.append(f"> Standard Layer Internal Tier: {'Favorable' if data['verdict'] == 'favorable' else 'Pending'}"
+                 "; this file does not alter that conclusion.\n")
 
-    lines.append("## 先说人话\n")
-    lines.append(f"- **主时间**：{primary_text}。")
+    lines.append("## Plain Language Summary\n")
+    lines.append(f"- **Primary Window**: {primary_text}.")
     if t3:
-        lines.append(f"- **最近的触发日**：{t3['local_time']} 前后。")
-    lines.append(f"- **参考**：另一条算法给出 {t4_text}，只作参考。")
-    lines.append("- 几条算法来自不同原典口径，结果不同时并列，不取平均。\n")
+        lines.append(f"- **Next Ingress Trigger**: Around {t3['local_time']}.")
+    lines.append(f"- **Secondary Reference**: Another classical formula indicates {t4_text} (reference only).")
+    lines.append("- Several classical calculation traditions are shown side by side without averaging.\n")
 
-    lines.append("## 计算明细\n")
-    lines.append("| 候选 | rule_id | 输入 | 结果 | 角色 |")
+    lines.append("## Calculation Breakdown\n")
+    lines.append("| Candidate | rule_id | Input | Result | Role |")
     lines.append("|---|---|---|---|---|")
     if primary["rule_id"] == "P-V.5":
         lines.append(
-            f"| T1 | P-V.5 | Lagna 顺数到第一个有七曜的宫：{primary['count']} 宫"
-            f"（{'、'.join(primary['planets'])}） | {primary['count']} × 12 = "
-            f"{primary['days']} 天 | 主时间（归来/到达题） |"
+            f"| T1 | P-V.5 | Count from Lagna to first house with grahas: house {primary['count']} "
+            f"({', '.join(primary['planets'])}) | {primary['count']} × 12 = "
+            f"{primary['days']} days | Primary Timing (Return/Arrival) |"
         )
     else:
         lines.append(
-            f"| T2 | M-XIV.85 | {primary['matter_house']} 宫主 {primary['lord']} 在 "
-            f"{primary['lord_house']} 宫，{primary['hemisphere']}；含首尾 "
-            f"{primary['count']} 宫 | {primary['count']} {primary['unit']}，"
-            f"节奏{primary['pace']} | 主时间 |"
+            f"| T2 | M-XIV.85 | House {primary['matter_house']} lord {primary['lord']} in "
+            f"house {primary['lord_house']}, {primary['hemisphere']}; inclusive span "
+            f"{primary['count']} houses | {primary['count']} {primary['unit']}, "
+            f"pace {primary['pace']} | Primary Timing |"
         )
     if t3:
-        already = "；提问时 Moon 已在该座，取下一次重新进入" if t3["already_in"] else ""
+        already = "; Moon already in sign at query time, taking next re-entry" if t3["already_in"] else ""
         lines.append(
-            f"| T3 | M-XIV.85 | Moon 下次进入 {t3['lord']} 所在 {t3['sign']}{already} | "
-            f"{t3['local_time']} | 触发日 |"
+            f"| T3 | M-XIV.85 | Moon's next ingress into {t3['lord']}'s sign {t3['sign']}{already} | "
+            f"{t3['local_time']} | Ingress Trigger |"
         )
     else:
         lines.append(
-            "| T3 | M-XIV.85 | 事项宫主就是 Moon，“Moon 进入宫主所在座”自指 | 不适用 | — |"
+            "| T3 | M-XIV.85 | Matter lord is Moon; self-referential ingress omitted | N/A | — |"
         )
     lines.append(
-        f"| T4 | M-XIV.82 | 上升 Navamsa {t4['navamsa_sign']}，主星 {t4['lord']} 在本座第 "
-        f"{t4['navamsa_ordinal']} 个 Navamsa；单位 {t4['unit_name']} = "
+        f"| T4 | M-XIV.82 | Rising Navamsa {t4['navamsa_sign']}, lord {t4['lord']} in Navamsa "
+        f"{t4['navamsa_ordinal']}; unit {t4['unit_name']} = "
         f"{_fmt_number(t4['per_unit'])} {t4['unit']} | {t4['navamsa_ordinal']} × "
-        f"{_fmt_number(t4['per_unit'])} = {t4_text} | 参考 |"
+        f"{_fmt_number(t4['per_unit'])} = {t4_text} | Reference |"
     )
     lines.append("")
 
-    lines.append("## 边界\n")
-    lines.append("- 只在标准层内部档为偏成或持平时运行；偏不成档不给时间。")
-    lines.append("- T2 的天/月分法是 Raman 注的假设（原文只说可见半球快、不可见半球慢）。")
-    lines.append("- T4 只作参考，不与主时间折中。")
+    lines.append("## Boundaries\n")
+    lines.append("- Runs only when standard layer tier is favorable or pending; unfavorable queries receive no timing.")
+    lines.append("- T2 day/month division follows Raman's commentary convention.")
+    lines.append("- T4 is for reference only; do not compromise or average with primary timing.")
     lines.append(
-        "- 不使用提问盘的 120 年 Vimshottari、Chara Dasha、过运；"
-        "不导入 Tajika 或 KP 的时间。"
+        "- Never uses 120-year Vimshottari, Chara Dasha, or transits for query charts; "
+        "never imports Tajika or KP timing stacks."
     )
     return "\n".join(lines) + "\n"

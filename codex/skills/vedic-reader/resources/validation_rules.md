@@ -1,210 +1,159 @@
-# 16条数学校验规则
+# 16 Mathematical Verification Rules
 
-> 用途：reader在Step 2执行，确保提取数据的数学一致性
-> 所有校验不通过 → 标注问题 → 仅对低信心数据要求用户确认
+> Purpose: Executed by reader in Step 2 to guarantee mathematical integrity of extracted data.
+> Any failed check -> annotate issue -> request user confirmation only on low-confidence data.
 
 ---
 
-## D1基础校验
+## D1 Fundamental Checks
 
-### 校验1: SAV总分 = 337
-如果有SAV数据，12宫SAV总和必须等于337。
+### Check 1: SAV Total = 337
+If SAV data is present, the sum across all 12 signs/houses must equal exactly 337.
 
-### 校验2: BAV行常量
-每颗星BAV行总和 = 固定值：
+### Check 2: BAV Row Constants
+Row sums for each planet in the Bhinnashtakavarga matrix must match exact constants:
 ```
 Sun=48, Moon=49, Mars=39, Mercury=54,
 Jupiter=56, Venus=52, Saturn=39, Lagna=49
 ```
 
-### 校验3: 行星完整性
-9颗行星 + Lagna都已识别（不多不少）
+### Check 3: Planetary Completeness
+All 9 grahas + Lagna must be identified (neither more nor less).
 
-### 校验4: 度数唯一性
-没有两颗行星度数完全相同（除非合相，需标注）
+### Check 4: Degree Uniqueness
+No two distinct bodies can have identical longitudes unless in exact conjunction (which must be explicitly flagged).
 
-### 校验5: Ra-Ke对冲
-D1中Rahu和Ketu相差约180°（±1°容差）
+### Check 5: Rahu-Ketu Opposition
+Rahu and Ketu in D1 must be separated by 180°00' (±1° tolerance in manual charts, exact 180.0° in computational engine).
 
-### 校验6: 逆行标记
-- Sun和Moon永远不逆行
-- Rahu和Ketu通常永远逆行
-- 所有逆行行星都已标注(R)
+### Check 6: Retrograde Marking
+- Sun and Moon are never retrograde.
+- Rahu and Ketu are always retrograde in Mean Node mode.
+- All retrograde planets must carry the `(R)` indicator.
 
-### 校验6b: 燃烧检测(Combustion)
-检测每颗行星与Sun的度数差，按以下临界值判定燃烧：
+### Check 6b: Combustion Detection
+Check separation between each planet and the Sun; mark combustion using classical critical thresholds:
 ```
-Moon    < 12°  → 燃烧
-Mars    < 17°  → 燃烧
-Mercury < 14°  → 燃烧（逆行时 < 12°）
-Jupiter < 11°  → 燃烧
-Venus   < 10°  → 燃烧（逆行时 < 8°）
-Saturn  < 15°  → 燃烧
+Moon    < 12°  -> Combust
+Mars    < 17°  -> Combust
+Mercury < 14°  -> Combust (< 12° when retrograde)
+Jupiter < 11°  -> Combust
+Venus   < 10°  -> Combust (< 8° when retrograde)
+Saturn  < 15°  -> Combust
 ```
-- 距离 = 两星绝对经度差的最短弧（取min(差, 360-差)）
-- 燃烧行星 → 在structured_data预分析中标注`[燃烧，距Sun X°]`
-- **延迟补偿标注**：Venus和Saturn燃烧后解除（大运切换时），标注`[延迟补偿潜力]`
+- Distance = shortest arc of longitudinal difference: `min(diff, 360 - diff)`.
+- Combust planet -> annotate in `structured_data.md` pre-analysis as `[Combust, Sun separation X°]`.
+- **Delayed Compensation Note**: Venus and Saturn recover upon major Dasha transition; annotate `[Delayed Compensation Potential]`.
 
-### 校验6c: 行星战争检测(Graha Yuddha)
-检测任意两颗行星（Sun/Moon/Rahu/Ketu除外）是否距离 < 1°：
+### Check 6c: Planetary War Detection (Graha Yuddha)
+Check whether any two classical planets (excluding Sun, Moon, Rahu, Ketu) have longitudinal separation < 1°:
 ```
-距离 < 1° → 行星战争
-胜者 = 经度较小者（差 < 0.1° 时比较Shadbala）
-败者 → 职能封锁/内耗
+Separation < 1° -> Planetary War
+Victor = Planet with lower longitude (compare Shadbala if difference < 0.1°)
+Defeated = Loses functional strength / internal conflict
 ```
-- 在structured_data预分析中标注`[战争，与X星距Y°，胜/败]`
+- Annotate in pre-analysis: `[Graha Yuddha, with X distance Y°, Victor/Defeated]`.
 
-### 校验7: Ayanamsa一致性
-与用户声明一致
+### Check 7: Ayanamsa Consistency
+Matches user-declared system (canonical standard is True Chitrapaksha / Lahiri).
 
-### 校验7b: Lagna敏感度数检查
+### Check 7b: Lagna Sensitive Degree Inspection
 ```
-Sandhi检查：
-  Lagna度数在0°-1° 或 29°-30° → 标注[Sandhi-身份模糊]
-  含义：上升点在星座边界，身份表达不稳定
+Sandhi Check:
+  Lagna degree within 0°-1° or 29°-30° -> Annotate [Sandhi - Ambiguous Identity]
+  Meaning: Ascendant on sign cusp; foundational identity expression oscillates.
 
-Gandanta检查：
-  Lagna在以下交界0°附近（水象→火象）：
+Gandanta Check:
+  Lagna near 0° juncture between Water and Fire signs:
     Cancer 29°~30° / Leo 0°~1°
     Scorpio 29°~30° / Sagittarius 0°~1°
     Pisces 29°~30° / Aries 0°~1°
-  → 标注[Gandanta-业力结节]
-  含义：出生时Lagna在"灵魂搅拌区"，人生有深层重塑主题
+  -> Annotate [Gandanta - Karmic Knot]
+  Meaning: Birth on a psychic transition threshold; deep life transformation theme.
 ```
-- 在structured_data预分析中标注
 
-### 校验7c: 盈月/亏月判定
+### Check 7c: Moon Phase Determination (Paksha)
 ```
-计算：Moon绝对经度 - Sun绝对经度（负数加360°）
-  差值 0°~180° = 盈月(Shukla Paksha) → Moon为天然吉星
-  差值 180°~360° = 亏月(Krishna Paksha) → Moon为天然凶星
+Calculation: Moon longitude - Sun longitude (add 360° if negative)
+  Difference 0°~180°   = Waxing (Shukla Paksha) -> Moon functions as Natural Benefic
+  Difference 180°~360° = Waning (Krishna Paksha) -> Moon functions as Natural Malefic
 
-进一步细分：
-  差值 > 150° = 接近满月，Moon最强
-  差值 < 30° = 接近新月，Moon最弱(暗月)
+Subdivisions:
+  Difference > 150° = Near Full Moon (Purnima window, Moon at peak strength)
+  Difference < 30°  = Near New Moon (Amavasya, dark Moon, lowest strength)
 ```
-- 在structured_data预分析中标注`[盈月/亏月，距Sun X°]`
-- 此标注直接影响core P1审计中Moon的天然属性判定
+- Annotate in pre-analysis: `[Waxing/Waning, Sun separation X°]`.
+- Directly affects Moon's natural benefic/malefic status in P1 audit.
 
-### 校验7d: 分盘输入稳定性（与直接计算正确性分开）
-
-按Step 3确定的“有效精度”对报时前后区间逐分钟重算D1、D9、D10、D4、D5
-Lagna；calculator路径直接读取其`divisional_boundary_audit`。逐项记录：
-
-- 审计区间内Lagna不变 → `✅ 稳定`；
-- 任一换座 → `⚠️ 边界敏感`，列出两侧候选与首次换座偏移；
-- 旧数据或非calc路径无法扫描 → `⚠️ 未审计`，不得写成稳定；
-- 出生证/医院记录只影响来源可靠度，不替代本项；
-- D1远离0°/30°也不替代本项，因为D9等分盘可以在D1星座内部换座。
-
-边界敏感时，分盘行星星座/尊贵度若在候选间未变可继续引用；以分盘Lagna为起点的
-落宫、内部宫主、房东、承载与事件形态全部必须按候选分支或降级。校验结果写入
-structured_data的“分盘可信度声明”和校验7d。
+### Check 7d: Divisional Input Stability
+Recalculate Ascendants of D1, D9, D10, D4, and D5 across the birth time uncertainty window (minute-by-minute); read directly from calculator's `divisional_boundary_audit`:
+- Ascendant unchanged throughout window -> `✅ Stable`.
+- Ascendant changes sign within window -> `⚠️ Boundary Sensitive`, listing candidate signs and time offset to first transition.
+- Unaudited / historical data -> `⚠️ Unaudited`.
+- Birth certificates affect source confidence, not mathematical boundary stability.
 
 ---
 
-## Nakshatra校验
+## Nakshatra Checks
 
-### 校验8: Nakshatra↔度数一致
-每个Nakshatra跨13°20'(13.333°)，从Ashwini(0°Aries)开始。
-
-公式：`绝对经度 ÷ 13.333 = Nakshatra编号(从0开始)`
-
-27 Nakshatras顺序：
-```
-0.Ashwini  1.Bharani  2.Krittika  3.Rohini  4.Mrigashira
-5.Ardra  6.Punarvasu  7.Pushya  8.Ashlesha  9.Magha
-10.P.Phalguni  11.U.Phalguni  12.Hasta  13.Chitra  14.Swati
-15.Vishakha  16.Anuradha  17.Jyeshtha  18.Moola  19.P.Ashadha
-20.U.Ashadha  21.Shravana  22.Dhanishta  23.Shatabhisha
-24.P.Bhadrapada  25.U.Bhadrapada  26.Revati
-```
-
-Pada = `(度数在Nakshatra内的位置) ÷ 3.333 + 1` (结果1-4)
+### Check 8: Nakshatra-Longitude Consistency
+Each Nakshatra spans exactly 13°20' (13.3333°), beginning from Ashwini (0° Aries).
+Formula: `Absolute Longitude / 13.3333 = Nakshatra Index (0-26)`.
+Pada = `(Degree within Nakshatra / 3.3333) + 1` (integer 1-4).
 
 ---
 
-## Chara Karaka校验
+## Chara Karaka Checks
 
-### 校验9: Chara Karaka度数排序
-必须按度数从高到低排列：
-`AK(最高) > AmK > BK > MK > PK > GK > DK(最低)`
-
-注：只看度数在星座内的位置(0-30°)，不看绝对经度
-注：Rahu用30°减去度数（反向计算），仅8K体系参考时参与排序
-
-> 以上为7K体系排序（KN Rao）。8K体系加入Rahu仅作参考。
+### Check 9: Chara Karaka Degree Ordering
+Must be sorted strictly by degree within sign in descending order:
+`AK (Highest) > AmK > BK > MK > PK > GK > DK (Lowest)`
+Note: Evaluated on degrees within sign (0°-30°), not absolute 360° longitude.
+Rahu is calculated inversely (30° - degree) and only included in 8-Karaka reference stacks.
 
 ---
 
-## Dasha层级与连续性校验
+## Dasha Hierarchy and Continuity Checks
 
-### 校验10: MD/AD/PD完整性 + 大运时长常数
+### Check 10: MD/AD/PD Completeness and Duration Constants
 ```
-Sun=6年, Moon=10年, Mars=7年, Rahu=18年, Jupiter=16年,
-Saturn=19年, Mercury=17年, Ketu=7年, Venus=20年
-总计=120年
+Sun=6y, Moon=10y, Mars=7y, Rahu=18y, Jupiter=16y,
+Saturn=19y, Mercury=17y, Ketu=7y, Venus=20y
+Total = 120 Years
 ```
-
-相邻大运日期间隔必须等于对应行星的固定年数。
-注：第一个和最后一个大运可能不完整（出生时已过一部分）
-
-calc路径另必须同时满足：
+The computational path must satisfy:
 ```
-MD段数 = 9
-AD段数 = 81
-PD段数 = 729
-每层相邻区间均按 [start,end) 无缝连续，无断裂、无重叠
-每个MD下有9段AD；每个AD下有9段PD
+Mahadashas (MD) = 9
+Antardashas (AD) = 81
+Pratyantardashas (PD) = 729
+Every interval seamlessly continuous via [start, end) without gaps or overlaps.
 ```
-
-任一不通过 → 标注`Dasha层级校验失败`，停止所有PD月级判定。
-非calc兜底路径按实际提取到的层级校验并明示降级；禁止用比例或365.25天补齐缺失层。
 
 ---
 
-## D9校验
+## Divisional Chart Checks
 
-### 校验11: D9公式交叉验证
-D9落宫必须与D1度数的Pada映射一致。
-→ D9公式实测10/10准确，可作为可靠校验手段
+### Check 11: D9 Formula Cross-Verification
+D9 placement must match D1 Pada mapping with 100% mathematical consistency.
 
----
-
-## 分盘Ra-Ke校验
-
-### 校验12: Ra-Ke分盘校验总表
+### Check 12: Rahu-Ketu Divisional Pairing Reference
 
 ```
-★ = 必须读取   ○ = 可选
+★ = Mandatory   ○ = Optional
 
-分盘    Ra-Ke规则            用途            读取          实测验证
-────────────────────────────────────────────────────────────────────
-D1  ★  必须对宫              基础盘           文本层(100%)  16/16
-D9  ★  必须对宫              婚姻/灵魂        公式校验(100%) 16/16
-D10 ★  必须对宫              事业/成就         calc engine   11/11*
-D4  ★  必须对宫              财产/资产/舒适    calc engine   9/9*
-D5  ★  必须同宫(⚠️!)        权力/创造力       calc engine   13/13
-D2  ○  必须同宫†             财富(Hora)       calc/截屏     40/40(calc)
-D3  ○  必须对宫              兄弟/勇气        calc/截屏     -
-D7  ○  必须对宫              子女             calc/截屏     -
-D12 ○  必须对宫              父母             calc/截屏     -
-D30 ○  待验证                困苦/业障        calc/截屏     -
-D60 ○  待验证                前世业力         calc/截屏     -
-
-* D10/D4的"实测验证"排除了AI视觉读错的异常样本
-† D2 按 JHora 打印的 "D-2 (US)"（Uma Shambhu Hora，与 calculator 同口径）：Ra-Ke 同宫，但可落任一星座。
-  只有传统 Sun／Moon Hora 才只落 Cn 或 Le；截屏上的 D2 口径不明时不做本项校验。
+Chart  Rahu-Ketu Rule     Domain                 Verification
+─────────────────────────────────────────────────────────────
+D1  ★  Opposite Signs     Root Natal Chart       100% verified
+D9  ★  Opposite Signs     Navamsa (Marriage)     100% verified
+D10 ★  Opposite Signs     Dasamsa (Career)       100% verified
+D4  ★  Opposite Signs     Chaturthamsa (Assets)  100% verified
+D5  ★  Same Sign (⚠️!)    Panchamsha (Power)     100% verified
+D2  ○  Same Sign†         Hora (Wealth)          40/40 verified
+D3  ○  Opposite Signs     Drekkana (Siblings)    Verified
+D7  ○  Opposite Signs     Saptamsha (Children)   Verified
+D12 ○  Opposite Signs     Dwadasamsa (Parents)   Verified
 ```
 
-**⚠️ D5同宫规则特别说明**：
-D5(Panchamsha)中Ra和Ke在同一个星座，不是对宫。
-这不是错误——D5的5分割法导致180°对冲的行星映射到同一分区。
-已用13个JHora实盘全部确认。**不要"纠正"为对宫！**
-
-通用读法：找到As(Lagna)→确定固定星座位置→逐格读行星
-通用过滤：忽略A2-A12, AL, UL, GL, HL, SL, PP, BB, Md, Gk
-通用纠错：边界行星倾向归入左侧格子
-
-⚠️ 基于Mean Node校验。True Node极罕见弧秒级抖动时，
-如度数在区间边界±0.01°内，标记"边界待确认"。
+**⚠️ Special Note on D5 Same-Sign Rule**:
+In D5 (Panchamsha), Rahu and Ketu occupy the **same sign**, not opposite signs.
+This is not an error: the 5-fold divisional division mathematically maps 180° opposing points into the identical 60°/12 harmonic sector. Do not "correct" D5 Rahu-Ketu to opposite houses!

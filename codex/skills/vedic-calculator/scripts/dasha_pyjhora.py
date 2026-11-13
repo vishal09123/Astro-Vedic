@@ -1,9 +1,9 @@
 """
-dasha_pyjhora.py — PyJHora Vimsottari Dasha 包装器
-使用 PyJHora 的精确天文算法计算大运/小运/三级运日期，偏差 ≤ 2 天（vs JHora PDF）。
-自建 engine.py 的 365.25 近似法偏差 6~9 天。
+dasha_pyjhora.py - PyJHora Vimsottari Dasha wrapper
+Calculates MD/AD/PD timing dates using PyJHora high-precision astronomical algorithms (deviation <= 2 days vs JHora PDF).
+The old 365.25 approximation in engine.py had 6-9 days deviation.
 
-返回格式与 engine.py 的 chart['dashas'] 数据契约兼容；engine中旧近似入口已禁用。
+Return format is compatible with chart['dashas'] data contract; legacy approximation entrypoint disabled.
 """
 
 import swisseph as swe
@@ -31,8 +31,8 @@ _DASHA_ORDER = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Satu
 def _setup_jhora():
     """Apply the same monkey-patches as ashtakavarga_pyjhora.py"""
     # Patch swe.calc_ut for pysweph 2.10+ compatibility
-    # 哨兵必须与其余 4 个包装层同名(_patched)：曾用 _dasha_patched 导致两族互不识别，
-    # 每张全盘交替调用后叠加 2 层，约 490 张后 RecursionError（常驻进程可触发）。
+    # Sentinel must match the other 4 wrappers (_patched): using _dasha_patched caused incompatibility,
+    # stacking 2 layers per chart, triggering RecursionError after ~490 charts in resident processes.
     orig_calc = swe.calc_ut
     if not getattr(orig_calc, '_patched', False):
         def patched_calc(jd, planet, flags=0):
@@ -46,14 +46,14 @@ def _setup_jhora():
         orig_he = swe.houses_ex
         if not getattr(orig_he, '_patched', False):
             def patched_he(*a, **kw):
-                # (1) PyJHora drik.ascendant() 不传 hsys → pyswisseph 默认落到 Placidus，极圈内(|lat|>66°33')
-                #     无解。补 b'W'(整宫制)：asc 值与宫制无关(实测 W/E/O/C/B 返回同一 asc)。
-                # (2) 显式传 Placidus/Koch 的调用(Shadbala Dig Bala 的 bhaava_madhya)在极圈内同样无解：
-                #     按 Swiss Ephemeris 文档的做法改用 Porphyry(swe_houses 遇此情形自己也改算 Porphyry 并报 ERR)。
-                # (3) 恒星盘请求统一到 engine.calc_lagna 的 Lagna 基准(=桌面 JHora，2026-10-23 客户 JHora
-                #     打印盘实证差 0.004″)：视位置回归宫位 − 与行星同口径的岁差(TRUEPOS|NONUT)。
-                #     PyJHora 自带的 FLG_TRUEPOS 只改 houses_ex 内部岁差，与行星口径差约 9″。
-                #     ARMC 与占位元素不减岁差，按与 FLG_SIDEREAL 原生结果比对识别后原样保留。
+                # (1) PyJHora drik.ascendant() without hsys -> pyswisseph defaults to Placidus, which has no
+                #     solution inside the polar circle (|lat|>66°33'). Pass b'W' (whole sign): asc is invariant to house system.
+                # (2) Explicit Placidus/Koch calls (Shadbala Dig Bala's bhaava_madhya) also fail inside polar circles:
+                #     Following Swiss Ephemeris docs, fall back to Porphyry (swe_houses does this internally on ERR).
+                # (3) Sidereal chart requests unify to engine.calc_lagna Lagna baseline (= desktop JHora benchmark,
+                #     0.004 arcsec diff vs 2026-10-23 JHora printout): apparent position tropical house - ayanamsa (TRUEPOS|NONUT).
+                #     PyJHora FLG_TRUEPOS only alters houses_ex internal ayanamsa, differing from planet ayanamsa by ~9 arcsec.
+                #     ARMC and placeholder elements do not subtract ayanamsa, retained as-is based on FLG_SIDEREAL native comparison.
                 if len(a) < 4 and 'hsys' not in kw:
                     a = a + (b'W',)
                 jd, lat, lon = a[0], a[1], a[2]
@@ -104,8 +104,8 @@ def calculate_dasha_fixed(
                'is_current': bool, 'pratyantardashas': [...]}
           ]}, ...]
 
-        所有区间均按 [start, end) 解释；AD 与 PD 的边界直接取 PyJHora
-        L2/L3 返回值，不使用 365.25 天近似反推。
+        All intervals are interpreted as [start, end); AD and PD boundaries are taken directly from PyJHora
+        L2/L3 return values without 365.25 day approximation reversal.
     """
     _setup_jhora()
 
@@ -131,10 +131,10 @@ def calculate_dasha_fixed(
     local_hour = hour + minute / 60.0 + second / 3600.0
     jd_local = swe.julday(year, month, day, local_hour)
 
-    # PyJHora 的 vimsottari.year_duration 是模块全局，初值为平均恒星年(const.sidereal_year)，
-    # 只有 get_vimsottari_dhasa_bhukthi(L2) 才把它更新为真恒星年；而本函数先调 L1 后调 L2，
-    # 于是进程内首张盘的 L1 用平均年、后续盘用上一张残留的真年 → 末 MD 的 end/end_time 首调
-    # 漂移约 5 小时（skill CLI 每盘都是首调）。显式先对齐，保证 L1/L2 同一年长。
+    # PyJHora vimsottari.year_duration is module-global, initialized to mean sidereal year (const.sidereal_year),
+    # and only get_vimsottari_dhasa_bhukthi(L2) updates it to true sidereal year; this function calls L1 then L2,
+    # so the first chart uses mean year while subsequent charts use lingering true year -> final MD end drift
+    # by ~5 hours. Explicitly align beforehand to ensure identical year duration across L1 and L2.
     vimsottari.year_duration = drik.dhasa_year_duration(jd=jd_local, place=place)
 
     # ── 1. Get Mahadasha start dates ──
@@ -172,13 +172,13 @@ def calculate_dasha_fixed(
         )
 
     # ── 3. Build output ──
-    # 运程边界由 jd_local 推得，是“UT + 出生时 tz_offset”的墙上时间；“当前”须换到同一偏移比较。
-    # 不用机器本地 datetime.now()：换一台时区不同的电脑，交界附近的当前标记就会变。
-    # as_of 必须带时区（默认取当下 UTC）。
+    # Dasha boundaries derive from jd_local (UT + birth tz_offset wall-clock time); current must use same offset.
+    # Avoid machine-local datetime.now(): changing machines shifts markers near boundary dates.
+    # as_of must be timezone-aware (defaults to current UTC).
     if as_of is None:
         as_of = datetime.now(timezone.utc)
     if as_of.tzinfo is None:
-        raise ValueError("as_of 必须是带时区的 datetime")
+        raise ValueError("as_of must be a timezone-aware datetime")
     now = as_of.astimezone(timezone.utc).replace(tzinfo=None) + timedelta(hours=tz_offset)
     md_items = list(md_dict.items())
     dashas = []

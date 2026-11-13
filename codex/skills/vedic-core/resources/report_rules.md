@@ -1,46 +1,43 @@
-# 报告打包规则
+# Report Packaging Rules
 
-> 用途：当用户说"生成报告""打包""导出HTML"时执行
+> Purpose: Executed when user requests: "generate report", "package report", "export HTML".
 
 ---
 
-## 脚本位置
+## Script Location
 
-report_builder.py 在本skill的 `scripts/` 目录下。
-**完整路径**：使用相对于SKILL.md的路径 `scripts/report_builder.py`。
+`report_builder.py` resides in the skill's `scripts/` directory: `scripts/report_builder.py`.
 
-如果执行时提示找不到脚本，按以下顺序查找：
-1. 当前skill目录下的 `scripts/report_builder.py`
-2. 工作目录下的 `report_builder.py`（用户可能手动复制过）
-3. 如果都找不到 → 告诉用户脚本路径，让用户确认位置
+If not found, resolve in order:
+1. `scripts/report_builder.py` under the current skill directory.
+2. `report_builder.py` in the workspace root.
+3. If neither exists, notify user and prompt for confirmation.
 
-## 打包命令
+## Packaging Command
 
-先根据当前 Skill 的 `client_language` 选择 `--lang`：
+Select `--lang` based on current `client_language`:
+- English -> `--lang en`
+- Japanese -> `--lang ja`
+- Chinese -> `--lang cn`
+- Other -> Select matching language; default HTML shell to `en` without altering the original prose language.
 
-- English → `--lang en`
-- 日本語 → `--lang ja`
-- 中文 → `--lang cn`
-- 其他语言 → 使用正文实际采用的语言；HTML 外壳暂选 `en`，不得因此把正文改回英文、日文或中文
+```bash
+# Package all existing markdown files
+python scripts/report_builder.py [workspace_dir] --lang [en|cn|ja]
 
-```python
-# 打包全部已有文件
-python scripts/report_builder.py [工作目录] --lang [cn|en|ja]
+# Package core analysis only
+python scripts/report_builder.py [workspace_dir] --include core --lang [en|cn|ja]
 
-# 只打包core
-python scripts/report_builder.py [工作目录] --include core --lang [cn|en|ja]
-
-# 只打包core + career
-python scripts/report_builder.py [工作目录] --include core,career --lang [cn|en|ja]
+# Package core + career
+python scripts/report_builder.py [workspace_dir] --include core,career --lang [en|cn|ja]
 ```
 
-report_builder自动检测目录中存在哪些MD文件，只打包存在的。
-`--include`参数可选择只打包特定部分。
-`--lang`只控制封面、目录、章节标题和页脚；正文语言来自已有 Markdown，禁止把
-正文放入不匹配的中文、英文或日文外壳。
+`report_builder.py` automatically detects existing Markdown artifacts and compiles only present sections.
+`--include` selectively packages specific modules.
+`--lang` styles the cover, table of contents, section banners, and footers.
 
-## ⚠️ 禁止行为
+## ⚠️ Forbidden Actions
 
-1. **禁止自动打开浏览器预览**：生成HTML后不要用 `open`/`start`/`xdg-open` 打开浏览器。只告诉用户文件路径，让用户自己决定是否打开。
-2. **禁止在聊天框中输出HTML代码**：HTML文件由脚本生成，不要在对话中贴代码。
-3. **生成完成后只报路径**：`"报告已生成：[完整文件路径]"`，不做其他操作。
+1. **No Automatic Browser Launch**: Do not open the browser with `open`, `start`, or `xdg-open`. State the absolute file path and let the user open it.
+2. **No HTML Code Dumps in Chat**: Do not output raw HTML markup into the chat dialogue.
+3. **Concise Confirmation**: State only the completed path upon generation: `"Report successfully generated: [absolute_file_path]"`.

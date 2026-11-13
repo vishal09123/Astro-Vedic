@@ -14,7 +14,6 @@ routing, and client-facing rendering. It also provides a single language rule:
 client-facing content follows the user's requested language while canonical data,
 filenames, technical identifiers, evidence, and conclusions remain unchanged.
 
-[日本語インストールガイド](README.ja.md) · [中文安装说明](README.md)
 
 ## Contents
 

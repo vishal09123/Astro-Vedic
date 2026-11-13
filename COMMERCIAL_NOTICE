@@ -21,16 +21,3 @@ references/ directories) are subject to the following additional terms:
    licensed under the same terms.
 
 For commercial licensing inquiries, please open a GitHub issue.
-
----
-
-指令文件（SKILL.md、prompt 模板、resources/ 和 references/ 目录下的所有文件）
-附加以下条款：
-
-1. 个人使用：自由使用、学习、修改，无任何限制。
-2. 商用限制：未经书面授权，不得将这些文件用于向第三方提供商业服务。
-   包括但不限于：搭建付费 API / 网页服务、嵌入商业平台或产品、
-   作为收费服务的系统提示词。
-3. 贡献：欢迎贡献，贡献内容适用相同条款。
-
-商用授权请在 GitHub 提 issue 联系。

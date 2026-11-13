@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
-"""build_prashna_data.py — Prashna 提问盘起盘链路
+"""build_prashna_data.py — Prashna chart generation pipeline
 
-调共享 vedic-calculator/scripts/engine.py 的 calculate_full_chart(提问时刻)，再由
-Prashna 专用白名单 formatter 组装 structured_prashna.md，写入
-prashna_<yyyymmdd_HHMMSS>_<label>/ 独立目录。
+Invokes calculate_full_chart from shared vedic-calculator/scripts/engine.py (at question instant),
+and uses Prashna-dedicated whitelisted formatter to assemble structured_prashna.md, writing into
+an isolated directory: prashna_<yyyymmdd_HHMMSS>_<label>/.
 
-沙箱化硬约束(vedic-prashna/SKILL.md §沙箱化硬约束):
-  1. 只读复用共享 engine，不调用本命 formatter，不改任何共享代码。
-  2. 产物名 structured_prashna.md(与本命 structured_data.md 严格区分)。
-  3. 产物路径 prashna_<yyyymmdd_HHMMSS>_<label>/(独立子目录，不写本命根)。
-  4. 不加任何 Tajika/KP/异体系字段。
+Sandbox constraints (vedic-prashna/SKILL.md):
+  1. Read-only reuse of shared engine; never invoke natal formatter or modify shared code.
+  2. Artifact named structured_prashna.md (strictly distinct from natal structured_data.md).
+  3. Artifact output to prashna_<yyyymmdd_HHMMSS>_<label>/ isolated subdirectory (never root).
+  4. Never include alien Tajika/KP fields in the standard layer.
 
-默认标准层:
-  - 仅输出 resources/standard-layer.md 的字段白名单。
-  - 不输出本命 Dasha、Chara Karaka、SAV/BAV、分盘、Yoga 或过运。
-  - 不计算时间；偏成/持平档的时间副层由独立 build_timing_overlay.py 写 timing_overlay.md
-    (resources/timing-layer.md)，本脚本不导入它。
+Standard Layer Defaults:
+  - Whitelisted fields strictly per resources/standard-layer.md.
+  - Omits natal Dasha, Chara Karaka, SAV/BAV, divisional charts, Yogas, or transits.
+  - Does not compute timing; timing overlay for favorable/pending outcomes is written
+    by independent build_timing_overlay.py (resources/timing-layer.md), not imported here.
 
-用法:
+Usage:
     python build_prashna_data.py \\
-        --datetime "2026-07-11 15:30:24.125"  # 提问时刻(本地时区)，或 "now" \\
-        --lat 30.667 --lon 104.067      # 提问地(度，正=北/东) \\
-        --tz "Asia/Shanghai"            # 提问地时区 \\
-        --question "这份 offer 该不该接?" \\
-        --label offer-decide            # 问题短标签(a-z0-9-, 1-30) \\
-        [--out-parent .]                # 独立子目录的父目录(默认 CWD)
+        --datetime "2026-07-11 15:30:24.125"  # Query instant (local tz), or "now" \\
+        --lat 30.667 --lon 104.067            # Location (degrees, positive=N/E) \\
+        --tz "Asia/Shanghai"                  # Location timezone \\
+        --question "Should I accept this offer?" \\
+        --label offer-decide                  # Question short label (a-z0-9-, 1-30) \\
+        [--out-parent .]                      # Output parent directory (default CWD)
 """
 import argparse
 import re
@@ -32,13 +32,13 @@ import sys
 from pathlib import Path
 
 
-# --- 复用共享 vedic-calculator(只读调用) ---
+# --- Reuse shared vedic-calculator (read-only) ---
 _HERE = Path(__file__).resolve().parent           # vedic-prashna/scripts/
 _CALC_SCRIPTS = _HERE.parent.parent / "vedic-calculator" / "scripts"
 if not _CALC_SCRIPTS.exists():
     raise RuntimeError(
-        f"[FATAL] 未找到共享 vedic-calculator/scripts: {_CALC_SCRIPTS}\n"
-        f"沙箱化硬约束 #1 要求 Prashna 复用共享 engine，请检查 skills 目录布局。"
+        f"[FATAL] Shared vedic-calculator/scripts not found: {_CALC_SCRIPTS}\n"
+        f"Prashna requires shared engine per sandbox constraint #1. Check directory layout."
     )
 if str(_CALC_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_CALC_SCRIPTS))
@@ -52,7 +52,7 @@ from prashna_time import (  # noqa: E402
     parse_local_datetime,
 )
 
-# 沙箱内 Moon 吠陀动向计算(不下沉 engine，见 calc_moon_vedic.py 顶注)
+# Sandboxed Moon Vedic motion computation (see calc_moon_vedic.py)
 from calc_moon_vedic import compute as compute_moon_vedic  # noqa: E402
 from calc_moon_vedic import format_moon_section            # noqa: E402
 
@@ -60,24 +60,24 @@ LABEL_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,29}$")
 
 
 def parse_args():
-    ap = argparse.ArgumentParser(description="Prashna 提问盘起盘")
+    ap = argparse.ArgumentParser(description="Prashna Horary Chart Builder")
     ap.add_argument(
         "--datetime",
         required=True,
-        help='提问时刻，格式 "YYYY-MM-DD HH:MM[:SS[.ffffff]][+HH:MM]"，或 "now"',
+        help='Query instant, format "YYYY-MM-DD HH:MM[:SS[.ffffff]][+HH:MM]", or "now"',
     )
-    ap.add_argument("--lat", type=float, required=True, help="提问地纬度(度，正=北)")
-    ap.add_argument("--lon", type=float, required=True, help="提问地经度(度，正=东)")
-    ap.add_argument("--tz", required=True, help='提问地时区，如 "Asia/Shanghai"')
-    ap.add_argument("--question", required=True, help="具体问题(单一可判定)")
+    ap.add_argument("--lat", type=float, required=True, help="Query latitude (positive=N)")
+    ap.add_argument("--lon", type=float, required=True, help="Query longitude (positive=E)")
+    ap.add_argument("--tz", required=True, help='Query timezone, e.g. "Asia/Shanghai"')
+    ap.add_argument("--question", required=True, help="Specific question (single decidable query)")
     ap.add_argument("--label", required=True,
-                    help="问题短标签(kebab-case, 1-30 字符 [a-z0-9-])")
+                    help="Short question label (kebab-case, 1-30 chars [a-z0-9-])")
     ap.add_argument("--out-parent", default=".",
-                    help="独立子目录的父目录(默认 CWD)")
+                    help="Parent directory for output subdirectory (default CWD)")
     args = ap.parse_args()
 
     if not LABEL_RE.match(args.label):
-        ap.error(f"--label 必须匹配 {LABEL_RE.pattern}: 收到 {args.label!r}")
+        ap.error(f"--label must match {LABEL_RE.pattern}: received {args.label!r}")
 
     try:
         args.dt = parse_local_datetime(args.datetime, args.tz)
@@ -90,37 +90,37 @@ def build_prashna_header(
     dt, lat, lon, tz, question, label, chart_ayanamsa, dst_info, calc_meta=None
 ):
     lines = []
-    lines.append("## 元信息\n")
+    lines.append("## Metadata\n")
     lines.append("```")
-    lines.append("盘类型: Prashna(提问盘/时盘) — 独立生态位，不与本命混")
-    lines.append(f"提问日期: {dt.strftime('%Y-%m-%d')}")
-    lines.append(f"提问时间: {format_wall_time(dt)}")
-    lines.append(f"脚本时刻: {instant_text(dt)}（后续脚本的 --datetime 照抄这一行）")
-    lines.append(f"提问地点: ({lon:.3f}, {lat:.3f})")
-    lines.append(f"时区: {tz}")
-    lines.append("时间精度: 秒级输入已保留；小数秒按原输入/本机消息时间保留")
-    lines.append("读盘方式: vedic-calculator 直接起 Prashna Kundali")
-    lines.append(f"Ayanamsa: True Chitrapaksha(Lahiri 系) ({chart_ayanamsa:.4f}°)")
+    lines.append("Chart Type: Prashna (Horary) — independent domain, separate from natal")
+    lines.append(f"Query Date: {dt.strftime('%Y-%m-%d')}")
+    lines.append(f"Query Time: {format_wall_time(dt)}")
+    lines.append(f"Script Time: {instant_text(dt)}")
+    lines.append(f"Query Location: ({lon:.3f}, {lat:.3f})")
+    lines.append(f"Timezone: {tz}")
+    lines.append("Time Precision: Seconds preserved; fractional seconds preserved from input/system")
+    lines.append("Chart Method: vedic-calculator direct Prashna Kundali calculation")
+    lines.append(f"Ayanamsa: True Chitrapaksha (Lahiri) ({chart_ayanamsa:.4f}°)")
     if calc_meta:
         lines.append(
-            f"计算溯源: engine {calc_meta['engine_version']}｜计算瞬间 UTC {calc_meta['instant_utc']}"
-            f"｜实际岁差 {calc_meta['ayanamsa']:.6f}°（行星与 Lagna 同口径）"
+            f"Provenance: engine {calc_meta['engine_version']} | UTC instant {calc_meta['instant_utc']}"
+            f" | Ayanamsa {calc_meta['ayanamsa']:.6f}° (matching Lagna and planets)"
         )
     if dst_info and dst_info.get('is_dst'):
         lines.append(
-            f"夏令时: ⚠️ 提问时刻处于当地夏令时期间(UTC 偏移 {dst_info['utc_offset']})"
+            f"Daylight Saving: ⚠️ Active DST in effect (UTC offset {dst_info['utc_offset']})"
         )
-    lines.append("Node模式: Mean Node")
-    lines.append("默认标准层: Shatpanchasika-rooted + KN Rao/Bhavan compatibility")
-    lines.append("时间副层: 偏成/持平档另由 build_timing_overlay.py 写 timing_overlay.md")
+    lines.append("Node Mode: Mean Node")
+    lines.append("Standard Layer: Shatpanchasika-rooted + KN Rao/Bhavan compatibility")
+    lines.append("Timing Layer: Favorable/pending outcomes computed via build_timing_overlay.py")
     lines.append("```\n")
 
-    lines.append("## 提问信息\n")
+    lines.append("## Query Details\n")
     lines.append("```")
-    lines.append(f"具体问题: {question}")
-    lines.append(f"问题短标签: {label}")
-    lines.append("求问者背景: [Prashna 分析阶段禁读盘主背景，此处留空]")
-    lines.append("占卜类别: [判读时拆题并写取象单，见 resources/question-decomposition.md 与 matter-rules.md]")
+    lines.append(f"Question: {question}")
+    lines.append(f"Short Label: {label}")
+    lines.append("Querent Background: [Horary analysis phase forbids reading background]")
+    lines.append("Matter Category: [Decomposed during judgment plan, see resources/matter-rules.md]")
     lines.append("```\n")
     return "\n".join(lines)
 
@@ -128,29 +128,25 @@ def build_prashna_header(
 def main():
     args = parse_args()
 
-    # 1. 起盘(复用共享 engine，只读调用)
+    # 1. Cast chart (reuse shared engine, read-only)
     chart = calculate_prashna_chart(args.dt, args.lat, args.lon, args.tz)
 
-    # 2. 由 Prashna 专用 formatter 输出白名单字段；不消费共享 natal formatter。
+    # 2. Format standard layer via Prashna-dedicated formatter
     data_section = format_standard_layer(chart)
 
-    # 3. 组装 Prashna 专用头部
+    # 3. Assemble Prashna header
     head = build_prashna_header(
         args.dt, args.lat, args.lon, args.tz, args.question, args.label,
         chart['ayanamsa'], chart.get('dst_info'), chart.get('calc_meta'),
     )
 
-    # 4. Moon 当前事实(沙箱内计算，不生成全局成败或时间窗)
+    # 4. Moon observation facts (sandboxed calculation)
     moon_data = compute_moon_vedic(chart, args.dt, args.tz)
     moon_section = format_moon_section(moon_data)
 
     final_md = head + "\n" + data_section + "\n\n---\n\n" + moon_section
 
-    # 5. 写入独立子目录。Tajika 与 KP 不在标准 builder 中导入或追加：
-    #    Tajika 由 build_tajika_overlay.py 在 Phase 2 选定主星后生成；
-    #    KP 由独立的 build_kp_horary.py 生成。
-    #    同名目录里已有产物时另开 _2、_3……，不覆盖旧盘（目录名只到整秒，同秒同 label 重跑、
-    #    改地点或改问题重跑都会撞名）。
+    # 5. Write to isolated subdirectory
     subdir_name = f"prashna_{datetime_slug(args.dt)}_{args.label}"
     base_dir = Path(args.out_parent).resolve() / subdir_name
     out_dir, n = base_dir, 1
@@ -158,18 +154,17 @@ def main():
         n += 1
         out_dir = base_dir.with_name(f"{subdir_name}_{n}")
     out_dir.mkdir(parents=True, exist_ok=True)
-    # 产物名严格区分本命根 structured_data.md
     out_path = out_dir / "structured_prashna.md"
     out_path.write_text(final_md, encoding='utf-8')
 
-    print(f"[OK] Prashna 盘已生成:")
-    print(f"     目录: {out_dir}")
-    print(f"     文件: structured_prashna.md")
+    print(f"[OK] Prashna chart generated:")
+    print(f"     Directory: {out_dir}")
+    print(f"     File: structured_prashna.md")
     print(
-        f"     提问时刻: {args.dt.strftime('%Y-%m-%d')} "
+        f"     Query Instant: {args.dt.strftime('%Y-%m-%d')} "
         f"{format_wall_time(args.dt)} ({args.tz})"
     )
-    print(f"     具体问题: {args.question}")
+    print(f"     Question: {args.question}")
 
 
 if __name__ == "__main__":

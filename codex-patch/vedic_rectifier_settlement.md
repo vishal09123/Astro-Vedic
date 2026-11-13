@@ -9,7 +9,7 @@ calculations, guardrails, checkpoints, or visible requirements.
 
 ## Settlement sequence
 
-Follow the skill's "每层统一流程" in order:
+Follow the skill's "unified layer workflow" in order:
 
 1. List every current candidate by objective name and the chart fields that
    actually vary among them at the active layer (read calculator output; never

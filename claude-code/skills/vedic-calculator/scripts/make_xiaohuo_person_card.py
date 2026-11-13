@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Export a compact, copyable Xiaohuo personal chart card.
+"""Export a compact, copyable personal chart card.
 
 This adapter reads an already-generated ``structured_data.md`` and only
-selects fields that are useful to the Xiaohuo text skills.  It never calls an
-ephemeris library and never calculates a chart.  The canonical structured
+selects fields that are useful to text skills. It never calls an
+ephemeris library and never calculates a chart. The canonical structured
 data file remains unchanged.
 """
 
@@ -29,22 +29,22 @@ PLANETS = (
 
 
 def clean(value: str) -> str:
-    return re.sub(r"\s+", " ", value.strip().strip("`"))
+    return re.sub(r"\s+", " ", value).strip()
 
 
 def cells(line: str) -> list[str]:
-    line = line.strip()
-    if not line.startswith("|"):
-        return []
-    return [clean(part) for part in line.strip("|").split("|")]
+    return [clean(cell) for cell in line.strip().strip("|").split("|")]
 
 
-def table_rows(body: str) -> list[list[str]]:
+def table_rows(text: str) -> list[list[str]]:
     rows: list[list[str]] = []
-    for line in body.splitlines():
+    for line in text.splitlines():
+        if not line.strip().startswith("|"):
+            continue
         row = cells(line)
-        if row and not all(re.fullmatch(r":?-{3,}:?", item) for item in row):
-            rows.append(row)
+        if not row or all(re.fullmatch(r"[-:\s]+", cell) for cell in row):
+            continue
+        rows.append(row)
     return rows
 
 
@@ -57,7 +57,7 @@ def section(text: str, pattern: str) -> str:
 
 
 def metadata(text: str) -> dict[str, str]:
-    body = section(text, r"##\s*元信息")
+    body = section(text, r"##\s*Metadata")
     fence = re.search(r"(?ms)```(?:text|yaml|markdown)?\s*\n?(.*?)```", body)
     source = fence.group(1) if fence else body
     result: dict[str, str] = {}
@@ -84,18 +84,18 @@ def meta_value(meta: dict[str, str], *names: str) -> str:
 def canonical_planet(value: str) -> str | None:
     value = clean(value).casefold()
     aliases = {
-        "上升": "Lagna",
         "asc": "Lagna",
         "ascendant": "Lagna",
-        "太阳": "Sun",
-        "月亮": "Moon",
-        "火星": "Mars",
-        "水星": "Mercury",
-        "木星": "Jupiter",
-        "金星": "Venus",
-        "土星": "Saturn",
-        "罗喉": "Rahu",
-        "计都": "Ketu",
+        "lagna": "Lagna",
+        "sun": "Sun",
+        "moon": "Moon",
+        "mars": "Mars",
+        "mercury": "Mercury",
+        "jupiter": "Jupiter",
+        "venus": "Venus",
+        "saturn": "Saturn",
+        "rahu": "Rahu",
+        "ketu": "Ketu",
     }
     if value in aliases:
         return aliases[value]
@@ -110,7 +110,7 @@ def canonical_planet(value: str) -> str | None:
 
 
 def parse_planets(text: str) -> dict[str, list[str]]:
-    body = section(text, r"###\s*行星位置")
+    body = section(text, r"###\s*(?:Planetary Positions|Planets)")
     result: dict[str, list[str]] = {}
     for row in table_rows(body):
         if not row:
@@ -134,12 +134,12 @@ def parse_moon_nakshatra(text: str) -> tuple[str, str]:
 
 
 def parse_ul(text: str) -> tuple[str, str]:
-    body = section(text, r"###\s*特殊点位")
+    body = section(text, r"###\s*Special Points")
     for row in table_rows(body):
         if row and row[0].casefold().startswith("ul"):
             return (row[1] if len(row) > 1 else "", row[2] if len(row) > 2 else "")
     match = re.search(
-        r"(?im)^\s*UL(?:\s*\([^\n)]*\))?\s*[:：]\s*([A-Za-z\u4e00-\u9fff]+)(?:\s*[；;,]\s*(\d+)\s*宫?)?",
+        r"(?im)^\s*UL(?:\s*\([^\n)]*\))?\s*[:：]\s*([A-Za-z]+)(?:\s*[；;,]\s*(\d+)\s*(?:House|H)?)?",
         text,
     )
     return (match.group(1), match.group(2) or "") if match else ("", "")
@@ -157,10 +157,7 @@ def parse_dk(text: str) -> str:
 
 
 def parse_current_dasha(text: str) -> tuple[str, str, str]:
-    # The formatter emits an explicit current-status block.  Prefer it over
-    # table heuristics: the AD table's heading contains “当前”, so scanning
-    # every marked line can accidentally reuse the MD row as the AD value.
-    status = re.search(r"(?ms)^当前状态\s*[:：]\s*\n?```(.*?)```", text)
+    status = re.search(r"(?ms)^Current Status\s*[:：]\s*\n?```(.*?)```", text)
     if status:
         body = status.group(1)
         md_match = re.search(
@@ -181,40 +178,33 @@ def parse_current_dasha(text: str) -> tuple[str, str, str]:
     md_body = section(text, r"###\s*Vimsottari Dasha")
     md = ""
     for row in table_rows(md_body):
-        if len(row) >= 4 and "当前" in " ".join(row[:2]):
-            md = f"{row[1]}（{row[2]} 至 {row[3]}）"
+        if len(row) >= 4 and "current" in " ".join(row[:2]).casefold():
+            md = f"{row[1]} ({row[2]} to {row[3]})"
             break
     ad = ""
-    # Current AD rows are marked in the relevant Antardasha table.  Keep the
-    # first explicitly current row and do not infer a date from today's date.
     for line in text.splitlines():
-        if not line.startswith("|") or "当前" not in line:
+        if not line.startswith("|") or "current" not in line.casefold():
             continue
         row = cells(line)
-        if len(row) >= 4 and ("←" in line or "当前" in row[0]):
-            ad = f"{row[1]}（{row[2]} 至 {row[3]}）"
+        if len(row) >= 4 and ("←" in line or "current" in row[0].casefold()):
+            ad = f"{row[1]} ({row[2]} to {row[3]})"
             break
     return md, ad, ""
 
 
 def parse_current_transit(text: str) -> tuple[str, list[tuple[str, str, str]]]:
-    """Read the dated slow-planet transit table when the source contains it."""
-
-    # This is a level-2 section containing level-3 subsections; the generic
-    # ``section`` helper intentionally stops at any level-2-or-deeper heading,
-    # so use a level-2-only boundary here.
     match = re.search(
-        r"(?ms)^\s*##\s*当前过运位置.*?\s*$\n(.*?)(?=^\s*##\s|\Z)",
+        r"(?ms)^\s*##\s*Current Transit Positions.*?\s*$\n(.*?)(?=^\s*##\s|\Z)",
         text,
     )
     body = match.group(1) if match else ""
     date_match = re.search(
-        r"(?im)^\s*>?\s*提取时间点\s*[:：]\s*(\d{4}-\d{2}-\d{2})",
+        r"(?im)^\s*>?\s*Extraction Timestamp\s*[:：]\s*(\d{4}-\d{2}-\d{2})",
         body,
     )
     date = date_match.group(1) if date_match else ""
     slow = re.search(
-        r"(?ms)^\s*###\s*慢行星过运\s*$\n(.*?)(?=^\s*###\s|\Z)", body
+        r"(?ms)^\s*###\s*Slow Planet Transits\s*$\n(.*?)(?=^\s*###\s|\Z)", body
     )
     if not slow:
         return date, []
@@ -233,7 +223,7 @@ def infer_house_system(planets: dict[str, list[str]]) -> str:
     }
     lagna = planets.get("Lagna", [""])[0].casefold()
     if lagna not in signs:
-        return "未确认（原资料未标明）"
+        return "Unconfirmed (Not specified in source data)"
     comparable = matches = 0
     for name in PLANETS:
         row = planets.get(name, [])
@@ -246,26 +236,25 @@ def infer_house_system(planets: dict[str, list[str]]) -> str:
         expected = (signs[row[0].casefold()] - signs[lagna]) % 12 + 1
         matches += expected == int(house_match.group(0))
     if comparable >= 5 and matches / comparable >= 0.8:
-        return "整宫制（按 D1 星座/宫位映射确认）"
-    return "未确认（原资料未标明）"
+        return "Whole Sign (Verified via D1 Sign-to-House mapping)"
+    return "Unconfirmed (Not specified in source data)"
 
 
 def display_row(name: str, row: list[str] | None) -> str:
     row = row or []
     values = [(row[index] if len(row) > index else "—") or "—" for index in range(4)]
-    if values[3].casefold() in {"r", "逆行", "retrograde"}:
-        values[3] = "逆行"
-    return f"{name}：" + "；".join(values[:3]) + (f"；{values[3]}" if values[3] != "—" else "")
+    if values[3].casefold() in {"r", "retrograde"}:
+        values[3] = "Retrograde"
+    return f"{name}: " + "; ".join(values[:3]) + (f"; {values[3]}" if values[3] != "—" else "")
 
 
 def display_lagna(row: list[str] | None) -> str:
-    """Keep the required Lagna key simple so downstream chat models do not miss it."""
     row = row or []
     sign = (row[0] if len(row) > 0 else "") or "—"
     house = (row[1] if len(row) > 1 else "") or "—"
     degree = (row[2] if len(row) > 2 else "") or "—"
     house = house if house.upper().startswith("H") else f"H{house}"
-    return f"Lagna: {sign}; {house}; {degree}（上升）"
+    return f"Lagna: {sign}; {house}; {degree} (Ascendant)"
 
 
 def build_card(text: str, label: str, include_birth: bool = False) -> str:
@@ -275,59 +264,59 @@ def build_card(text: str, label: str, include_birth: bool = False) -> str:
     ul_sign, ul_house = parse_ul(text)
     md, ad, pd = parse_current_dasha(text)
     transit_date, transits = parse_current_transit(text)
-    ayanamsa = meta_value(meta, "Ayanamsa", "岁差", "Ayanamsa方法") or "未提供"
-    precision = meta_value(meta, "有效精度", "时间精度") or "未提供"
-    source = meta_value(meta, "读盘方式", "数据来源") or "已计算盘面资料"
+    ayanamsa = meta_value(meta, "Ayanamsa", "ayanamsa_method") or "Not provided"
+    precision = meta_value(meta, "Effective Precision", "Time Precision") or "Not provided"
+    source = meta_value(meta, "Reading Method", "Data Source") or "Calculated Chart Data"
     lines = [
-        "盘面资料卡版本：xiaohuo-person-v1",
-        f"资料归属：{label}",
-        f"黄道口径：恒星黄道；Ayanamsa：{ayanamsa}",
-        f"宫制：{infer_house_system(planets)}",
-        f"数据精度：{precision}",
-        f"数据来源：{source}",
+        "Personal Chart Card Version: person-card-v1",
+        f"Subject Label: {label}",
+        f"Zodiac Baseline: Sidereal; Ayanamsa: {ayanamsa}",
+        f"House System: {infer_house_system(planets)}",
+        f"Data Precision: {precision}",
+        f"Data Source: {source}",
     ]
     if include_birth:
-        date = meta_value(meta, "出生日期", "birth date")
-        time = meta_value(meta, "出生时间", "birth time")
-        place = meta_value(meta, "出生地点", "地点", "birth place")
+        date = meta_value(meta, "Birth Date", "birth date")
+        time = meta_value(meta, "Birth Time", "birth time")
+        place = meta_value(meta, "Birth Place", "Location", "birth place")
         if date or time or place:
-            lines.append("出生资料：" + "；".join(value for value in (date, time, place) if value))
+            lines.append("Birth Details: " + "; ".join(value for value in (date, time, place) if value))
     lines.append("")
     lines.append(display_lagna(planets.get("Lagna")))
     for name in PLANETS:
         lines.append(display_row(name, planets.get(name)))
-    lines.append(f"Moon Nakshatra/Pada：{moon_name or '未提供'} / {moon_pada or '未提供'}")
-    ul = ul_sign or "未提供"
+    lines.append(f"Moon Nakshatra/Pada: {moon_name or 'Not provided'} / {moon_pada or 'Not provided'}")
+    ul = ul_sign or "Not provided"
     if ul_house:
-        ul += f"；{ul_house}宫"
-    lines.append(f"UL：{ul}")
-    lines.append(f"DK：{parse_dk(text) or '未提供'}")
+        ul += f"; H{ul_house}"
+    lines.append(f"UL: {ul}")
+    lines.append(f"DK: {parse_dk(text) or 'Not provided'}")
     lines.append(
-        f"当前 MD/AD/PD：{md or '未提供'} / {ad or '未提供'} / {pd or '未提供'}"
+        f"Current MD/AD/PD: {md or 'Not provided'} / {ad or 'Not provided'} / {pd or 'Not provided'}"
     )
     if transits:
-        lines.append(f"当前过运（提取时间：{transit_date or '未提供'}）：")
-        lines.extend(f"{planet}：{sign}；{house}" for planet, sign, house in transits)
+        lines.append(f"Current Transits (Extraction Date: {transit_date or 'Not provided'}):")
+        lines.extend(f"{planet}: {sign}; {house}" for planet, sign, house in transits)
         if transit_date:
             lines.append(
-                f"时间规则：以上过运是 {transit_date} 的静态快照；只有会话日期同为 "
-                f"{transit_date} 时才可作为真实当日过运。其他日期需重新运行 Calc 生成当天资料卡。"
+                f"Time Rule: The above transits reflect a static snapshot on {transit_date}; only when the session date is "
+                f"{transit_date} may they be taken as real-time transits. For other dates, re-run Calc."
             )
-    lines.append("备注：本卡整理自已计算盘面，不会自行排盘或刷新星历。")
+    lines.append("Note: This card is compiled from calculated chart data and does not independently cast or refresh ephemeris data.")
     return "\n".join(lines) + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="把 structured_data.md 整理成 Xiaohuo 个人资料卡。只读，不排盘。")
+    parser = argparse.ArgumentParser(description="Summarize structured_data.md into a compact personal chart card. Read-only.")
     parser.add_argument("structured_data", type=Path)
-    parser.add_argument("--label", default="本人", help="资料归属名称，默认：本人")
-    parser.add_argument("--include-birth", action="store_true", help="同时输出出生日期、时间和地点")
-    parser.add_argument("-o", "--output", type=Path, help="输出文件；不填则打印到屏幕")
+    parser.add_argument("--label", default="Subject", help="Subject label, default: Subject")
+    parser.add_argument("--include-birth", action="store_true", help="Include birth date, time, and location")
+    parser.add_argument("-o", "--output", type=Path, help="Output file path; prints to stdout if omitted")
     args = parser.parse_args(argv)
     try:
         text = args.structured_data.read_text(encoding="utf-8-sig")
     except OSError as exc:
-        print(f"错误：无法读取 {args.structured_data}: {exc}", file=sys.stderr)
+        print(f"Error: Unable to read {args.structured_data}: {exc}", file=sys.stderr)
         return 2
     card = build_card(text, args.label, include_birth=args.include_birth)
     if args.output:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Progressive reader for calculator-generated ``structured_data.md`` files.
 
-The canonical file keeps all 9 MD, 81 AD, and 729 PD rows.  This helper keeps
+The canonical file keeps all 9 MD, 81 AD, and 729 PD rows. This helper keeps
 the model-facing context small: ``--overview`` collapses the full PD tables,
 while date queries return only the PD rows that overlap the requested window
 plus a small amount of adjacent context.
@@ -14,7 +14,7 @@ import sys
 from datetime import date, timedelta
 
 
-PD_HEADING_RE = re.compile(r"^### .*Pratyantardasha（三级运）\s*$")
+PD_HEADING_RE = re.compile(r"^### .*Pratyantardasha.*$")
 PD_ROW_RE = re.compile(
     r"^\|\s*([A-Za-z]+-[A-Za-z]+-[A-Za-z]+)\s*\|\s*"
     r"(\d{4}-\d{2}-\d{2})\s*\|\s*(\d{4}-\d{2}-\d{2})\s*\|"
@@ -41,8 +41,8 @@ def collapsed_overview(text):
             skipping_pd = True
             output.append(line)
             output.append(
-                "> 已折叠完整PD表；月/日级审计用 "
-                "`dasha_query.py --month/--date/--start --end` 按需读取。"
+                "> Full PD tables collapsed; use "
+                "`dasha_query.py --month/--date/--start --end` for on-demand queries."
             )
             continue
         if skipping_pd:
@@ -142,17 +142,17 @@ def render_query(rows, start, end, context):
     last = min(len(rows), hits[-1] + context + 1)
     hit_set = set(hits)
     output = [
-        "# 局部三级运窗口",
+        "# Targeted Pratyantardasha Window",
         "",
-        "> 查询区间：`[%s, %s)`" % (start.isoformat(), end.isoformat()),
-        "> 完整性：MD/AD/PD canonical PD = 729/729，`[start,end)` 全程连续。",
+        "> Query Interval: `[%s, %s)`" % (start.isoformat(), end.isoformat()),
+        "> Completeness: Canonical MD/AD/PD = 729/729 rows; `[start, end)` continuous.",
         "",
-        "| 关系 | MD-AD-PD | 起始 | 结束 | 源行 |",
-        "|------|----------|------|------|------|",
+        "| Relation | MD-AD-PD | Start | End | Source Line |",
+        "|----------|----------|-------|-----|-------------|",
     ]
     for index in range(first, last):
         row = rows[index]
-        relation = "命中窗口" if index in hit_set else "相邻上下文"
+        relation = "Hit Window" if index in hit_set else "Adjacent Context"
         output.append(
             "| %s | %s | %s | %s | %d |"
             % (

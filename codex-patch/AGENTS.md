@@ -1,7 +1,7 @@
 # Vedic Skill Suite Execution Router
 
 This section applies only when the selected skill name begins with `vedic-`,
-or when the user explicitly invokes 印占、吠陀占星、Vedic, or Jyotish
+or when the user explicitly invokes Vedic, or Jyotish
 workflows.
 
 ## Source of truth
@@ -139,8 +139,7 @@ workflows.
   strongest supported direction or window and name the material boundary once;
   do not replace the answer with a list of possibilities or repeatedly tell
   the client to decide from reality.
-- Do not add reflexive boilerplate such as “仅供参考”, “请结合实际”, “需要综合
-  权衡”, “最终取决于双方沟通”, or “建议咨询专业人士” unless a real evidence
+- Do not add reflexive boilerplate such as "for reference only", "please consider reality", "requires comprehensive evaluation", "ultimately depends on communication", or "consult a professional" unless a real evidence
   limitation or medical, legal, financial, or safety boundary makes that
   statement materially necessary. When it is necessary, state it once at the
   appropriate point without weakening unrelated conclusions.
@@ -186,7 +185,7 @@ Resolve paths against the active `CODEX_HOME`; paths below show the default.
   is missing, report once and continue with the skill, this router, and the UC
   firewall.
 - **Core analyst-edit mode**: activate only when the user explicitly invokes
-  `印占咨询式整合模式`, requests a core analyst-edited complete report, or
+  Consultative Integration Mode, requests a core analyst-edited complete report, or
   asks to use the consultative integration prompt. Verify that the complete
   core report exists, then read
   `~/.codex/vedic_consultative_integration_prompt.md`. This is post-core

@@ -1,172 +1,148 @@
-# Prashna 拆题与取象
+# Prashna Query Decomposition and Symbolic Extraction
 
-> **用途**：Phase 2。把问题拆成子问题，判型，把每一步投射到盘上的宫与星，抓出措辞里的关键词，最后写成取象单
-> `prashna_plan.json` 交给判定脚本。**拆题是主流程**：三层、行动链与通用规则都有原文出处（`standard-layer.md` 核证矩阵），
-> 不因事项登记表写死的行名让路；登记表只为"事情成不成"这一子问题提供本事古法（`matter-rules.md`）。
+> **Purpose**: Phase 2 execution. Decomposes the query into sub-questions, classifies its type, maps each operational step onto houses and planets, extracts keyword qualifiers, and compiles the plan sheet `prashna_plan.json` for the judgment script. **Decomposition is the primary workflow**: the 3-layer architecture, action chains, and general rules possess authentic textual citations (`standard-layer.md` verification matrix) and never yield to fixed table names; the matter registry provides classical topic rules (`matter-rules.md`) strictly for the binary success sub-question.
 >
-> **自由度**：拆题、判型、抓关键词、定行动者与事项宫、定关键词与所问相合还是相反——这些"挑选"由模型判断，每一项在取象单里
-> 写明出处，核对区原样显示，可复核。计数（成事账、能力否决、行动链、限定语判定）由脚本做，模型不手算。
+> **Division of Responsibility**: Query decomposition, question typing, keyword extraction, actor/matter house assignment, and determining whether keywords align with or oppose the query are qualitative decisions made by the LLM, with each cited authority documented in the plan sheet. Quantitative calculations (success ledger tallying, ability vetoes, action chains, qualifier verification) are executed deterministically by the script, never computed by hand.
 >
-> **来源纪律**：只取印度本土典籍。西占的"接纳、互容"，Tajika 的传光（Nakta）、收光（Yamaya）、Itthasala 不是依据；Tajika 只在用户开启时
-> 进 `tajika_overlay.md`。
+> **Classical Sourcing**: Sourced strictly from classical Indian authorities. Western concepts of reception, mutual reception, and Tajika transfer/collection of light (Nakta, Yamaya, Itthasala) do not govern the standard layer; Tajika executes only in `tajika_overlay.md` upon explicit user request.
 
 ---
 
-## 1. 拆题模板
+## 1. Query Decomposition Template
 
-| 要素 | 问自己 | 例："他会不会在 11 月 15 日主动约我私下见面" |
+| Element | Question to Ask | Example: "Will they proactively ask me out for a private meeting on Nov 15?" |
 |---|---|---|
-| 行动者 | 谁要做这件事？ | 对方 |
-| 动作 | 做什么：起意、说话联系、表达情意、实际行动、得到所求？ | 主动约（起意＋行动） |
-| 对象 | 冲着谁？ | 提问人 |
-| 结果 | 现实里可观察的结果是什么？ | 两人见成 |
-| 限定语 | 时间、场合、谁发起、私下或公开、在家在外 | 11 月 15 日当天；私下 |
+| Actor | Who is expected to take action? | The other party |
+| Action | What action: intent, communication, romance, physical movement, fulfilling desire? | Proactively ask out (intent + action) |
+| Target | Toward whom? | The querent |
+| Observable Result | What is the observable real-world result? | The two parties meet |
+| Qualifiers | Time, setting, initiator, private vs public, domestic vs outside? | On Nov 15; private setting |
 
 ---
 
-## 2. 三型与子问题出口
+## 2. Three Query Types and Sub-Question Outlets
 
-| 型 | 问的是 | 怎么答 | 例 |
+| Type | Query Focus | Output Protocol | Example |
 |---|---|---|---|
-| 事件型 | 某件事成不成 | 成事账定档（`judgment-rubric.md` §1–§4） | offer、考试、见面、买房 |
-| 行动型 | 某个人会不会做某件事 | **两步作答**：先答行动链"会不会动"，再答成事账"事情成不成"（rubric §8） | 他会主动表白吗；前任会主动联系我吗 |
-| 描述型 | 相处得怎样、氛围、局面 | `matter: 描述`：脚本只出事实（指标星能力与连接、影响者逐颗、关键词落点），不建账、不定档、不给时间；按 `house-meanings.md` 第 7 节三问写成描述 | 我们相处会不会吵；这个职位竞争激不激烈 |
+| Event Type | Whether a concrete event materializes | Success ledger 3-tier verdict (`judgment-rubric.md` §1–§4) | Job offer, exam, meeting, home purchase |
+| Action Type | Whether a specific person takes action | **Two-step response**: 1. Action chain evaluates "will they move"; 2. Success ledger evaluates "will the event succeed" (rubric §8) | Will they confess feelings? Will an ex reach out? |
+| Descriptive Type | General atmosphere, dynamics, situation | `matter: description`: Script outputs objective facts (significator ability & contacts, influencing planets, keyword placements) without ledger scoring, tiers, or timing; described via 3 questions per `house-meanings.md` §7 | Will our interactions be contentious? Is competition fierce? |
 
-描述型只讲局面与相处的样子；第三方的性格、心理、在想什么属读心，不判（`matter-rules.md` 第 6 节），"他是什么性格"改问"我们相处会怎样"。
+Descriptive queries focus strictly on situational dynamics and observable interactions; attempting to read a third party's private mind or personality constitutes mind-reading and is rejected (§6 of `matter-rules.md`). Rephrase "what is their personality like" to "how will we interact".
 
-一句话可以同时含几型，逐个回答。上例＝行动型（主动约）＋事件型（见成）＋两个限定语。
+A single query may combine multiple types; answer each sequentially. The example above = Action Type (proactive invitation) + Event Type (meeting materializes) + Two Qualifiers.
 
-**一个子问题只有一个出口**：
+**Each Sub-Question Has Exactly One Outlet**:
 
-| 子问题 | 唯一出口 | 其他层 |
+| Sub-Question | Unique Outlet | Other Layers |
 |---|---|---|
-| 某人会不会动（主动约、联系、表白、回复、来） | 行动链 | 成事账不答这一问 |
-| 事情成不成（见不见得成、关系能不能缓和、能不能在一起、能不能录用） | 成事账＋能力层否决 | 意愿层、行动链只讲"怎么走"，不下成败结论 |
-| 条件成不成立（私下、在家；由谁发起读行动链） | 限定语检验（`house-meanings.md` 第 9 节） | 不改档 |
-| 相处得怎样、局面如何 | 描述（`matter: 描述`） | 不定档 |
+| Will someone take action? (reach out, confess, reply, visit) | Action Chain | Success ledger does not answer this question |
+| Will the matter succeed? (meet successfully, reconcile, get hired) | Success Ledger + Ability Veto | Desire layer and action chains describe dynamics only |
+| Are conditions satisfied? (private, at home; initiator via action chain) | Qualifier Verification (`house-meanings.md` §9) | Does not alter outcome tier |
+| What are the dynamics/situation like? | Descriptive (`matter: description`) | No outcome tier |
 
-同一子问题若两层给出相反结论，说明拆错了（多半是把"会不会动"和"成不成"混成一问），回到本节重拆；不把两个相反结论交给用户。
-
-**问法本身决定子问题**：措辞直接限定的条件（"私下""公开""由对方发起"）是问题的一部分。"会不会私下一对一见面"和"会不会一对一见面"是两个问题：
-前者 8 宫是应象，后者 8 宫按默认读作阻碍（`house-meanings.md` 第 7 节）。
+If different layers produce conflicting answers for the same sub-question, the query was improperly decomposed; re-decompose using this section rather than presenting conflicting conclusions to the user.
 
 ---
 
-## 3. 投射表：行动者的动作看转宫
+## 3. Projection Table: Actor's Actions via Derived Houses
 
-依据：*Prasna Marga* 婚姻卜问以 Lagna 读女方、**以 7 宫读男方**（`M-XVII.8–9`）；"宫、宫主、征象星"同用一套原则，Raman 注示范从 7 宫
-起算第 2、第 12 宫（`M-XIV.116` 注）；从某宫起算吉位（`M-XIV.27`、`M-XIV.42`）。所以**别人的动作，以那个人所在的宫为命宫，再数第 n 宫**。
+Governed by: *Prasna Marga* marriage queries read the woman via Lagna and the **man via 7th house** (`M-XVII.8–9`); house, lord, and significator follow identical principles, with Raman demonstrating derived counting from the 7th house (`M-XIV.116` note). Therefore, **another person's actions are judged using that person's house as the 1st house, counting n houses from there**.
 
-| 动作 | 行动者起第 n 宫 | 征象星 | 出处 |
+| Action | Derived House from Actor | Classical Significator | Source |
 |---|---:|---|---|
-| 起意、主动、开口的勇气 | 3 | Mars（勇气） | `M-XIV.5`；`M-XIV.31` |
-| 言语、联系、消息 | 2 | Mercury（言语） | `M-XIV.4`；`M-XIV.31` |
-| 情意、吸引 | 7（行动者眼里的另一方） | Venus（感官之乐、妻室） | `M-XIV.9`；`M-XIV.31` |
-| 实际行动、把事办了 | 10 | — | `M-XIV.12`（一切行动） |
-| 得到所求 | 11 | — | `M-XIV.13` |
-| 官方、上级、录用 | 10 | Sun（君主） | `M-XIV.12`；`M-XIV.90` |
-| 学识、考场发挥 | 2（一切学识）、5（智力、记忆、判断） | Mercury（学识）、Jupiter（智力） | `M-XIV.4`、`M-XIV.7`；`M-XIV.31` |
+| Intent, initiative, courage to speak | 3rd | Mars (courage) | `M-XIV.5`; `M-XIV.31` |
+| Speech, communication, messages | 2nd | Mercury (speech) | `M-XIV.4`; `M-XIV.31` |
+| Romance, mutual attraction | 7th (counterpart from actor's view) | Venus (pleasure, spouse) | `M-XIV.9`; `M-XIV.31` |
+| Practical execution, taking action | 10th | — | `M-XIV.12` (all activities) |
+| Obtaining desires | 11th | — | `M-XIV.13` |
+| Official approval, superiors, hiring | 10th | Sun (sovereign) | `M-XIV.12`; `M-XIV.90` |
+| Examination, study, test performance | 2nd (learning), 5th (intellect, memory) | Mercury, Jupiter | `M-XIV.4`, `M-XIV.7`; `M-XIV.31` |
 
-换算由 `structured_prashna.md`"行动者视角（转宫）与行动链"表逐宫算好，不手推。例：对方（7）起第 2→本盘 8，3→9，7→1（对方眼里的另一方
-就是你），10→4，11→5；用人方（10）起第 2→11，3→12，7→4，10→7，11→8。**本盘那一宫原来的宫义照常存在**，叙述两层都写：对方行动者时，本盘
-8 宫既是"阻碍、暗处"（`M-XIV.10`、`M-XIV.20`），也是"对方的言语"。转宫只用于行动者的动作，不给事项宫另开账本。表外的动作按
-`house-meanings.md` 第 2 节找最贴近的一宫，再从行动者起算；找不到就用第 10 宫（一切行动）。
+Derived houses are computed automatically in `structured_prashna.md`. Example: Other party (7th house) -> 2nd from 7th = natal 8th, 3rd = natal 9th, 7th = natal 1st, 10th = natal 4th, 11th = natal 5th. Employer (10th house) -> 2nd = natal 11th, 3rd = natal 12th, 7th = natal 4th, 10th = natal 7th, 11th = natal 8th. The original house significations remain active; narrative includes both layers.
 
 ---
 
-## 4. 抓关键词
+## 4. Keyword Extraction
 
-逐句找出措辞里**直接点到某宫、某星象义**的词，查 `house-meanings.md` 第 6 节关键词库，记下三件事：
+Identify all words in the user's phrasing that **directly name a house or planetary signification** per `house-meanings.md` §6, recording:
 
-1. 词 → 宫与星（出处）；
-2. 与所问**相合**还是**相反**：问"私下见面"，"私下"点到 8、12、4 宫，相合；问"会不会公开关系"，"公开"点到 10 宫，8、12 宫与之相反；
-3. 它答的是哪个子问题：是"事情成不成"本身需要的，还是某人"会不会动"需要的（行动链自己处理起意星 Mars，不写进 `needed_planets`）。
+1. Word -> House & Planet (source);
+2. Polarity: **Aligned** or **Conflicting** relative to the query;
+3. Sub-question addressed: Does it pertain to whether the event succeeds, or whether an actor takes initiative (Action chains process initiative planet Mars independently without adding it to `needed_planets`).
 
-没有点到的不硬补。拿不准是否点到，按没点到处理（默认读法）。
+Do not invent unstated keywords. If uncertain, treat as unmentioned (default interpretation).
 
 ---
 
-## 5. 取象单 `prashna_plan.json`
+## 5. Intake Plan `prashna_plan.json`
 
-写进当前 `prashna_*` 目录，再运行 `scripts/judge_prashna_standard.py`（SKILL Phase 3）。
+Written to the current `prashna_*` directory prior to running `scripts/judge_prashna_standard.py` (SKILL Phase 3).
 
-| 字段 | 必填 | 内容 |
+| Field | Required | Content |
 |---|---|---|
-| `matter` | 是 | `matter-rules.md` 第 2 节的 matter 名；表外用 `通用`；描述型用 `描述` |
-| `matter_house` | 见面、财富、通用、描述必填；登记表里宫位固定的事项不填（填了不同的宫会被拒；代他人问或要转宫用 `通用`） | 事项宫（见面取行动者的宫） |
-| `context` | 否 | `恋爱`：见面题加 XVII 四偈；显隐定序启用第 1 序位 |
-| `actor` | 行动型必填 | 行动者的宫（对方 7、上级 10……） |
-| `needed_planets` | 否 | "事情成不成"本身需要的征象星（竞争、手术要 Mars；官方录用要 Sun；考试要 Mercury、Jupiter）。`P-I.3` 与能力层不按凶星计它们 |
-| `keywords` | 否 | 每条 `{"word", "houses", "planets", "polarity": "相合"／"相反", "source"}`；相合的宫在本题另有角色：能力层"落该宫"改记应象，类比偈读到该宫不入账 |
-| `qualifiers` | 否 | 问题措辞明确要求的条件，按必要条件检验：内置 `私下`、`公开`、`在家`、`在外`、`主动`，或 `keywords` 里的词。不成立即答"按这个条件不能"、不给时间。描述型不收（带条件的问法拆出事件型子问题） |
-| `location` | 否 | `city`（只给城市名，默认）／`exact`（给了经纬度）：只决定输入提示的检查窗口 |
-| `asker` | 结婚题必填 | `男`／`女` |
-| `direction` | 裁员题 | `发生`（会不会被裁，默认）／`避免`（能不能保住） |
-| `early_departure` | 离开题 | 问"能否早日出发"时为 `true` |
-| `time_scope` | 事件型、行动型要填 | 时间范围：这件事多远以内的日子还有意义。在看盘结果前定，不进判定（`E` 工作流）。按问题判：问句带了时间吗？这件事一般多久见分晓？多远以内的日子还有意义？三种填法：`{"kind": "范围", "label": "今晚", "until": "YYYY-MM-DD"}`（几个字的说法加截止日，如今晚、这周、几天内）；`{"kind": "无意义"}`（说时间没有意义）；`{"kind": "不设上限"}`（几个月、几年才见分晓的事）。没填按不设上限 |
+| `matter` | Yes | Matter name from `matter-rules.md` §2; custom queries use `general`; descriptive queries use `description` |
+| `matter_house` | For meeting, wealth, general, description | Matter house (meeting uses actor's house) |
+| `context` | Optional | `romance`: Meeting queries add XVII verses; enables rank 1 visibility order |
+| `actor` | For Action type | Actor's house (other party = 7, employer = 10, etc.) |
+| `needed_planets` | Optional | Planets intrinsically required for success (Mars for competition/surgery; Sun for official hiring; Mercury/Jupiter for exams). Excluded from malefic penalties in `P-I.3` |
+| `keywords` | Optional | Array of `{"word", "houses", "planets", "polarity": "aligned" / "conflicting", "source"}` |
+| `qualifiers` | Optional | Explicit prerequisites: `private`, `public`, `at_home`, `outside`, `proactive`, or words from `keywords`. Failure answers: "Under this condition, it cannot materialize." |
+| `location` | Optional | `city` (default) / `exact`: Configures input sensitivity window |
+| `asker` | For marriage queries | `male` / `female` |
+| `direction` | Layoff queries | `occur` (will layoff happen) / `prevent` (can job be saved) |
+| `early_departure` | Travel queries | `true` when asking if departure can happen early |
+| `time_scope` | For Event/Action types | Horizon within which the query is meaningful: `{"kind": "scope", "label": "tonight", "until": "YYYY-MM-DD"}`, `{"kind": "meaningless"}`, or `{"kind": "unlimited"}` |
 
-例（"11 月 15 日当天双方会不会私下一对一见面，须由对方主动发起"）：
+Example ("Will they proactively ask me out for a private one-on-one meeting on Nov 15?"):
 
 ```json
-{"matter": "见面", "matter_house": 7, "context": "恋爱", "actor": 7,
- "keywords": [
-  {"word": "私下", "houses": [8, 12, 4], "planets": [], "polarity": "相合", "source": "M-XIV.20 Randhra；M-XXVII.15–16 床榻；M-XIV.6"},
-  {"word": "对方主动", "houses": [9], "planets": ["Mars"], "polarity": "相合", "source": "M-XIV.5、M-XIV.31；M-XVII.8–9 转宫"}],
- "qualifiers": ["私下", "主动"], "location": "city",
- "time_scope": {"kind": "范围", "label": "11 月 15 日当天", "until": "2026-11-15"}}
+{
+  "matter": "meeting",
+  "matter_house": 7,
+  "context": "romance",
+  "actor": 7,
+  "keywords": [
+    {"word": "private", "houses": [8, 12, 4], "planets": [], "polarity": "aligned", "source": "M-XIV.20 Randhra; M-XXVII.15–16; M-XIV.6"},
+    {"word": "other_proactive", "houses": [9], "planets": ["Mars"], "polarity": "aligned", "source": "M-XIV.5, M-XIV.31; M-XVII.8–9 derived"}
+  ],
+  "qualifiers": ["private", "proactive"],
+  "location": "city",
+  "time_scope": {"kind": "scope", "label": "Nov 15", "until": "2026-11-15"}
+}
 ```
 
-"11 月 15 日当天"是日期，只写进 `time_scope`，不进判定；是不是恰好落在那天，照 `timing-layer.md` §3 第 7 条说。
-
 ---
 
-## 6. 常见问法的因素拆解（示例）
+## 6. Worked Query Decomposition Examples
 
-先问"现实里这件事由什么决定"，再把每个因素投射到盘上。下表用来学拆法，不是穷举。
-
-| 问法 | 现实里由什么决定 → 盘上看哪里 | 怎么答 |
+| Question | Real-world Determining Factors -> Astrological Indicators | Response Architecture |
 |---|---|---|
-| 他会主动表白吗 | 有没有情意 → Venus，7 宫主与 Lagna 的连接；敢不敢开口 → 本盘 9 宫主（对方的起意）、Mars；用什么方式 → 本盘 8 宫主（对方的言语）、Mercury；会不会真做 → 本盘 4 宫主（对方的行动）；阻力 → 7 宫与 7 宫主所受的影响 | 行动型：行动链答"会不会表白"；`表白` 成事账答"确立关系能不能成" |
-| 前任会主动联系我吗 | 起意 → 本盘 9 宫主、Mars；言语 → 本盘 8 宫主、Mercury；指不指向你 → 与 Lagna 主的连接 | 行动型：行动链答"会不会联系"；`恢复往来` 成事账答"联系后关系能不能缓和" |
-| 我们会复合吗；还有没有机会 | 两人之间还有没有桥 → Lagna 主与 7 宫主的连接、Venus 串联；谁会先动 → 双方各看一次行动链（你：本盘 3、10 宫；对方：本盘 9、4 宫）；旧怨能不能化解 → `P-III.3~4`；阻力 → 6 宫（争斗）、12 宫（断裂、失去）、Saturn（迟滞） | 事件型：`复合` 成事账定档；双方行动链与阻力进叙述 |
-| 能不能拿到 offer | 我够不够格 → Lagna、Lagna 主的能力（`M-XIV.3` 一切事业之成）；用人方有没有意向 → 10 宫主与 Lagna 主的连接、用人方的行动链；职位与权力 → 10 宫、Sun；待遇 → 11 宫、2 宫；竞争者 → 6 宫 | 事件型：`求职` 成事账定档（A 级）；问官方录用时 `needed_planets` 写 Sun |
-| 考公能不能考上 | 学识与发挥 → 2 宫、5 宫、Mercury、Jupiter；竞争 → 6 宫；公职 → 10 宫、Sun；录取 → 11 宫 | 事件型：`竞争考试` 成事账定档 |
-| 见面能不能成；他会不会主动约我 | 会不会主动约 → 行动链；见不见得成 → 成事账；私下或公开、在家在外 → 限定语 | 行动型＋事件型：两步作答 |
+| Will they confess feelings proactively? | Affection -> Venus, 7th lord connection to Lagna; Courage to speak -> 9th lord (derived 3rd), Mars; Means of expression -> 8th lord (derived 2nd), Mercury; Execution -> 4th lord (derived 10th); Obstacles -> Afflictions to 7th house and lord | Action Type: Action chain answers "will they confess"; `confession` success ledger answers "will relationship formalize" |
+| Will an ex proactively contact me? | Initiative -> 9th lord, Mars; Communication -> 8th lord, Mercury; Targeted toward querent -> Connection to Lagna lord | Action Type: Action chain answers "will they reach out"; `resume_contact` success ledger answers "will relations soften" |
+| Will we reconcile; is there still a chance? | Bridge between parties -> Lagna lord connecting to 7th lord, Venus bridging; Who moves first -> Action chains for both sides; Resolving grievances -> `P-III.3~4`; Resistance -> 6th (strife), 12th (separation), Saturn (delay) | Event Type: `reconciliation` success ledger determines tier; both action chains and resistance enter narrative |
+| Can I secure the job offer? | Qualifications -> Lagna & lord capacity (`M-XIV.3`); Employer intent -> 10th lord connection to Lagna lord, employer action chain; Position/authority -> 10th house, Sun; Remuneration -> 11th & 2nd; Competition -> 6th house | Event Type: `job_hunting` success ledger determines tier; `needed_planets` includes Sun |
+| Will I pass the civil service exam? | Knowledge/performance -> 2nd, 5th, Mercury, Jupiter; Competition -> 6th; Public post -> 10th, Sun; Selection -> 11th | Event Type: `competitive_exam` success ledger determines tier |
+| Will the meeting occur; will they invite me? | Will they invite -> Action chain; Will meeting occur -> Success ledger; Setting -> Qualifiers | Action Type + Event Type: Two-step response |
 
 ---
 
-## 7. 新问法与表外问法
+## 7. Custom and Unregistered Queries
 
-**通用范式**：拆题是把问题里的人、动作、对象、条件投到宫与星上（取象，依据是宫义、星义、转宫，都有出处）；投上之后，判据是对任何事都
-适用的通用规则（成事账的 `P-I.3`、`P-I.4`、`P-IV.1`、连接，能力层、限定语；描述型出事实），登记表的本事古法只是给常见题多加几条证据。
-所以问题再怪，要素能投到宫上就能答；登记表里没有这一行，不是不能答的理由。三个出口，按顺序试：
+**General Paradigm**: Query decomposition maps persons, actions, targets, and conditions onto houses and planets. Once projected, the evaluation applies universal rules (`P-I.3`, `P-I.4`, `P-IV.1`, connections, ability layer, qualifier gates); the matter registry provides topic verses for common questions. As long as elements project onto houses, the query can be answered:
 
-1. **投得上**：问成败走登记表或 `通用`，问局面走 `描述`；
-2. **投不上，但背后有提问人关心的人事**：找出那件人事改问。例：天气是自然现象，十二宫讲的是提问人生活里的人和事，宫义里没有晴雨；唯一的
-   天气古法是雨季的有雨条件（`P-VII.3~4`，查表题）。所以非雨季"明天会不会下雨"投不上；"下雨会不会误了婚礼"背后是"婚礼能不能顺利办成"
-   （`通用`），"出门会不会被天气耽误"背后是"路上顺不顺"；
-3. **都不行**：按 `matter-rules.md` 第 6 节不判，一句话说明原因并给改问。
-
-具体步骤：
-
-1. 现实里这件事要成，需要哪几个人、各做哪一步？
-2. 每个人按 `house-meanings.md` 第 5 节找宫；每一步按本文件第 3 节找"行动者起第 n 宫"与征象星；
-3. 判型（第 2 节），抓关键词（第 4 节）；
-4. "事情成不成"在 `matter-rules.md` 登记表里有对应行就用；没有就取 `通用`，按宫义与关键词选事项宫并写明出处（`matter-rules.md` 第 3 节）；
-5. 查不到的步骤写"盘面不判"，不硬套；拆题后连一个有出处的宫义都对不上，才按 `matter-rules.md` 第 6 节不判。
+1. **Direct Projection**: Binary outcomes use registry or `general`; situational dynamics use `description`;
+2. **Indirect Projection with Human Core**: Identify the underlying human concern. (Example: "Will it rain tomorrow" cannot project onto human affairs; "Will weather disrupt my outdoor event" projects onto `general`);
+3. **Inapplicable**: Reject per `matter-rules.md` §6 with a clear reason and alternative formulation.
 
 ---
 
-## 8. 澄清与门控（工作流，`E`）
+## 8. Clarification and Intake Gates
 
-- **模糊问题**（"帮我看看运势""感情怎么样"）：问句没有明确动作或时间指向。请用户说出最想知道的一件事，举两三个可判定的问法
-  （"我接受这份 offer，能不能顺利入职？""我这个官司会赢吗？"）；时间只在偏成或持平时给大致范围，不承诺精确日期。
-- **一句多问**（"我想问事业和婚姻"）：一张盘只答一问，请用户先选一个，另一个再起盘；不合并起盘。
-- **假设问题**（"如果我 XX 会怎样"）：转成"我执行 XX，能不能达到 YY？"或"XX 结果会不会发生？"，请用户选一个。
-- **已发生的事**：只有结果仍未知或仍在发展，才能改问"这件事最终会不会出现某结果"；结果已客观发生的，不用现在的盘反推当时过程。
-  不用"超过 1 年"之类任意阈值。
-- **时间未定**（"我以后能不能……"）：判当前盘对这件事的支持方向；偏成或持平时附大致时间，偏不成时说明什么变化之后可以再问。
-- **A／B 二选一**：先让用户选一个最想执行的方案，改问"执行 A 能否达到某结果"；不在同一分钟机械起两张盘。
-- **同一问题反复起盘、换问法、补条件**：见 `qa_rules.md` §1。
-- **操控、打听类与不判**：见 `matter-rules.md` 第 6 节。
-- **自伤或极端语句**：先回应安全，不起盘。
+- **Vague Queries** ("How is my luck", "Tell me about my love life"): Ask user for their single most urgent question with 2-3 concrete examples;
+- **Multiple Questions**: One chart answers one question; ask user to choose one;
+- **Hypothetical Questions** ("What if I do X"): Rephrase as "If I execute X, will Y result?";
+- **Already Occurred Events**: If the outcome is already known, do not cast charts to deduce past events;
+- **Binary A/B Choice**: User selects their preferred option, rephrased as "If I execute A, will it succeed?";
+- **Repeated Inquiries**: Follow `qa_rules.md` §1;
+- **Harm/Extreme Queries**: Provide safety/crisis resources immediately; do not cast a chart.

@@ -1,181 +1,151 @@
-# Tajika 十六 Yoga overlay
+# Tajika Sixteen Yogas Overlay
 
-## 定位
+## System Positioning
 
-本层是默认关闭、与 Parashari 标准层隔离的 Tajika 副层。它按
-*Tajika Nilakanthi* 的十六 Yoga 次序分类接触、传光、集光、阻断、接收与强弱修正。
-它不改变标准层的内部三档（偏成／持平／偏不成），也不与 KP 拼票。
+This layer is an optional, disabled-by-default Tajika sub-layer strictly isolated from the Parashari standard layer. It classifies contacts, collection of light, transmission of light, intervention, reception, and dignity modifiers according to the sixteen classical Yogas of *Tajika Nilakanthi*. It does not alter the internal three outcome tiers (Favorable / Balanced / Unfavorable) of the standard layer, nor does it combine voting scores with KP.
 
-只在用户明确要求 Tajika、Itthasala、applying/separating 或十六 Yoga 时运行。
-必须先完成标准层 Phase 2，取得：
+It runs only when the user explicitly requests Tajika, Itthasala, applying/separating aspects, or the 16 Yogas. Standard layer Phase 2 must be completed first to establish:
 
-- 问者星：Lagna lord；
-- 事项星：唯一主事项宫之主。
+- Querent planet: Lagna lord;
+- Matter planet: Lord of the single primary matter house.
 
-不得固定加入自然 Karaka；Moon 只按 Kamboola／Khallasara 等原规则进入。
+Do not permanently inject natural Karakas; the Moon enters strictly according to classical rules such as Kamboola or Khallasara.
 
-以下情况不运行，不生成 `tajika_overlay.md`，在回答里用一句白话说明这题 Tajika
-副层不适用及原因，主答案以标准层为准；不拿 Karaka 或其他宫主顶替：
+In the following circumstances, this sub-layer does not execute and does not generate `tajika_overlay.md`. State clearly in plain language why the Tajika overlay is inapplicable, relying on the standard layer as the authoritative answer, without substituting Karakas or other house lords:
 
-- 查表题（描述题、天气、胎儿性别、亲属下落）和不判题：没有事项星；
-- 描述型（`matter: 描述`）：问的是局面，不是成败，Tajika 接触没有可答的结果；
-- 问者星与事项星为同一颗：事项宫为 1 宫（主动挽回、裁员／保工作、病能否好、
-  考试），或事项宫与 Lagna 同一座主。脚本拒绝同星输入；原典对主星相同的处理
-  未核，失败关闭。
+- Lookup/table questions (descriptive questions, weather, fetal gender, whereabouts of relatives) and non-judgment queries: there is no matter planet;
+- Descriptive questions (`matter: description`): the query asks about the situation rather than binary success/failure, so Tajika contacts have no applicable outcome;
+- Querent planet and matter planet are identical: matter house is the 1st house (proactive reconciliation, job preservation/layoff defense, recovery from illness, exam success), or the matter house shares the same rashi lord as Lagna. The script rejects identical planet inputs; classical handling of identical lords remains unverified, triggering fail-closed behavior.
 
 ---
 
-## 来源边界
+## Classical Boundaries and Sources
 
-主要来源：
+Primary sources:
 
-1. *Tajika Nilakanthi*, Samjnatantra, Sodasayogadhyaya 2.3–59：
+1. *Tajika Nilakanthi*, Samjnatantra, Sodasayogadhyaya 2.3–59:
    <https://archive.org/details/tajika_nilakanthi>
-2. Martin Gansten and Ola Wikander, “Sahl and the Tājika Yogas: Indian
-   Transformations of Arabic Astrology” (2011)：
+2. Martin Gansten and Ola Wikander, "Sahl and the Tājika Yogas: Indian Transformations of Arabic Astrology" (2011):
    <https://doi.org/10.1080/00033790.2010.533349>
-3. Balabhadra, *Hāyanaratna*, chapter 3, Martin Gansten Sanskrit-English
-   critical edition (2020)：
+3. Balabhadra, *Hāyanaratna*, chapter 3, Martin Gansten Sanskrit-English critical edition (2020):
    <https://archive.org/details/oapen-20.500.12657-42540>
 
-第三项用于交叉核对 Nilakantha 所引规则的原文传统和固定 worked examples；它仍只
-服务 Tajika 沙箱，不进入 KN Rao 兼容标准层。
+The third source provides cross-checks of the original textual tradition and worked examples cited by Nilakantha; it strictly serves the Tajika sandbox without entering the KN Rao-compatible standard layer.
 
-实现顺序固定为：
+Execution order is fixed as follows:
 
-| # | Yoga | 本层判据 |
+| # | Yoga | Standard Criteria |
 |---:|---|---|
-| 1 | Ikkavala | 七曜均不在 cadent houses |
-| 2 | Induvara | 七曜均在 cadent houses |
-| 3 | Itthasala / Muthashila | deeptamsha 内正在应用或精确成相 |
-| 4 | Isharafa / Musharipha | 已越过精确点并继续分离 |
-| 5 | Nakta | 主星无直接接触；更快第三星从一方分离并向另一方应用 |
-| 6 | Yamaya | 主星无直接接触；更慢第三星同时接收双方应用 |
-| 7 | Manau | Mars／Saturn 在主 Itthasala 前抢先接触或形成原典包围条件 |
-| 8 | Kamboola | 主星有 Itthasala，Moon 再向一方或双方应用 |
-| 9 | Gairikamboola | Moon 处 Shunyamarga，但换座后向强星形成未来接触 |
-| 10 | Khallasara | Moon 同时为 Shunyamarga，且与两主星都无 Itthasala／合相 |
-| 11 | Radda | 接收方因逆行、停滞、失光、落陷、敌座等退回接触 |
-| 12 | Duphalikuttha | 较快星弱、较慢星强的主 Itthasala |
-| 13 | Dutthotthadivira | 弱主星由强第三星接援 |
-| 14 | Tambira | 主星当前无接触，但换座后向强星形成未来接触 |
-| 15 | Kuttha | Itthasala 参与星具原典强势条件 |
-| 16 | Durapha | Itthasala 参与星具原典失能条件 |
+| 1 | Ikkavala | All 7 planets are outside cadent houses (3, 6, 9, 12) |
+| 2 | Induvara | All 7 planets are inside cadent houses |
+| 3 | Itthasala / Muthashila | Applying or exact aspect within deeptamsha orb |
+| 4 | Isharafa / Musharipha | Past the exact aspect and separating |
+| 5 | Nakta | No direct contact; faster 3rd planet separates from one and applies to the other |
+| 6 | Yamaya | No direct contact; slower 3rd planet simultaneously receives application from both |
+| 7 | Manau | Mars/Saturn intervenes before primary Itthasala or forms classical enclosure |
+| 8 | Kamboola | Primary lords have Itthasala, Moon further applies to one or both |
+| 9 | Gairikamboola | Moon in Shunyamarga, but after ingress forms future contact to a strong planet |
+| 10 | Khallasara | Moon in Shunyamarga with neither Itthasala nor conjunction to primary lords |
+| 11 | Radda | Receiving planet retrogrades, combusts, debilitates, or rejects the contact |
+| 12 | Duphalikuttha | Primary Itthasala where faster planet is weak and slower planet is strong |
+| 13 | Dutthotthadivira | Weak primary lord receives assistance from a strong 3rd planet |
+| 14 | Tambira | No current contact, but faster planet forms future contact after ingress |
+| 15 | Kuttha | Planets in Itthasala possess classical strength conditions |
+| 16 | Durapha | Planets in Itthasala possess classical debility conditions |
 
-这些分类是 Tajika 内部语义，不能迁入 KN Rao 兼容标准层。
+These classifications represent internal Tajika semantics and must not be imported into the Parashari standard layer.
 
 ---
 
-## 计算契约
+## Computational Contract
 
-运行：
+Execution:
 
 ```bash
 python scripts/build_tajika_overlay.py \
-  --datetime "<原盘元信息「脚本时刻」；旧盘没有这一行时写 YYYY-MM-DD HH:MM:SS[.ffffff]>" \
+  --datetime "<original chart 'Script Time' metadata; YYYY-MM-DD HH:MM:SS[.ffffff]>" \
   --lat <lat> --lon <lon> --tz "<IANA>" \
   --querent-lord <planet> \
   --matter-lord <planet> \
   --out-dir "<existing prashna_* directory>"
 ```
 
-只在当前标准盘目录增加 `tajika_overlay.md`。标准
-`build_prashna_data.py` 不导入本模块，也没有 `--enable-tajika`。
-overlay 必须沿用标准盘的原始秒级时刻和实际地点，不能用开始计算 Tajika 的时间。
+Adds `tajika_overlay.md` exclusively to the active Prashna directory. The standard `build_prashna_data.py` does not import this module and has no `--enable-tajika` flag. The overlay must reuse the exact second-level timestamp and actual coordinates from the standard chart.
 
-几何与权限：
+Geometry and parameters:
 
-- 七曜参与；Rahu／Ketu 不参与；
-- 相位为 0／60／90／120／180；
-- 60／90／120 计算两侧分支；
-- deeptamsha：Sun 15、Moon 12、Mars 8、Mercury 7、Jupiter 9、Venus 7、
-  Saturn 9；
-- 正在应用的较快星是传光者，接触边界使用**较快星自己的 deeptamsha**；不得把
-  两星数值平均。换座候选同样使用即将换座的移动星自身 deeptamsha；
-- 逆行保留在有符号相对速度中，再由 Radda／Durapha 等具体 Yoga 处理；
-- 60／120 为友好相位；0／90／180 为敌意相位；
-- Itthasala 只说明接触正在形成，敌意相位不得翻译成“顺利成事”；
-- Kamboola 权限使用 Uttama／Madhyama／Sama／Adhama 四级交叉的 16 档；
-- 权限输入限 D1 sign dignity、TNK Hadda、Drekkana、Navamsa 和相关 house；
-- Khallasara 必须满足完整 Shunyamarga 条件，不是普通 Moon 无接触。
+- 7 classical grahas participate; Rahu/Ketu do not participate;
+- Aspects: 0°, 60°, 90°, 120°, 180°;
+- 60°, 90°, 120° aspects evaluate bilateral branches;
+- Deeptamsha orbs: Sun 15°, Moon 12°, Mars 8°, Mercury 7°, Jupiter 9°, Venus 7°, Saturn 9°;
+- The applying faster planet transmits light; the contact boundary uses the **faster planet's own deeptamsha orb**; never average the two planetary orbs. Ingress candidates also evaluate the moving planet's own deeptamsha;
+- Retrogradation is handled via signed relative velocity, then resolved by specific Yogas like Radda/Durapha;
+- 60°/120° are harmonious/friendly aspects; 0°/90°/180° are challenging/inimical aspects;
+- Itthasala indicates contact is actively forming; challenging aspects must never be translated as "smooth, unhindered success";
+- Kamboola dignity uses the 16 cross-tiers of Uttama / Madhyama / Sama / Adhama;
+- Dignity inputs are restricted to D1 sign dignity, TNK Hadda, Drekkana, Navamsha, and relevant houses;
+- Khallasara strictly requires complete Shunyamarga conditions, not merely lack of Moon contacts.
 
 ---
 
-## 消费规则
+## Consumption Rules
 
-| 配置 | 可说 | 不可说 |
+| Configuration | Permitted Phrasing | Prohibited Phrasing |
 |---|---|---|
-| 友好 Itthasala | 双方存在较顺畅的靠近／接通趋势 | 单凭它把标准层改为偏成 |
-| 敌意 Itthasala | 接触正在形成，但伴随冲突或不协调 | 把“有接触”翻译成“顺利成” |
-| Isharafa | 接触已经越过高点 | 自动等于永久不成 |
-| Nakta／Yamaya | 可能经中间人传递或由第三方收集双方力量 | 主星已有直接接触时重复叠加 |
-| Manau | Mars／Saturn 的抢先阻断候选 | 未核先后次序就断言一定阻断 |
-| Kamboola | Moon 对主接触的分级增强候选 | 不显示 16 档权限就称“最强” |
-| Gairikamboola／Tambira | 换座后的未来接触候选 | 当成已经发生的接触 |
-| Khallasara | Tajika 内对 Kamboola 的缺失修正 | 写成 Parashari 空亡或全局否决 |
-| Radda | 接收方退回，并保留先成后坏／先坏后成次序 | 把所有弱势都压成同一句失败 |
-| Duphalikuttha／Dutthotthadivira | 主接触中的强弱不对称或第三星援助 | 覆盖更具体的 Radda 结果 |
-| Kuttha／Durapha | Itthasala 参与星的承事能力或失能 | 当作独立于接触的全盘吉凶 |
+| Friendly Itthasala | Favorable, smooth approaching/connecting trend between parties | Unilaterally altering standard layer to Favorable based on this alone |
+| Inimical Itthasala | Contact is forming, but accompanied by tension, conflict, or friction | Translating "contact exists" into "smooth success" |
+| Isharafa | Contact has already passed its peak and is separating | Automatically equating to permanent failure |
+| Nakta / Yamaya | Possibility of mediation via an intermediary or third-party collection of light | Doubling scores when direct primary contact already exists |
+| Manau | Mars/Saturn pre-emptive blockage candidate | Asserting guaranteed blockage without verifying precedence order |
+| Kamboola | Graded reinforcement of primary contact by the Moon | Claiming "strongest" without displaying the 16-tier dignity rank |
+| Gairikamboola / Tambira | Future contact candidate following sign ingress | Treating as an already realized contact |
+| Khallasara | Internal Tajika deficiency correction for Kamboola | Equating to Parashari void-of-course or global veto |
+| Radda | Receiving planet rejects/reverses contact; preserves order of success-then-spoil | Flattening all weakness into an identical statement of failure |
+| Duphalikuttha / Dutthotthadivira | Strength asymmetry in primary contact or 3rd-planet rescue | Overriding more specific Radda results |
+| Kuttha / Durapha | Operational capacity or debility of Itthasala participants | Treating as global chart fortune independent of contact |
 
-若主星对无接触，只能写：
+If the primary lords have no contact, write strictly:
 
-> 本 Tajika overlay 未检出 deeptamsha 内的主星直接接触；继续检查
-> Nakta／Yamaya／Tambira 等原典条件。副层不改变标准结论。
+> This Tajika overlay detected no direct primary lord contact within deeptamsha orb; proceeding to check classical conditions such as Nakta, Yamaya, and Tambira. This sub-layer does not alter the standard layer conclusion.
 
-`tajika_overlay.md` 是本副层的人类可读判读单，固定先显示：
+`tajika_overlay.md` is the human-readable judgment sheet for this sub-layer, presenting:
 
-1. 原始时刻和地点；
-2. 一段无需术语即可理解的过程结论；
-3. 直接接触、间接帮助或阻力的白话含义；
-4. timing 是否可用及原因；
-5. 十六 Yoga 完整表及可回查明细。
+1. Original timestamp and location;
+2. A plain-language summary understandable without jargon;
+3. Meaning of direct contacts, mediation, or resistance;
+4. Whether timing is available and why;
+5. Complete 16 Yogas table with inspectable breakdown.
 
-不得只输出布尔表，不得让 Yoga 名称先于其白话翻译，也不得生成标准层
-内部三档（偏成／持平／偏不成）。“先说人话”一节不得出现 deeptamsha、Yoga 名称、英文状态码
-或只写行星／相位而不解释现实意义；这些全部移入可跳过的技术核对区。
+Never output raw boolean dumps, never present Sanskrit Yoga names without plain English explanations, and never generate standard-layer 3-tier verdicts (Favorable / Balanced / Unfavorable). The plain-language section must avoid raw deeptamsha degrees, untranslated codes, or bare aspects without real-world meaning; these belong strictly to the collapsible technical audit section.
 
 ---
 
-## Timing
+## Timing Protocol
 
-只有主星对形成直接 Itthasala 时，允许显示 `度差 × 12 日` 的古典比例候选。该算法
-见 *Tajika Nilakanthi* 2.5–6 的 Hindi commentary；*Hāyanaratna* 3.3 又引
-*Tajikayogasudhanidhi* 6.35，并给出 Sun Leo 2°／Mars Scorpio 16°、
-`14° × 12 = 168 日` 的固定正例。必须同时写：
+Only when primary lords form direct Itthasala is the classical proportional candidate `degree difference × 12 days` permitted. This formula is documented in the Hindi commentary to *Tajika Nilakanthi* 2.5–6; *Hāyanaratna* 3.3 cites *Tajikayogasudhanidhi* 6.35, providing the canonical worked example of Sun in Leo 2° / Mars in Scorpio 16°, `14° × 12 = 168 days`. One must explicitly state:
 
-- 这是原典比例候选，不是天文保证；
-- 只属于 Tajika 副层；
-- 不进入 Parashari 标准层；
-- 无直接主星 Itthasala 时，timing 为 `unavailable`。
-- 与标准层时间副层（`timing-layer.md`）来自不同体系，不互相校正；主答案以
-  判读单 §四 为准。
+- This is a classical symbolic candidate, not an astronomical guarantee;
+- It belongs strictly to the Tajika sub-layer;
+- It does not enter the Parashari standard layer;
+- When no direct primary Itthasala exists, timing is marked `unavailable`;
+- Derived from a different system than the standard timing layer (`timing-layer.md`), they do not calibrate each other; the primary answer relies on standard judgment sheet §IV.
 
 ---
 
-## 进入可用状态的门
+## Verification Gates
 
-当前实现覆盖十六 Yoga，但在出版例盘套件全部完成前仍标
-`experimental_pending_published_example_suite`。至少验证：
+Although the implementation covers all 16 Yogas, it remains marked `experimental_pending_published_example_suite` until publication regressions are satisfied:
 
-- 0／60／90／120／180 两侧分支；
-- applying、exact、刚过 exact、Isharafa；
-- direct／retrograde 的有符号速度；
-- Ikkavala／Induvara 的完整与缺输入边界；
-- Nakta／Yamaya／Manau 的正反例与先后顺序；
-- Kamboola 16 档、Shunyamarga、Gairikamboola、Khallasara；
-- Radda 与 Durapha 的优先级及先成后坏／先坏后成；
-- Duphalikuttha／Dutthotthadivira／Tambira／Kuttha；
-- 主星相同、Moon 为主星、sign／Hadda／Drekkana／Navamsa 边界；
-- 两张固定出版盘回归；
-- `度差 × 12 日` 的正反例与禁用条件。
+- 0°/60°/90°/120°/180° bilateral branches;
+- applying, exact, post-exact, and Isharafa;
+- direct/retrograde signed velocities;
+- Ikkavala/Induvara boundary conditions;
+- Nakta/Yamaya/Manau precedence order;
+- Kamboola 16 tiers, Shunyamarga, Gairikamboola, Khallasara;
+- Radda and Durapha precedence order;
+- Duphalikuttha / Dutthotthadivira / Tambira / Kuttha;
+- Identical lords, Moon as primary lord, sign/Hadda/Drekkana/Navamsha boundaries;
+- Fixed published chart regressions;
+- `degree diff × 12 days` positive and negative examples.
 
-当前已锁定一张出版接触几何回归：Journal of Astrology article 153
-（1994-06-11 18:45 IST），可复算公开盘的 Scorpio 20°08′ 上升、Mars Aries
-20°02′ 与 Saturn Aquarius 18°30′，并复现原文所称 Mars–Saturn Tajik sextile。
-原页面没有单列 Prashna place；Delhi 坐标虽可复现公开 Lagna，仍不能把这个推断
-冒充完整出版输入。因此它只闭合接触几何，不独立满足“两张完整固定出版盘”或出版
-timing 正反例门。
-
-另已锁定 *Hāyanaratna* 3.3 的 Sun–Mars `14° × 12 = 168 日` 固定 worked
-example，用于同时回归“较快星自身 deeptamsha”和 timing 比例。它没有完整日期、
-地点和七曜输入，因此只完成规则级出版正例，仍不计入“两张完整固定出版盘”。
+Regression chart Journal of Astrology article 153 (1994-06-11 18:45 IST) reproduces Scorpio 20°08′ Lagna, Mars Aries 20°02′, and Saturn Aquarius 18°30′, verifying the Mars-Saturn Tajik sextile. *Hāyanaratna* 3.3 Sun-Mars `14° × 12 = 168 days` verifies the faster planet's deeptamsha orb and timing formula.

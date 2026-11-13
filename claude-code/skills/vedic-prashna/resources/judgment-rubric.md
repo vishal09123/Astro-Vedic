@@ -1,264 +1,186 @@
-# Prashna 判定：成事账、能力层、行动链与限定语
+# Prashna Judgment Rubric: Success Ledger, Ability Layer, Action Chains, and Qualifiers
 
-> **用途**：说明判定脚本 `scripts/judge_prashna_standard.py`（规则实现在 `scripts/prashna_rules.py`）怎么定内部三档
-> `偏成／持平／偏不成`，以及模型怎样读它的结果。本文件与 `prashna_rules.py` 一一对应：**改规则必须同改两处**，并跑基础率。
+> **Purpose**: Documents how the judgment script `scripts/judge_prashna_standard.py` (rules implemented in `scripts/prashna_rules.py`) determines the internal outcome tiers `Favorable / Balanced / Unfavorable` and how the LLM consumes its output. This file corresponds one-to-one with `prashna_rules.py`: **modifying rules requires updating both files concurrently** and verifying against baseline test distributions.
 >
-> **分工**：模型拆题、写取象单（`question-decomposition.md`）；脚本计数，写 `prashna_verdict.json` 与 `prashna_verdict.md`；模型照读，
-> 不手算账本，不改档。三档只写在判读单核对区；给用户看的部分讲事情怎么走，不出现档名（`judgment-writing.md`）。
->
-> 不运行固定五轴，也不要求每题都出现 Moon、自然 Karaka 或"事件闭环"。
+> **Division of Roles**: The LLM decomposes the query and generates the plan sheet (`question-decomposition.md`); the script tallies points and writes `prashna_verdict.json` and `prashna_verdict.md`; the LLM consumes the resulting verdict faithfully without hand-calculating scores or overriding tiers. The internal tier appears exclusively in the technical audit section; the client-facing section explains how the matter unfolds without exposing technical tier labels (`judgment-writing.md`).
 
 ---
 
-## 1. 成事账
+## 1. The Success Ledger
 
-"事情成不成"这一子问题由成事账回答。
+The sub-question "will the event succeed" is evaluated exclusively through the Success Ledger.
 
-### 1.1 收录
+### 1.1 Itemization of Entries
 
-| 槽 | 内容 | 出处 |
+| Slot | Content | Classical Citation |
 |---|---|---|
-| 本事古法 | `matter-rules.md` 登记表本题一行的主、辅规则 | 各偈 |
-| 事项宫扶压 | 事项宫 `P-I.3`（登记表写明同源不收的除外） | Ayer I.3 注"should be used in judging all problems" |
-| 上升 | `P-I.4`（本事古法已含则不重复） | Ayer I.4：所问之事能否达成 |
-| 全盘布局 | `P-IV.1`：吉星占角宫、三方宫且凶星不占角宫与 8 宫则兴，反之则衰 | Ayer IV.1，目录称"omnibus solution" |
-| 连接 | 指标星（事项宫主）与 Lagna 主按 `house-meanings.md` 第 8 节连上记有利；没连上不记不利；事项宫是 1 宫（Lagna 主即指标星）时不适用 | `M-XIV.43`："与 Lagna 或 Lagna 主有照射、同宫、角宫关系等的宫，其事必应验"（创始人 2026-10-29 定进账，D2） |
+| Topic-Specific Classical Rule | Primary and secondary rules for the topic from `matter-rules.md` | Respective verses |
+| Matter House Support / Affliction | Matter House `P-I.3` (unless excluded as an identical cognate) | Ayer I.3 note: "should be used in judging all problems" |
+| Ascendant Disposition | `P-I.4` (omitted if already included in topic-specific rules) | Ayer I.4: Success/failure of desired object |
+| Global Chart Architecture | `P-IV.1`: Benefics in kendras/trikonas and malefics absent from kendras and 8th house brings prosperity; contrary configuration brings ruin | Ayer IV.1 ("omnibus solution") |
+| Connection | Significant connection between indicator planet (matter lord) and Lagna lord per `house-meanings.md` §8 (+1); lack of connection does not score negatively; inapplicable when matter house is the 1st house | `M-XIV.43`: "Houses aspected by, conjoined with, or in kendra to Lagna or Lagna lord surely bear fruit" |
 
-婚恋题的 `M-XVII.16`（Lagna 主与 7 宫主、或与 Venus 互换、入旺、互照则成）与连接同源：其中"Lagna 主与 7 宫主互换、互照"已归入连接一条，
-`M-XVII.16` 只留入旺与 Venus 部分，不重复计。
+For relational queries, `M-XVII.16` (Lagna lord and 7th lord mutual exchange, exaltation, or mutual aspect) is cognate with Connection: mutual exchange and aspect are absorbed into the Connection entry; `M-XVII.16` evaluates only exaltation and Venus aspects to avoid duplicate scoring.
 
-### 1.2 填写纪律
+### 1.2 Ledger Discipline
 
-- 只引用 `structured_prashna.md` 白名单事实；
-- 只有 `P`、`M` 规则计分；`B` 实例只作兼容性说明，不计分；`E` 只管工作流，不把结果变成吉凶；`U`、`T`、`KP` 不进账本；`M` 只收
-  `standard-layer.md` §1 准入的条目；
-- 一条规则内部同时有吉凶因素记"混合"（0 分），不拆成两票制造多数；原文写明偈内由占优定局的按 §3 在偈内定方向，不是拆票；
-- **同源只计一次**：两条规则读的是同一组占据、照射事实（买房的 Vriddhi 与 4 宫 `P-I.3`；裁员的 Chyuti 与 1 宫 `P-I.3`；路上顺不顺的 `P-II.5` 与
-  1 宫 `P-I.3`）时，只留本事古法；
-- **反向同源不计后者**：Pravasa 以第 10 宫受凶星照为成行，10 宫 `P-I.3` 把同一凶照记为不利，离开题不收 10 宫 `P-I.3`。
+- Cites whitelisted facts from `structured_prashna.md` only;
+- Only `P` and `M` rules score points; `B` instances serve as compatibility citations; `E` manages workflow without altering scoring; `U`, `T`, and `KP` never enter this ledger;
+- A single rule containing mixed benefic and malefic indications scores "mixed" (0 points); rules with internal preponderance mechanisms determine internal net direction per §3;
+- **Cognates Score Once**: When two rules evaluate the identical set of occupation/aspect facts (e.g. property purchase Vriddhi vs 4th house `P-I.3`; layoff Chyuti vs 1st house `P-I.3`), retain the topic-specific rule only;
+- **Inverse Cognates Exclude the Latter**: In departure queries, Pravasa requires 10th house malefic aspect for journey to materialize; 10th house `P-I.3` would penalize that malefic aspect; therefore, `P-I.3` is excluded from departure queries.
 
-### 1.3 类比偈语境检验
+### 1.3 Contextual Verification of Analogical Verses
 
-类比偈（`matter-rules.md` 标"类比"的：`M-XVII` 四偈用于表白、见面；`P-III.3~4` 用于复合、恢复往来）原是议婚、王者和解的语境。
-它触发时读到的宫，如果在本题拆题里另有角色——取象单里方向"相合"的关键词点到了这一宫——这一条**不入账**，核对区写"语境不合"
-（创始人 2026-10-29 定，D4）。例：问"私下见面"，"私下"点到 8 宫；`M-XVII.17` 因 8 宫落陷凶星受凶星照而触发 → 不入账。
-本事原文的偈（结婚题的 `M-XVII` 四偈、谈判题的 `P-III.3~4`）不做这项检验。
+Analogical verses (flagged "analogical" in `matter-rules.md`, such as `M-XVII` verses applied to confessions/meetings, or `P-III.3~4` applied to reconciliation) originated in royal peace treaties or matrimonial negotiations. If the house evaluated by the rule matches a keyword with an **aligned** polarity in this query, that rule **does not enter the ledger**, and the audit section notes "inapplicable context". Example: In a "private meeting" query, "private" aligns with the 8th house; if `M-XVII.17` triggers due to an afflicted malefic in the 8th house, it is excluded. Direct verses (`M-XVII` in marriage, `P-III.3~4` in formal negotiations) do not undergo this exclusion.
 
-### 1.4 按问题读
+### 1.4 Contextual Planetary Reclassification
 
-取象单 `needed_planets`（"事情成不成"本身需要的征象星）在 `P-I.3` 里不按凶星计（D3；`house-meanings.md` 第 7 节）。没有点到的，`P-I.3`、
-`P-IV.1` 都按宫表的 Ayer 功能吉凶标签计。
+Planets registered under `needed_planets` in the plan sheet (planets intrinsically required for success, such as Mars in litigation or surgery) are not penalized as malefics under `P-I.3`. All unmentioned planets follow standard Ayer functional tags.
 
 ---
 
-## 2. 计分与合判：按占优断
+## 2. Scoring and Determination: Preponderance of Factors
 
-### 2.1 依据
+### 2.1 Classical Authority
 
-| 出处 | 内容 |
+| Citation | Classical Principle |
 |---|---|
-| Ayer I.4、III.4、IV.5 注；I.2 注 | 偈内吉凶混合时由占优定局（"preponderance of benefic influence will decide the issue" 等，§3） |
-| `M-XIV.98` | "If the influences are mixed, then prediction must be made according to the predominating factor." 语境是行星吉凶影响的权衡（紧接 XIV.89–97 各行星 Dasa 吉凶） |
-| `M-XVII` 注（Raman 婚事例盘） | "the majority of factors are against the marriage being happy"（XVII.19 注）；"The minus points are more in evidence"（XVII.32 注） |
-| Ayer I.3 注 | 宫位扶压判据"should be used in judging all problems"：`P-I.3` 作一份证据进账 |
-| Ayer III.2 注 | 吉凶并存"the result will be undecided"：吉凶真正相当才持平 |
+| Ayer I.4, III.4, IV.5 notes; I.2 note | Mixed configurations within a verse resolve by preponderance ("preponderance of benefic influence will decide the issue", §3) |
+| `M-XIV.98` | "If the influences are mixed, then prediction must be made according to the predominating factor." |
+| `M-XVII` notes (Raman marital examples) | "the majority of factors are against the marriage being happy"; "The minus points are more in evidence" |
+| Ayer I.3 note | House support/affliction "should be used in judging all problems" |
+| Ayer III.2 note | When positive and negative forces are evenly balanced, "the result will be undecided" |
 
-### 2.2 数法（执行口径）
+### 2.2 Numerical Execution
 
-1. 账本每条一份证据：有利 +1，不利 −1，混合或无方向 0；§3 三条先在偈内定方向再记分；
-2. 等权，不给主规则加倍（加倍无出处）；本事古法与通用规则同账等权，不单独否决；
-3. 合计 >0 记**偏成**；<0 记**偏不成**；=0 记**持平**（§4）；
-4. 强度：偏成且账本无不利证据＝**顺**，有＝**有阻力**；偏不成且无有利证据＝**明确**，有＝**有转机**。账本里只有一条有方向的条目时，
-   不标顺或明确，标**单条证据**，判读单写明"本题只有一条古典规则给出方向"。能力层否决时强度写**能力不足**；
-5. 阻力、转机必须指到账本里具体的反向条目；判读单据此讲卡在哪、转机在哪；
-6. 偈内按 §3 吉占优才记有利的，正文按"困难后成"讲过程不顺、阻力在哪。
-
-单条规则就能定方向：几乎每偈原文自带反向结论——I.4"Should it be the reverse, it does not conduce to success"；III.1"Mars or Saturn in the ninth
-indicates defeat"；IV.1"Opposite placements bring about the opposite result"；VII.2 注"other placements indicate a negative answer"；VI.3 Bhattotpala 注
-"chances of recovery are remote"。不要求凑齐两条不利。
-
-B 级题照常计分，核对区标：
-
-> 支持级 B：这是通用古典规则判读，不是该现代题型的专属古典 yoga。
+1. Each ledger entry represents one item of evidence: Favorable = +1, Unfavorable = −1, Mixed or Directionless = 0;
+2. Equal weighting: Topic rules and universal rules carry equal weight (+1/−1);
+3. Net Sum: Sum > 0 = **Favorable**; Sum < 0 = **Unfavorable**; Sum == 0 = **Balanced** (§4);
+4. Strength Designation:
+   - Favorable with zero negative entries = **Smooth**; with negative entries = **With Obstacles**;
+   - Unfavorable with zero positive entries = **Definitive**; with positive entries = **With Turning Points**;
+   - Single active entry in ledger = **Single Evidence**;
+   - Overridden by Ability Veto = **Incapacitated**;
+5. Obstacles and Turning Points must cite the specific opposing ledger entries;
+6. Verses resolving favorably via internal preponderance (§3) are described narratively as "materializing after initial difficulties".
 
 ---
 
-## 3. 偈内占优数法（执行口径，不是原文）
+## 3. Internal Preponderance Computation (Implementation Protocol)
 
-原文写明配置混合时由吉的影响是否占优定局的，只有以下三处：
+Classical verses explicitly resolving internal mixtures via preponderance are restricted to three instances:
 
-| 规则 | 原文 | 所看宫 | 吉占优时 |
+| Rule | Textual Authority | Scope Houses | Favorable Resolution |
 |---|---|---|---|
-| `P-I.4` | 注"succeeds with difficulty … preponderance of benefic influence will decide the issue"；(1)(2) 一合一不合、吉凶星同占头升 Lagna、Pisces 上升都属此类 | 第 1 宫行；六分盘合计另记一条（多吉记吉、多凶记凶、相等不计） | 能成 |
-| `P-III.4` | 注"mixed placements will tend to continue the tension …, a preponderance of benefic influence leading to prospective resolution" | 1／4／7／10 宫行 | 趋向和解 |
-| `P-IV.5` | 注"a preponderance of favourable influence should be looked for eventual recovery" | Lagna／7／8／5 宫行；Moon 落 3／6／10／11 宫记一条吉，落别处记一条凶（注"the Moon otherwise placed will lead to a contrary result"） | 终可康复 |
+| `P-I.4` | "succeeds with difficulty … preponderance of benefic influence will decide the issue" | 1st House row; Shadvarga totals scored as an independent sub-entry | Succeeds |
+| `P-III.4` | "mixed placements will tend to continue the tension …, a preponderance of benefic influence leading to prospective resolution" | Kendras (1, 4, 7, 10) | Tending toward resolution |
+| `P-IV.5` | "a preponderance of favourable influence should be looked for eventual recovery" | 1, 7, 8, 5; Moon in 3, 6, 10, 11 | Eventual recovery |
 
-Ayer 没给数法，执行按下面数：所看宫在宫表"七曜占据""七曜照射本宫"两列的吉凶标签条数，占据与照射都算，F1 宫主记吉，"盈月未定"和 Rahu／Ketu
-不计；吉多记有利（困难后成），凶多记不利，相等记混合。
-
-`P-I.4` 的六分盘按"Lagna 六分盘座主"表的合计算一条，不把六个座主逐个加进来：六分盘只是条件(1)里与"吉星占 Lagna"并列的一项，逐个计会让它
-压过 Lagna 宫的实际占据和照射。`P-I.2` Chyuti 变动座的"吉凶影响孰多"也按此数：吉多＝变动成立，凶多＝不变（事件方向，问"保住"时反向）。
-其余规则（如 `P-II.2` 吉凶同照、`P-I.3`）原文没给偈内占优定局，混合记 0，不套本节。
+Computation counts the total number of benefic vs malefic tags across occupations and aspects for the designated houses (F1 lord counts as benefic; Rahu/Ketu and waxing/waning unassigned do not count). More benefics = Favorable (with difficulty); more malefics = Unfavorable; equal = Mixed.
 
 ---
 
-## 4. 持平
+## 4. Balanced Verdict (Neutral Tier)
 
-以下任一情况记持平，并写明类型：
-
-- **吉凶相当**：合计为 0，且账本里有方向相反的条目或混合条目；
-- **盘面未给方向**：账本里没有任何有利、不利或混合的条目（全部规则条件不满足）。不是吉凶相当：判读单写"按原文这张盘对本题没有给出判据"，
-  给改问建议，不运行时间副层；
-- **两说**：原文两说并列、计分规则读法不一（`P-VI.3` 的 Gemini 头升、`P-II.9` 的 Sun、归来题的 4 宫、`P-V.2` 的且／或）时，两说各算一次合计：
-  档位相同就用这个档；不同记持平·两说，两种走向并列写出，不择一，也不把该行记 0。
-
-持平不是"目前不明朗"：判读单必须写出两边各是什么、该看哪个信号。
+Assigned when:
+- **Evenly Balanced**: Sum = 0, with opposing active entries or mixed entries;
+- **Chart Gives No Direction**: Sum = 0 because all rule conditions were unmet (no rules triggered); states clearly: "The chart provides no definitive indication under classical rules for this matter", and timing is disabled;
+- **Dual Interpretations**: Classical texts present conflicting commentaries (e.g. Gemini as Shirshodaya, Sun in `P-II.9`, 4th house return). Compute net sums under both readings: if tiers match, use that tier; if they diverge, mark "Balanced (Dual Commentary)" and present both trajectories.
 
 ---
 
-## 5. 能力层：只做否决
+## 5. The Ability Layer: Veto Power Only
 
-指标星＝事项宫主。读 `prashna_verdict.md` 的能力层一行（脚本在 formatter"宫主能力与连接"表上做按需减项）。
+Indicator Planet = Matter House Lord. Evaluated via the "Lord Ability and Connections" table:
 
-- 依据：`M-XIV.39`（宫主与征象星既弱又落 6／8／12 宫，结果为否，"能不能得到就不必问了"）、`M-XIV.40`（强而落凶位，事会出现但享受不到；弱而落
-  吉位，多少能得）、`M-XIV.30`（宫主受损诸项，"其中两三项同时出现，宫就毁坏"，Raman 注要求权衡）。只取作用于宫主自身的几项；XIV.28–29 的
-  6／8／12 宫主连接不收。
-- 折损项：落陷；落 6／8／12 宫（宫主坐本宫不算：`M-XIV.42` 宫主落本宫起算的吉位，该宫之事圆满）；燃烧；逆行；受凶星占照而无吉星。
-  燃烧、逆行只算折损，不单独算无力。
-- 救应：吉星同宫或照射；宫主入旺、本座（含根本三角）或落天然友座（落陷星不算：Raman 注"弱＝落陷"）；宫主落陷而落吉位（1、4、5、7、9、10、11 宫，`M-XIV.40`"弱而落吉位，
-  多少能得"）——落陷一项照记，只作救应，所以只把"两项而无救应"降为能力打折，三项及以上仍是严重受损。
-- **按需减项**：`needed_planets` 占照指标星，不算"受凶星占照"，改记供给（`M-XIV.47`、`M-XIV.32`）；取象单里方向相合的关键词点到的宫，指标星
-  "落该宫"不算折损，改记应象（`house-meanings.md` 第 7 节）。去掉后仍有别的凶星占照且无吉星，这一项照记。
-- **严重受损**（三项及以上，或两项而无救应）→ 不论账本合计，内部档记**偏不成**，强度写"能力不足"，账本照常显示；一到两项或有救应记
-  "能力打折"，写进叙述，不否决。
-- 有力或正常不加分：指标星有力只说明"有能力做"，不证明事情会成。
+- Classical Basis: `M-XIV.39` (significator weak and in 6/8/12 yields failure; "no need to ask if it will be obtained"), `M-XIV.40` (strong in bad house brings event without enjoyment; weak in good house brings partial gains), `M-XIV.30` (multiple afflictions destroy house indications).
+- Afflictions: Debilitated; in 6/8/12 (excluding own sign per `M-XIV.42`); combust; retrograde; aspected/occupied by malefics without benefic assistance. Combustion or retrogradation alone counts as an affliction, not standalone incapacity.
+- Mitigations: Conjunction or aspect from benefics; exalted, own sign, or natural friend's sign; debilitated planet occupying an auspicious kendra/trikona (1, 4, 5, 7, 9, 10, 11 per `M-XIV.40`).
+- Contextual Deductions: `needed_planets` aspecting the indicator do not count as malefic afflictions; occupying a house that aligns with query keywords (e.g. 8th house in a private meeting) does not count as an affliction.
+- **Severely Afflicted** (3+ afflictions, or 2 afflictions without mitigation) -> Regardless of ledger sum, the internal tier is forced to **Unfavorable**, with strength labeled **Incapacitated**;
+- 1–2 afflictions or mitigated afflictions are labeled "Compromised Capacity" and enter narrative without vetoing the ledger tier;
+- Strength or normal status never adds points (+0): operational capacity shows ability to act, not guaranteed event fruition.
 
 ---
 
-## 6. 意愿层：指标星在做什么（不计分）
+## 6. The Desire Layer: Planetary Engagement (Zero Scoring)
 
-依据：`M-XIV.33`（行星主典籍归给它的一切象义）、`M-XIV.47`（卜卦按所落吉凶宫筛去不合适的象义）、`M-XIV.48`（落好宫或坏宫决定吉凶）、
-`M-XIV.21`（宫与本宫主相连读内名）、`M-XIV.43`、`M-XVIII.30`。读"宫主能力与连接"表与 `house-meanings.md`，按 `judgment-writing.md` §3 的五步写：
-它是谁、在哪做事、和谁在一起（那些星管哪几宫，逐颗按三问读）、状态、和提问人有没有桥（靠什么连上）。只用于限定语与叙述，不进合计。
+Governed by `M-XIV.33`, `M-XIV.47`, `M-XIV.48`, `M-XIV.21`, `M-XIV.43`. Evaluates what the matter lord is actively doing via 5 steps: Identity, location of activity, companions (houses ruled, nature), dignity/state, and bridges to querent. Sourced for narrative explanation and qualifier verification; never scores points in the ledger.
 
 ---
 
-## 7. 限定语
+## 7. Qualifiers
 
-脚本按取象单 `qualifiers` 检验，方法见 `house-meanings.md` 第 9 节，结论写进核对区。限定语是问题成立的必要条件（"必须由对方发起""私下一对一"）
-而检验**不成立**时，回答"按这个条件不能"，内部档仍按成事账显示，**不给时间**（创始人 2026-10-29 定，D13：按这个条件事情不发生，
-给时间自相矛盾）；成立时，正文说明它怎样成立、有多强。取象单 `qualifiers` 只写问题措辞明确要求的条件，都按必要条件处理。
-
----
-
-## 8. 行动链：行动型问题两步作答（执行口径）
-
-问"某个人会不会做某件事"（他会主动表白吗、前任会主动联系我吗、他会主动约我吗）时，一个合计不能同时回答"会不会动"和"事情成不成"。
-分两步，一个子问题只有一个出口（`question-decomposition.md` 第 2 节）：
-
-**第一步：会不会动——行动链**。脚本读 `structured_prashna.md`"行动者视角（转宫）与行动链"表行动者那一行（取象单 `actor`）。以行动者的宫为
-命宫转宫（`M-XVII.8–9`、`M-XIV.116` 注）：
-
-| 环 | 检验 | 出处 |
-|---|---|---|
-| ① 起意 | 行动者起第 3 宫主与行动者宫主相连；或 Mars 与行动者宫主同宫、由 Mars 照射 | `M-XIV.5`、`M-XIV.31`；`M-XIV.43` |
-| ② 行动 | 行动者起第 10 宫主与行动者宫主相连，或就是同一颗星 | `M-XIV.12` |
-| ③ 指向你 | 行动者宫主、起意宫主、行动宫主之一与 Lagna 主相连；或经 Mars 串联两端 | `M-XIV.43` |
-| ④ 能力 | 行动者宫主或起意宫主在能力表为"严重受损" | `M-XIV.39`、`M-XIV.32` |
-| ⑤ 落实 | 行动者起第 11 宫主的强弱，只进叙述 | `M-XIV.13` |
-
-"相连"按 `house-meanings.md` 第 8 节。Mercury、Venus、Sun 只有第七宫照射，经它们串联的两端必已直连，所以③只需另查 Mars。④ 读原能力表，
-不做按需减项。
-
-| 行动链 | 条件 | 基础率（北京一年 2,700 盘：对方 7／用人方 10；10-30 按现行代码重算） |
-|---|---|---|
-| **偏会** | ①③ 成立，② 成立，④ 不成立 | 26%／28% |
-| **偏会·停在念头或言语** | ①③ 成立，② 不成立，④ 不成立 | 24%／22% |
-| **有心无力** | ①③ 成立，④ 成立 | 11%／8% |
-| **有起意未指向你** | ① 成立，③ 不成立 | 15%／12% |
-| **盘面未见主动** | ① 不成立 | 25%／30% |
-
-**第二步：事情成不成——成事账**（§1–§4）。成事账答的是结果（见不见得成、关系能不能缓和），不答"会不会动"；登记表的行名按结果读。
-
-**写法**：标题与简述各用一句分别答两个子问题，并说出是哪一问（例："他多半会主动约你；见面顺不顺，这张盘偏紧"）。主问本身就是"会不会主动"
-时，只有第一步为"有起意未指向你"或"盘面未见主动"，才答"按这个条件不能"（§7）；"有心无力"写成"想动，但使不上力"。
-
-**边界**：
-- 行动链不进合计，不改内部档；能力层否决照旧；
-- 与 10-20 废掉的固定五轴不同：五轴是没有出处的闸门（Moon 必须连接、自然 Karaka 必须闭环），缺一项就判主事件不利；行动链每一环都有原文，
-  只回答"会不会动"这一个子问题；
-- 事件型问题里"由对方主动"等限定语同样读行动链；
-- 同一子问题只有一个出口：两层在同一子问题上给出相反结论，是拆题错了，回拆题重拆；冲突时以拆题和行动链为准（创始人 10-29 定）。
+Evaluated by script from plan sheet `qualifiers`:
+- Essential Prerequisites: If verified as **Not Established**, client-facing text states: "Under this specific condition, it cannot materialize." The internal tier reflects the ledger, but **timing is completely disabled** (D13: providing a date for an event that cannot happen under the requested condition is contradictory).
 
 ---
 
-## 9. `P-I.3` 的正确使用
+## 8. Action Chains: Two-Step Response for Action Queries
 
-检查事项宫是否被本宫主占据或照射、是否得到吉星占照、是否被凶星占照；宫主本身的承事能力见 §5，不在 `P-I.3` 里另计。它是一份证据，与本事古法
-同账计分，不单独否决。吉星、凶星读宫表 Ayer 功能吉凶标签（`standard-layer.md` §2.1）：本宫主对本宫恒为吉（F1）；标签按被占据、照射的星座起算，
-同一行星对不同宫可有不同标签；带"(回落)"的是 Bhattotpala 自然吉凶；正文点名行星的偈按点名判，不读标签；Rahu／Ketu 不作吉星或凶星计。
+When asking "will a specific person take action" (reach out, confess, invite), a single net sum cannot simultaneously answer "will they act" and "will the event succeed":
 
-它不是机械计票：所问之事本身属 6、8、12 宫领域时按 `house-meanings.md` 第 7 节读；强行星在不相关宫位不自动救援本题；D1 尊贵度、燃烧和逆行是
-次级能力事实，不能覆盖本事古法。
+**Step 1: Will they act? -> Action Chain**. Evaluated from actor's perspective via derived houses:
+1. Intent: Derived 3rd lord connects with actor's lord, or Mars conjoins/aspects actor's lord (`M-XIV.5`, `M-XIV.31`);
+2. Action: Derived 10th lord connects with actor's lord, or is the identical planet (`M-XIV.12`);
+3. Direction toward Querent: Actor's lord, intent lord, or action lord connects with Lagna lord, or Mars bridges both (`M-XIV.43`);
+4. Capacity: Neither actor's lord nor intent lord is Severely Afflicted in ability table (`M-XIV.39`);
+5. Execution: Derived 11th lord strength enters narrative description (`M-XIV.13`).
 
----
+Outcomes:
+- **Favorable (Action Expected)**: (1), (3), and (2) satisfied, (4) uninhibited;
+- **Favorable (Arrested in Thought/Speech)**: (1) and (3) satisfied, (2) not satisfied;
+- **Willing but Incapacitated**: (1) and (3) satisfied, (4) afflicted;
+- **Initiative not Directed at Querent**: (1) satisfied, (3) not satisfied;
+- **No Initiative in Chart**: (1) not satisfied.
 
-## 10. 不进账本的单一因素
-
-以下事实不是规则，不计分，也不能单独决定倾向：Moon 无同宫或无 Graha Drishti；Moon 不连接事项宫主；行星逆行、燃烧、落陷或处某个月宿
-（宫主状态由 §5 处理）；宫主与自然 Karaka 无闭环；SAV 低、分盘差或本命 Dasha 不配合（本来就不在数据契约）。
-
----
-
-## 11. Moon
-
-只有本事古法明确使用 Moon 时，Moon 才作为规则输入；其余只列背景。详见 `moon-policy.md`。
+**Step 2: Will the event succeed? -> Success Ledger** (§1–§4). Evaluates whether the ultimate outcome materializes (reconciliation, harmonious meeting).
 
 ---
 
-## 12. 时间副层
+## 9. Correct Application of `P-I.3`
 
-三档定好后再看时间（`timing-layer.md`），脚本在 `prashna_verdict.json` 的 `timing` 字段给出是否运行与 `--mode`：
-
-- 偏成：运行，写"约……"；持平：运行，写成条件式，如"如果推进顺利，大约……"；
-- 偏不成（含能力不足）、持平·盘面未给方向、路上顺不顺、必要条件不成立（§7）：不运行；偏不成写清什么变化之后可以再问。
-
-时间不进账本，不因时间远近改档。用户要的精确日期给不出，不因此改记持平。
+Evaluates whether the matter house is occupied or aspected by its own lord, benefics, or malefics. Planetary functional roles follow Ayer's criteria. It represents a single piece of evidence (+1 / −1 / 0) within the ledger and never exerts standalone veto power.
 
 ---
 
-## 13. 输入提示（不改档）
+## 10. Factors Excluded from the Success Ledger
 
-档只按所给的提问时刻与地点定：时间地点由提问人负责，产品取消息到达服务器的时刻（创始人 2026-10-29 定）。脚本另在前后各取一盘（只给城市名
-±60 秒，精确经纬度 ±30 秒），本题账本或能力层否决随之改变的，只在核对区"输入提示"记一行，不改档，**不进给用户看的部分**。
-
----
-
-## 14. 盘有效性与事件结论分开
-
-- 时间、地点或问题缺失：补输入，不生成结论；
-- 同一问题无实质变化却重起：沿用第一次清晰提问盘（`qa_rules.md` §1）；不用 24 小时、3 个月等任意阈值；重复起盘是 `E` 工作流问题，不是偏不成的
-  占星证据；
-- 不判（`matter-rules.md` 第 6 节）是方法覆盖不足，不是事件失败。
+The following are astrological facts, not independent rules, and never alter ledger scores independently:
+- Moon without whole-sign conjunctions or Graha Drishti;
+- Moon not connecting with the matter lord;
+- Retrogression, combustion, or debilitation of uninvolved planets;
+- Lack of closed loops with natural Karakas;
+- Low Ashtakavarga scores, unactivated divisional charts, or unrelated natal Dashas.
 
 ---
 
-## 15. 查表题
+## 11. Moon Policies
 
-`matter-rules.md` 第 5 节的题不建账本、不出三档、不跑时间副层，按 `standard-layer.md` §5.1 输出查表结果：只引用 `structured_prashna.md`"描述题与天气
-查表事实"，不补原文没有的描述；原文歧义两说并列，不用"更可能"裁决；天气条件不满足写"原文无反面判据"。
-
-描述型（`matter: 描述`，`question-decomposition.md` 第 2 节）同样不建账本、不出三档、不跑时间副层，但不是查表：脚本出事实——指标星能力与
-连接、事项宫与指标星所在宫的同宫照射之星逐颗（所管宫、吉凶标签、尊贵度、燃烧逆行、措辞点没点到）、关键词落点、`M-XIV.117`。判读按
-`house-meanings.md` 第 7 节三问写局面与相处的样子，不从这些事实推成败；要问成败，拆出事件型子问题另走成事账。
+The Moon serves as rule input only when explicitly mandated by topic classical verses; otherwise it provides background context only (`moon-policy.md`).
 
 ---
 
-## 16. 自检
+## 12. Timing Sub-Layer
 
-- [ ] 取象单的每个关键词写了出处，相合、相反判对了？`needed_planets` 只写了"成不成"本身需要的星？
-- [ ] 核对区完整显示 `prashna_verdict.md` 的账本、合计、内部档、能力层、限定语、行动链？
-- [ ] 判读单的倾向与内部档一致，没有手改档？
-- [ ] 行动型问题两步作答，行动链没有进合计？同一子问题只有一个结论？
-- [ ] 输入提示只在核对区，给用户看的部分没提？
-- [ ] 查表题只给查表结果、两说并列，没有出三档和时间？
+Invoked only after the 3-tier verdict is determined (`timing-layer.md`):
+- Favorable: Timing enabled ("Approximately...");
+- Balanced: Timing enabled conditionally ("If progress continues smoothly, approximately...");
+- Unfavorable, Incapacitated, Directionless, or Failed Qualifier: Timing is disabled.
+
+---
+
+## 13. Input Sensitivity Audits (Zero Tier Alteration)
+
+The judgment is bound strictly to the given query timestamp. The script re-evaluates the chart at ±60 seconds (or ±30 seconds for exact coordinates). Any alterations in ledger items or ability vetoes are noted strictly in the technical audit section as "Input Sensitivity"; they never alter the primary verdict or enter the client-facing section.
+
+---
+
+## 14. Verification Checklist
+
+- [ ] Does every keyword in the plan sheet cite an authentic classical source with verified polarity?
+- [ ] Does the audit section display ledger entries, net sum, internal tier, ability layer, and qualifiers completely?
+- [ ] Does the client-facing narrative match the internal tier without exposing technical tier labels?
+- [ ] Are action-oriented queries answered in two distinct steps, with action chains kept out of ledger tallies?
+- [ ] Is timing withheld for Unfavorable verdicts, Incapacitated statuses, and failed prerequisites?

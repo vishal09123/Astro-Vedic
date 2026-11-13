@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Second-precise time handling for the isolated Prashna stacks.
 
-提问时刻（含秒、微秒）整个传给共享 engine：engine 只本地化一次，D1、各分盘、SAV、
-Dasha 等全部出自同一个计算瞬间。本模块不再自己按秒补算一部分字段——那种做法让同一张
-盘混用整分与秒级两个瞬间（2026-10-21 起六分盘表约 5% 的盘因此被隐藏）。
-本模块只负责解析输入、秒级显示与 JD 换算。
+Passes the query instant (including seconds and microseconds) intact to the shared engine:
+the engine localizes only once, ensuring D1, divisional charts, SAV, Dasha, etc., all derive
+from the exact same calculation instant. This avoids mixing whole-minute and second-level instants.
+This module handles input parsing, second-precise display, and JD conversion.
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ DATETIME_FORMATS = (
     "%Y-%m-%d %H:%M",
 )
 
-# 带 UTC 偏移的写法＝确定的瞬间（起盘产物元信息「脚本时刻」），重复的一小时靠偏移分清第几次。
+# Text formats with UTC offset represent confirmed instants (used in chart metadata "Script Time").
 INSTANT_FORMATS = tuple(fmt + "%z" for fmt in DATETIME_FORMATS)
 
 
@@ -39,7 +39,7 @@ def parse_local_datetime(value: str, timezone: str) -> datetime:
             continue
         local = known.astimezone(zone)
         if local.replace(tzinfo=None) != known.replace(tzinfo=None):
-            raise ValueError(f"--datetime 的 UTC 偏移与 {timezone} 在这一时刻的偏移不一致")
+            raise ValueError(f"--datetime UTC offset does not match {timezone} offset at this instant")
         return local
 
     for fmt in DATETIME_FORMATS:
@@ -57,12 +57,12 @@ def parse_local_datetime(value: str, timezone: str) -> datetime:
 
 
 def instant_text(dt_local: datetime) -> str:
-    """确定瞬间的文字写法（钟表时间带 UTC 偏移），后续脚本的 --datetime 照抄。"""
+    """Confirmed instant text format (wall-clock time with UTC offset)."""
     return dt_local.isoformat(sep=" ")
 
 
 def shift_seconds(dt_local: datetime, seconds: float) -> datetime:
-    """按绝对时间前后移动：钟表时间加减跨夏令时切换会落到不存在的时刻，或丢掉“第几次”。"""
+    """Shift forwards/backwards in absolute time across daylight saving transitions."""
     return (dt_local.astimezone(pytz.utc) + timedelta(seconds=seconds)).astimezone(dt_local.tzinfo)
 
 
@@ -71,7 +71,7 @@ def _seconds(dt_local: datetime) -> float:
 
 
 def _fold(dt_local: datetime):
-    """带时区的已知瞬间传 fold（夏令时回拨时消歧）；无时区的手填时刻不传，歧义照旧报错。"""
+    """Pass fold for aware instants; omit fold for naive manual inputs to raise on ambiguity."""
     return dt_local.fold if dt_local.tzinfo is not None else None
 
 
@@ -126,7 +126,7 @@ def calculate_prashna_chart(
         second=_seconds(dt_local),
         fold=_fold(dt_local),
     )
-    # 只改显示：Prashna 宫表按秒显示度数；经度本身就是 engine 的同一瞬间结果。
+    # Display formatting: Prashna house table displays degrees with seconds.
     chart["lagna"]["deg_str"] = _format_degree(chart["lagna"]["longitude"])
     for record in chart["planets"].values():
         record["deg_str"] = _format_degree(record["longitude"])

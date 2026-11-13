@@ -137,37 +137,37 @@ KP_OUTCOME_SCOPES = {
     "explicit-mutual-relationship": {
         "topic": "love-materialization",
         "supported": True,
-        "definition": "双方是否会建立明确确认并持续推进的恋爱关系",
+        "definition": "Whether both parties establish an explicit, committed, ongoing romantic partnership",
         "excluded_outcomes": (
-            "仅恢复联系",
-            "仅互动回暖",
-            "仅恢复暧昧",
-            "对方的秘密感受或意图",
+            "Contact resumption only",
+            "Atmosphere rewarming only",
+            "Ambiguity resumption only",
+            "Secret feelings or intentions of the other party",
         ),
     },
     "romantic-interaction-rewarming": {
         "topic": None,
         "supported": False,
-        "definition": "双方是否会恢复轻松、暧昧或升温的互动",
+        "definition": "Whether both parties resume relaxed, flirtatious, or warm interactions",
     },
     "romantic-contact-resumption": {
         "topic": None,
         "supported": False,
-        "definition": "双方是否会重新联系、回复或见面",
+        "definition": "Whether both parties re-establish contact, replies, or meetings",
     },
     "private-feelings-or-intent": {
         "topic": None,
         "supported": False,
-        "definition": "对方的秘密感受、想法或行动意图",
+        "definition": "Secret feelings, thoughts, or intentions of the other party",
     },
     "business-partnership-continuity": {
         "topic": "business-partnership-continuity",
         "supported": True,
-        "definition": "既有商业合作关系是否会延续",
+        "definition": "Whether existing commercial partnership will continue",
         "excluded_outcomes": (
-            "仅一次回复",
-            "对方的秘密意图",
-            "尚未建立的合作能否开始",
+            "Single reply only",
+            "Secret intentions of counterparty",
+            "Commencing unestablished partnership",
         ),
     },
 }
@@ -1331,12 +1331,12 @@ def compute(
     nirayana_asc = number_record["start_lon"]
     tropical_asc = (nirayana_asc + kp_ayanamsa) % 360.0
     obliquity = swe.calc_ut(jd, swe.ECL_NUT)[0][0]
-    # KP Readers 规定 Placidus 宫制；Placidus 在极圈内（|纬度| ≥ 90° − 黄赤交角）没有定义。
-    # 不换宫制顶替（那就不是 KP 了），明确不收。
+    # KP Readers mandate Placidus house system; Placidus is undefined within the polar circle (|lat| >= 90 - obliquity).
+    # Cannot substitute house systems without departing from KP; fail-closed.
     if abs(latitude) >= 90.0 - obliquity:
         raise ValueError(
-            f"判盘地纬度 {latitude:.4f}° 在极圈内（|纬度| ≥ {90.0 - obliquity:.2f}°），"
-            "KP 所用的 Placidus 宫制在此没有定义，KP 不收；可改用标准层"
+            f"Judgment latitude {latitude:.4f} deg is within polar circle (|lat| >= {90.0 - obliquity:.2f} deg). "
+            "Placidus house system used by KP is undefined here; KP fails closed; use standard layer instead."
         )
     armc = _solve_armc_for_asc(tropical_asc, latitude, obliquity)
     tropical_cusps = swe.houses_armc(armc, latitude, obliquity, b"P")[0]
@@ -1461,516 +1461,494 @@ def format_kp_section(data: dict) -> str:
     topic = data["topic_result"]
     timing = data["timing"]
     outcome_scope = data["outcome_scope"]
-    question_lines = [f"- 问题：{data['question']}"] if data.get("question") else []
+    question_lines = [f"- Question: {data['question']}"] if data.get("question") else []
     lines = [
-        "# KP Horary 独立栈（1–249）",
+        "# KP Horary Independent Stack (1–249)",
         "",
-        "> 本文件不属于 Parashari 标准盘，也不与标准结论拼票。",
-        f"> 当前状态：{data['production_status']}。",
+        "> This document is independent of the Parashari standard layer and does not vote with standard verdicts.",
+        f"> Current Status: {data['production_status']}.",
         "",
-        "## 输入与技术口径",
+        "## Input and Technical Parameters",
         "",
         *question_lines,
         (
-            f"- 可观察结果范围：**{outcome_scope['definition']}** "
-            f"（{outcome_scope['id']}）"
+            f"- Observable Outcome Scope: **{outcome_scope['definition']}** "
+            f"({outcome_scope['id']})"
         ),
         (
-            "- 本题型不回答："
-            + "、".join(outcome_scope.get("excluded_outcomes", ()))
+            "- Excluded from this question type: "
+            + "; ".join(outcome_scope.get("excluded_outcomes", ()))
         ),
-        f"- 判盘时刻：{data['judgment_time']}（{data['judgment_timezone']}）",
+        f"- Judgment Instant: {data['judgment_time']} ({data['judgment_timezone']})",
         (
-            f"- 判盘地点：{data['judgment_location']['latitude']}, "
+            f"- Judgment Location: {data['judgment_location']['latitude']}, "
             f"{data['judgment_location']['longitude']}"
         ),
-        f"- Horary number：**{data['number']}**",
+        f"- Horary Number: **{data['number']}**",
         (
-            f"- Number Asc：{data['number_segment']['sign']} "
-            f"{_format_degree(data['number_segment']['start_lon'])}；"
+            f"- Number Ascendant: {data['number_segment']['sign']} "
+            f"{_format_degree(data['number_segment']['start_lon'])}; "
             f"{data['number_segment']['star_lord']} star / "
             f"{data['number_segment']['sub_lord']} sub"
         ),
-        f"- Ayanamsa：{data['ayanamsa']['mode']}",
-        f"- House：{data['house_system']}",
-        f"- Node：{data['node_mode']}",
+        f"- Ayanamsa: {data['ayanamsa']['mode']}",
+        f"- House System: {data['house_system']}",
         "",
-        "## 题型专属 promise 检查",
+        "## Topic-Specific Promise Verification",
         "",
-        f"- 题型：**{topic['topic']}**",
-        f"- 判断 cusp：{topic['judgment_cusp']}",
-        f"- Cusp sub-lord：**{topic['cusp_sub_lord']}**",
+        f"- Topic: **{topic['topic']}**",
+        f"- Judgment Cusp: {topic['judgment_cusp']}",
+        f"- Cusp Sub-Lord: {topic['cusp_sub_lord']}",
         (
-            f"- Cusp sub-lord 所落 star lord："
-            f"**{topic['cusp_sub_lord_star_lord']}**"
+            f"- Cusp Sub-Lord Star Lord: "
+            f"{topic['cusp_sub_lord_star_lord']}"
         ),
-        f"- Star-lord significator houses：{topic['star_lord_signifies']}",
+        f"- Significator Houses: {topic['star_lord_signifies']}",
         (
-            f"- Position sub-lord：{topic['position_sub_lord']}；"
-            f"位于第 {topic['position_sub_lord_house']} 宫"
+            f"- Position Sub-Lord: {topic['position_sub_lord']} "
+            f"located in House {topic['position_sub_lord_house']}"
         ),
-        f"- 正向命中：{topic['positive_hits']}",
-        f"- 反向命中：{topic['negative_hits']}",
+        f"- Positive House Hits: {topic['positive_hits']}",
+        f"- Negative House Hits: {topic['negative_hits']}",
         (
-            "- 正向条件："
+            "- Positive Condition: "
             f"{topic['positive_condition']['match']} "
-            f"{topic['positive_condition']['required_houses']}；"
+            f"{topic['positive_condition']['required_houses']}; "
             f"met={topic['positive_condition']['met']}"
         ),
         (
-            "- 反向条件："
+            "- Negative Condition: "
             f"{topic['negative_condition']['match']} "
-            f"{topic['negative_condition']['required_houses']}；"
+            f"{topic['negative_condition']['required_houses']}; "
             f"met={topic['negative_condition']['met']}"
         ),
-        f"- 方向状态：{topic['directional_status']}",
+        f"- Directional Status: {topic['directional_status']}",
         (
-            f"- 逆行 materialization gate："
-            f"{topic['retrograde_gate']['status']}"
-            + (
-                f"（{topic['retrograde_gate']['blocked_by']}）"
-                if topic["retrograde_gate"]["blocked_by"]
-                else ""
-            )
+            f"- Retrograde Materialization Gate: "
+            f"{topic['retrograde_gate']['status']} "
+            f"({topic['retrograde_gate']['retrograde_planets']})"
         ),
         (
-            "- Node agency 完整性："
+            "- Node Agency Completeness: "
             + (
-                "不完整；合相／相位代理未启用，本题失败关闭"
+                "Incomplete; conjunction/aspect agency not enabled, fails closed"
                 if topic["node_agency_incomplete"]
-                else "本题 operative promise 路径未穿过 node agency"
+                else "Operative promise path does not traverse node agency"
             )
         ),
-        f"- 机械状态：**{topic['status']}**",
-        f"- 来源规则：{topic['source_rule']}",
+        f"- Mechanical Status: **{topic['status']}**",
+        f"- Source Rule: {topic['source_rule']}",
         "",
-        "## 12 Cusps",
+        "## Cusps Table (1–12)",
         "",
-        "| 宫 | 位置 | Sign | Star lord | Sub lord | 最近 sub 边界 |",
-        "|---|---|---|---|---|---|",
+        "| House | Longitude | Sign | Star Lord | Sub Lord | Nearest Sub Boundary |",
+        "|---:|---|---|---|---|---|",
     ]
-    for cusp in data["house_cusps"]:
+    for cusp in data["cusps"]:
+        nearest = cusp["sub_boundary_distance"]
+        nearest_str = f"{nearest['minutes_to_boundary']:.2f}' to {nearest['direction']}"
         lines.append(
-            f"| {cusp['house']} | {cusp['position']} | {cusp['sign']} | "
-            f"{cusp['star_lord']} | **{cusp['sub_lord']}** | "
-            f"{cusp['boundary_distance_arcmin']['sub']:.2f}' |"
+            f"| {cusp['house']} | {_format_degree(cusp['longitude'])} | "
+            f"{cusp['sign']} | {cusp['star_lord']} | {cusp['sub_lord']} | {nearest_str} |"
         )
-
     lines.extend(
         [
             "",
-            "## Ruling Planets",
+            "## Ruling Planets Audit",
+            "",
+            f"- Day Lord (from sunrise): "
+            f"{data['ruling_planets']['day_rule']['day_lord']} (day shifts at local sunrise)",
+            (
+                "- Accepted: "
+                + " / ".join(data["ruling_planets"]["accepted_planets"])
+                or "None"
+            ),
+            (
+                "- Filtered out by retrograde star lord: "
+                + " / ".join(data["ruling_planets"]["filtered_out_by_star_lord_retrograde"])
+                or "None"
+            ),
+            "- Node Retrograde Policy: Natural retrograde motion of Rahu/Ketu does not trigger star-lord elimination.",
+            "- Node Agent: Star lord and sign lord enabled per Reader VI sequence; conjunction/aspect slots fail closed due to undefined classical orb.",
+            "",
+            "## Boundaries and Timing",
             "",
             (
-                f"- Day lord：{data['ruling_planets']['day_rule']['effective_weekday']} / "
-                f"{data['ruling_planets']['day_rule']['day_lord']}；按当地日出换日"
-            ),
-            "- 接受："
-            + (
-                " / ".join(item["planet"] for item in data["ruling_planets"]["accepted"])
-                or "无"
-            ),
-            "- 因逆行星宿主过滤："
-            + (
-                " / ".join(item["planet"] for item in data["ruling_planets"]["rejected"])
-                or "无"
-            ),
-            "- Node 逆行政策：Rahu/Ketu 的正常逆向运动不触发 star-lord 剔除。",
-            (
-                "- Node agent：星宿主与星座主按 Reader VI 次序启用；"
-                "合相／相位槽因原典未给 node orb 而失败关闭。"
-            ),
-            "",
-            "## 边界与 Timing",
-            "",
-            (
-                f"- True Citra 与 KP ayanamsa 差值："
-                f"{data['ayanamsa']['true_citra_difference_arcmin']:.3f}'"
+                f"- Difference between True Chitra and KP ayanamsa: "
+                f"{data['ayanamsa']['difference_arcmin']:.3f}'"
             ),
             (
-                "- 5′ 内敏感点："
-                + (
-                    " / ".join(
-                        item["name"] for item in data["sensitivity"]["sensitive_points"]
-                    )
-                    or "无"
-                )
+                "- Sensitive points within 5': "
+                + " / ".join(item["name"] for item in data["sensitivity"]["sensitive_points"])
+                or "None"
             ),
-            f"- Timing 状态：**{timing['status']}**",
+            f"- Timing Status: **{timing['status']}**",
             (
-                "- Horary Moon 当前链："
+                "- Horary Moon Current Chain: "
                 + " / ".join(
                     f"{item['level']}={item['lord']}"
                     for item in timing["moon_periods"]["current"]
                 )
             ),
             (
-                "- Event significators ∩ Ruling Planets："
-                + ("/".join(timing["period_lords"]) or "无")
+                "- Significator and Ruling Planets Intersection: "
+                + ("/".join(timing["period_lords"]) or "None")
             ),
             (
-                "- 四级 period 候选："
+                "- Four-level Period Candidates: "
                 + (
-                    "；".join(
+                    "; ".join(
                         (
-                            f"{item['mahadasha']}-"
-                            f"{item['bhukti']}-"
-                            f"{item['antara']}-"
-                            f"{item['shookshma']} "
-                            f"{item['start']} → {item['end']}"
+                            f"{item['mahadasha']}-{item['bhukti']}-"
+                            f"{item['antara']}-{item['shookshma']} "
+                            f"{item['start']} -> {item['end']}"
                         )
                         for item in timing["period_candidates"][:3]
                     )
-                    or "无"
+                    or "None"
                 )
             ),
             (
-                "- 过运候选："
+                "- Transit Candidates: "
                 + (
                     f"{timing['transit']['scale_planet']} "
-                    f"{timing['transit']['entry']}"
+                    f"into {timing['transit']['sign']} "
+                    f"({timing['transit']['entry']}); "
+                    f"RP={timing['transit']['sign_lord_is_rp']}"
                     if timing["transit"]["status"] == "candidate"
                     else timing["transit"]["status"]
                 )
             ),
             (
-                "- Timing 体系边界：独立使用 horary Moon balance、"
-                "RP 交集与 Moon/Sun/Jupiter 分层；不得借用标准层 Moon "
-                "ingress 或 natal Dasha。"
+                "- Timing Authority Boundary: Independently utilizes horary Moon balance, "
+                "RP intersection, and Moon/Sun/Jupiter stratification; does not borrow standard Moon "
+                "ingress or natal Dasha."
             ),
         ]
     )
-    return "\n".join(lines) + "\n"
-
-
-def format_kp_judgment(data: dict) -> str:
+    return "\n".join(lines) + "\n\n\n"def format_kp_judgment(data: dict) -> str:
     """Render a human-readable judgment without merging KP into Parashari."""
     topic = data["topic_result"]
     timing = data["timing"]
     outcome_scope = data["outcome_scope"]
     topic_language = {
         "love-materialization": {
-            "name": "关系能否从互动状态落实为明确关系",
+            "name": "Whether romantic interaction materializes into an explicit relationship",
             "positive_requirement": (
-                "明确伙伴关系与期待结果两项条件必须同时成立"
+                "Both explicit partnership and desired outcome conditions must be met simultaneously"
             ),
             "negative_requirement": (
-                "分歧摩擦或疏离退出任一条件成立即构成否定"
+                "Either discord/friction or withdrawal/separation constitutes a negative verdict"
             ),
             "positive": {
-                7: "关系有走向明确伙伴关系的条件",
-                11: "期待的关系结果有实现条件",
+                7: "Conditions support establishing explicit partnership",
+                11: "Conditions support achieving the desired relationship outcome",
             },
             "negative": {
-                6: "分歧、摩擦或不对等会妨碍关系落实",
-                12: "疏离、退出或消耗会妨碍关系落实",
+                6: "Disagreements, friction, or disparity obstruct materialization",
+                12: "Estrangement, withdrawal, or depletion obstruct materialization",
             },
         },
         "business-partnership-continuity": {
-            "name": "合作关系能否继续",
+            "name": "Whether business partnership can continue",
             "positive_requirement": (
-                "继续投入或合作收益任一条件成立即可构成正向"
+                "Continued commitment or partnership returns constitutes a positive indication"
             ),
             "negative_requirement": (
-                "责任冲突或退出终止任一条件成立即构成否定"
+                "Liability conflicts or withdrawal/termination constitutes a negative indication"
             ),
             "positive": {
-                5: "合作仍有继续投入和维系的条件",
-                11: "合作目标仍有实现和收益条件",
+                5: "Conditions support continued investment and maintenance of partnership",
+                11: "Conditions support realizing partnership objectives and returns",
             },
             "negative": {
-                6: "争议、竞争或责任冲突会妨碍合作继续",
-                12: "退出、损耗或终止条件会妨碍合作继续",
+                6: "Disputes, competition, or liability conflicts obstruct continuation",
+                12: "Withdrawal, attrition, or termination conditions obstruct continuation",
             },
         },
     }[topic["topic"]]
     status_labels = {
-        "promised_candidate": "正向落实候选",
-        "denied_candidate": "反向／否定候选",
-        "mixed": "混合",
-        "unsupported": "当前题型未取得承诺",
-        "positive_indication_blocked": "正向候选暂时受逆行门阻塞",
-        "negative_indication_blocked": "反向候选暂时受逆行门阻塞",
-        "mixed_with_retrograde_block": "混合且受逆行门阻塞",
-        "incomplete_node_agency": "Node 代理链不完整，失败关闭",
+        "promised_candidate": "Positive Materialization Candidate",
+        "denied_candidate": "Negative / Denied Candidate",
+        "mixed": "Mixed",
+        "unsupported": "Query Type Not Promising Under Rules",
+        "positive_indication_blocked": "Positive candidate temporarily blocked by retrograde gate",
+        "negative_indication_blocked": "Negative candidate temporarily blocked by retrograde gate",
+        "mixed_with_retrograde_block": "Mixed and blocked by retrograde gate",
+        "incomplete_node_agency": "Node agency chain incomplete; fails closed",
     }
     directional_labels = {
-        "positive_only": "完整正向条件成立，明确否定条件未成立",
-        "negative_only": "完整正向条件未成立，明确否定条件成立",
-        "mixed": "正向与反向完整条件同时成立",
-        "unsupported": "正向与反向完整条件均未成立",
+        "positive_only": "Full positive condition met, explicit negative condition not met",
+        "negative_only": "Full positive condition not met, explicit negative condition met",
+        "mixed": "Both positive and negative full conditions met",
+        "unsupported": "Neither positive nor negative full conditions met",
     }
-    positive = "、".join(map(str, topic["positive_hits"])) or "无"
-    negative = "、".join(map(str, topic["negative_hits"])) or "无"
-    positive_meanings = "；".join(
+    positive = " / ".join(map(str, topic["positive_hits"])) or "None"
+    negative = " / ".join(map(str, topic["negative_hits"])) or "None"
+    positive_meanings = "; ".join(
         topic_language["positive"][house] for house in topic["positive_hits"]
-    ) or "没有命中支持结果落实的条件"
-    negative_meanings = "；".join(
+    ) or "No conditions supporting outcome materialization were hit"
+    negative_meanings = "; ".join(
         topic_language["negative"][house] for house in topic["negative_hits"]
-    ) or "没有命中阻碍结果落实的条件"
+    ) or "No conditions obstructing outcome materialization were hit"
     positive_condition_met = topic["positive_condition"]["met"]
     negative_condition_met = topic["negative_condition"]["met"]
     positive_condition_text = (
-        "已完整成立" if positive_condition_met else "未完整成立"
+        "Fully Met" if positive_condition_met else "Not Fully Met"
     )
     negative_condition_text = (
-        "已成立" if negative_condition_met else "未成立"
+        "Met" if negative_condition_met else "Not Met"
     )
     sensitive = " / ".join(
         item["name"] for item in data["sensitivity"]["sensitive_points"]
-    ) or "无"
+    ) or "None"
     accepted_ruling_planets = (
-        " / ".join(timing["accepted_ruling_planets"]) or "无"
+        " / ".join(timing["accepted_ruling_planets"]) or "None"
     )
-    period_candidates = "；".join(
+    period_candidates = "; ".join(
         (
             f"{item['mahadasha']}-{item['bhukti']}-"
             f"{item['antara']}-{item['shookshma']} "
-            f"{item['start']} → {item['end']}"
+            f"{item['start']} -> {item['end']}"
         )
         for item in timing["period_candidates"][:3]
-    ) or "无"
+    ) or "None"
     transit = timing["transit"]
     transit_reading = (
-        f"{transit['scale_planet']} 于 {transit['entry']} 进入候选区间"
+        f"{transit['scale_planet']} entered candidate window at {transit['entry']}"
         if transit["status"] == "candidate"
         else transit["status"]
     )
     timing_boundary = (
-        "当前同时取得正向 promise、四级 period 与过运入口；只作为 KP "
-        "实验栈候选，不是标准层日期。"
+        "Positive promise, four-level period, and transit entry all satisfied simultaneously; "
+        "operates strictly as a KP experimental stack candidate, not a standard-layer date."
         if timing["status"] == "candidate"
         else (
-            "当前未满足 KP 事件日期的全部授权条件；不得由模型补造或借用"
-            "其他栈日期。"
+            "KP event timing conditions are not fully authorized for this chart; "
+            "do not improvise dates or borrow from other stacks."
         )
     )
     plain_status = {
         "promised_candidate": (
-            "当前偏向落实。题型要求的完整正向条件成立，明确否定条件未成立；"
-            "这是方向判断，不是百分之百保证。"
+            "Currently trending towards materialization. Full positive conditions met, explicit negative conditions unmet; "
+            "this is a directional assessment, not a 100% guarantee."
         ),
         "denied_candidate": (
-            "当前偏向不落实。题型要求的完整正向条件没有成立，而至少一个明确"
-            "否定条件已经成立。"
+            "Currently trending against materialization. Full positive conditions unmet, and at least one explicit "
+            "negative condition has been satisfied."
         ),
         "mixed": (
-            "这套 KP 规则目前无法裁决：原典要求的完整正向条件与明确否定条件"
-            "同时成立，但当前题型没有来源支持的优先裁决规则。"
+            "Rules cannot currently resolve: both full positive and negative conditions are met, "
+            "and classical texts provide no priority rule for this question type."
         ),
         "unsupported": (
-            "这套 KP 规则目前无法判断：完整正向条件没有成立，明确否定条件也"
-            "没有成立。"
+            "Rules cannot currently determine: neither positive nor negative full conditions are met."
         ),
         "positive_indication_blocked": (
-            "方向本来偏向落实，但关键行星仍处于临时逆行阻塞中；现在不能把"
-            "正向条件当成已经能够落实。"
+            "Direction originally favored materialization, but key planets remain under temporary retrograde block; "
+            "positive conditions cannot yet be treated as capable of landing."
         ),
         "negative_indication_blocked": (
-            "方向本来偏向不落实，但相关负向结果也被临时逆行阻塞；这不自动"
-            "转成正面，只表示当前负向结果尚未落实。"
+            "Direction originally disfavored materialization, but negative outcome is also temporarily blocked by retrogradation; "
+            "this does not turn it positive, but indicates the negative event has not landed."
         ),
         "mixed_with_retrograde_block": (
-            "完整正向条件和明确否定条件同时成立，且关键行星还有临时逆行"
-            "阻塞；原典没有提供当前题型的优先裁决规则。"
+            "Both positive and negative conditions met, with key planets additionally blocked by retrogradation; "
+            "no priority rule available."
         ),
         "incomplete_node_agency": (
-            "关键判断链经过 Rahu／Ketu，而原典没有给足合相与相位所需的 node orb。"
-            "为了避免自造规则，本盘在这里停止，不能宣布成或不成。"
+            "Critical judgment chain traverses Rahu/Ketu, while classical texts omit required node orbs. "
+            "To avoid inventing rules, evaluation halts here without declaring yes or no."
         ),
     }[topic["status"]]
     plain_timing = {
         "candidate": (
-            "KP 同时找到了正向结果、四级时间周期和过运入口；下面的时间只能作为"
-            "候选窗口，不能当成保证日期。"
+            "KP identifies a positive outcome, four-level period, and transit entry; "
+            "the timing below represents a candidate window, not a guarantee."
         ),
         "blocked_node_agency": (
-            "关键链经过尚未闭合的 Rahu／Ketu 代理规则，因此不允许给日期。"
+            "Critical chain traverses unclosed Rahu/Ketu agency rules; timing output disabled."
         ),
         "blocked_temporary_retrograde": (
-            "关键行星的临时逆行阻塞尚未解除，因此不允许给日期。"
+            "Key planet retrograde block has not lifted; timing output disabled."
         ),
         "not_authorized_without_positive_promise": (
-            "结果本身不是单纯正向，所以 KP 规则不允许继续推算发生日期。"
+            "Outcome is not purely positive; KP rules do not permit calculating timing."
         ),
         "no_rp_significator_intersection": (
-            "主宰行星与事件行星没有交集，因此没有可用的时间主星。"
+            "No intersection between ruling planets and significators; no ruling period lord available."
         ),
         "no_four_level_period_within_horizon": (
-            "在当前搜索范围内没有找到四级时间主星都吻合的周期。"
+            "No four-level period matching all ruling lords was found within search horizon."
         ),
         "period_candidate_without_transit_entry": (
-            "找到了时间周期，但没有找到对应的过运入口，因此不能落到日期。"
+            "Period candidate found, but no matching transit entry; cannot pinpoint date."
         ),
     }[timing["status"]]
     reason = {
         "promised_candidate": (
-            f"{topic_language['positive_requirement']}，本盘{positive_condition_text}；"
-            f"{topic_language['negative_requirement']}，本盘{negative_condition_text}。"
+            f"{topic_language['positive_requirement']}: this chart {positive_condition_text}; "
+            f"{topic_language['negative_requirement']}: this chart {negative_condition_text}."
         ),
         "denied_candidate": (
-            f"{topic_language['positive_requirement']}，本盘{positive_condition_text}；"
-            f"{topic_language['negative_requirement']}，本盘{negative_condition_text}。"
+            f"{topic_language['positive_requirement']}: this chart {positive_condition_text}; "
+            f"{topic_language['negative_requirement']}: this chart {negative_condition_text}."
         ),
         "mixed": (
-            "完整正向条件和明确否定条件都成立；现有来源没有规定哪一边优先。"
+            "Both positive and negative full conditions are met; classical sources specify no priority."
         ),
         "unsupported": (
-            "完整正向条件与明确否定条件都未成立，所以不能硬选正面或负面。"
+            "Neither positive nor negative full conditions are met; no definitive direction can be forced."
         ),
         "positive_indication_blocked": (
-            "完整正向条件成立、明确否定条件未成立，但落实门仍被临时逆行阻塞。"
+            "Positive conditions met, negative conditions unmet, but gate is temporarily blocked by retrogradation."
         ),
         "negative_indication_blocked": (
-            "完整正向条件未成立、明确否定条件成立，但负向落实门也被临时逆行阻塞。"
+            "Positive conditions unmet, negative conditions met, but negative gate is also temporarily blocked by retrogradation."
         ),
         "mixed_with_retrograde_block": (
-            "完整正向与明确否定条件都成立，且落实门仍被临时逆行阻塞。"
+            "Both conditions met, and materialization gate remains blocked by retrogradation."
         ),
         "incomplete_node_agency": (
-            "关键链穿过原典未给足参数的节点代理；为了不自造规则，判断在此停止。"
+            "Critical chain traverses node agency without sufficient classical parameters; halts to avoid rule invention."
         ),
     }[topic["status"]]
     reality = {
         "promised_candidate": positive_meanings,
         "denied_candidate": negative_meanings,
         "mixed": (
-            "不能把任何一边写成优先结果；这不是“有机会也有阻力”，而是规则"
-            "本身在此缺少裁决条款"
+            "Neither side can be declared primary; the rules lack an authorized resolution clause here."
         ),
         "unsupported": (
-            "当前证据不足以产生方向；部分命中不等于完整正向条件"
+            "Evidence is insufficient to yield a directional verdict; partial hits do not satisfy full conditions."
         ),
         "positive_indication_blocked": (
-            f"{positive_meanings}，但目前尚不能视为已经能够落地"
+            f"{positive_meanings}, but cannot yet be regarded as capable of landing."
         ),
         "negative_indication_blocked": (
-            f"{negative_meanings}，但目前尚不能视为负向结果已经落地"
+            f"{negative_meanings}, but negative outcome has not yet landed."
         ),
         "mixed_with_retrograde_block": (
-            "既无优先裁决规则，落实门又未放行，因此不能给确定方向"
+            "No priority rule exists, and materialization gates remain blocked."
         ),
         "incomplete_node_agency": (
-            "当前没有权限输出成或不成；补齐来源前保持失败关闭"
+            "No authority to declare outcome; remains failed-closed pending primary sources."
         ),
     }[topic["status"]]
     lines = [
-        f"# KP 独立判读单（研究验证版）：{data.get('question', '未附问题')}",
+        f"# KP Independent Reading Sheet (Research Validation): {data.get('question', 'No Question Attached')}",
         "",
-        "## 一、先说人话",
+        "## 1. Summary",
         "",
-        f"**当前偏向**：{plain_status}",
+        f"**Current Trend**: {plain_status}",
         "",
-        f"**关键理由**：{reason}",
+        f"**Key Rationale**: {reason}",
         "",
-        f"**现实含义**：{reality}。",
+        f"**Practical Meaning**: {reality}.",
         "",
-        f"**能否给时间**：{plain_timing}",
+        f"**Timing Availability**: {plain_timing}",
         "",
         (
-            f"**范围**：本盘只回答“{outcome_scope['definition']}”，不回答"
-            + "、".join(outcome_scope.get("excluded_outcomes", ()))
-            + "。"
+            f"**Scope**: This chart addresses only '{outcome_scope['definition']}', excluding: "
+            + "; ".join(outcome_scope.get("excluded_outcomes", ()))
+            + "."
         ),
         "",
         (
-            "**怎样使用这个结果**：它只回答 KP 这套规则本身，不和标准层或 "
-            "Tajika 投票，也不能用英文状态码代替现实判断。"
+            "**Usage Guidelines**: Answers strictly according to KP rules; does not vote with standard layer or Tajika."
         ),
         "",
-        "## 二、这张盘使用了什么",
+        "## 2. Input Configuration",
         "",
-        f"- 判盘时刻：{data['judgment_time']}（{data['judgment_timezone']}）",
+        f"- Judgment Instant: {data['judgment_time']} ({data['judgment_timezone']})",
         (
-            f"- 判盘地点：{data['judgment_location']['latitude']}, "
+            f"- Judgment Location: {data['judgment_location']['latitude']}, "
             f"{data['judgment_location']['longitude']}"
         ),
-        f"- 用户给出的 Horary number：{data['number']}",
-        f"- 问题类型：{topic_language['name']}",
-        f"- 用户确认的可观察结果：{outcome_scope['definition']}",
+        f"- Horary Number: {data['number']}",
+        f"- Question Type: {topic_language['name']}",
+        f"- Confirmed Observable Outcome: {outcome_scope['definition']}",
         "",
-        "## 三、为什么会得到这个结论",
+        "## 3. Rationale Breakdown",
         "",
         (
-            f"- 正向条件：{positive_condition_text}。{positive_meanings}。"
+            f"- Positive Conditions: {positive_condition_text}. {positive_meanings}."
         ),
         (
-            f"- 否定条件：{negative_condition_text}。{negative_meanings}。"
+            f"- Negative Conditions: {negative_condition_text}. {negative_meanings}."
         ),
-        f"- 裁决理由：{reason}",
+        f"- Adjudication Rationale: {reason}",
         (
-            "- 这里判断的是“能否落实”，不是推测对方的秘密想法，"
-            "也不是用一次短暂回暖代替稳定结果。"
-        ),
-        "",
-        "## 四、时间为什么能算或不能算",
-        "",
-        f"- 当前时间结论：{plain_timing}",
-        (
-            "- 只有结果先呈现单纯正向，且逆行、节点代理、时间周期和过运"
-            "条件全部通过，才允许显示候选时间。"
+            "- Evaluates concrete materialization, not private thoughts or fleeting moods."
         ),
         "",
-        "## 五、技术附录（可以跳过）",
+        "## 4. Timing Evaluation",
         "",
-        f"- 原始题型：{topic['topic']}",
-        f"- 结果范围 ID：{outcome_scope['id']}",
-        f"- 判断 cusp：{topic['judgment_cusp']}",
-        f"- Cusp sub-lord：{topic['cusp_sub_lord']}",
-        f"- Star lord：{topic['cusp_sub_lord_star_lord']}",
-        f"- 支持宫命中：{positive}",
-        f"- 阻碍宫命中：{negative}",
+        f"- Timing Conclusion: {plain_timing}",
         (
-            "- 正向条件："
+            "- Candidate timing is shown only when the outcome is purely positive and retrogradation, node agency, period, and transit criteria all pass."
+        ),
+        "",
+        "## 5. Technical Appendix",
+        "",
+        f"- Original Topic: {topic['topic']}",
+        f"- Outcome Scope ID: {outcome_scope['id']}",
+        f"- Judgment Cusp: {topic['judgment_cusp']}",
+        f"- Cusp Sub-Lord: {topic['cusp_sub_lord']}",
+        f"- Star Lord: {topic['cusp_sub_lord_star_lord']}",
+        f"- Supporting House Hits: {positive}",
+        f"- Obstructing House Hits: {negative}",
+        (
+            "- Positive Condition: "
             f"{topic['positive_condition']['match']} "
-            f"{topic['positive_condition']['required_houses']}；"
+            f"{topic['positive_condition']['required_houses']}; "
             f"met={topic['positive_condition']['met']}"
         ),
         (
-            "- 反向条件："
+            "- Negative Condition: "
             f"{topic['negative_condition']['match']} "
-            f"{topic['negative_condition']['required_houses']}；"
+            f"{topic['negative_condition']['required_houses']}; "
             f"met={topic['negative_condition']['met']}"
         ),
-        f"- 原始机械状态：{topic['status']}",
-        f"- 原始方向状态：{topic['directional_status']}",
+        f"- Mechanical Status: {topic['status']}",
+        f"- Directional Status: {topic['directional_status']}",
         (
-            f"- 状态翻译：{status_labels.get(topic['status'], topic['status'])}；"
+            f"- Status Translation: {status_labels.get(topic['status'], topic['status'])}; "
             f"{directional_labels.get(topic['directional_status'], topic['directional_status'])}"
         ),
-        f"- Star-lord significator houses：{topic['star_lord_signifies']}",
-        f"- 来源规则：{topic['source_rule']}",
-        f"- Temporary retrograde gate：{topic['retrograde_gate']['status']}",
+        f"- Star-lord Significator Houses: {topic['star_lord_signifies']}",
+        f"- Source Rule: {topic['source_rule']}",
+        f"- Temporary Retrograde Gate: {topic['retrograde_gate']['status']}",
         (
-            "- Rahu／Ketu 规则完整性："
+            "- Rahu/Ketu Rule Completeness: "
             + (
-                "关键路径经过未闭合的 node 接触代理，已停止推断"
+                "Critical path traverses unclosed node contact agency; inference halted"
                 if topic["node_agency_incomplete"]
-                else "本题关键路径未经过当前 node 缺口"
+                else "Critical path does not traverse unclosed node agency"
             )
         ),
-        f"- Timing 原始状态：{timing['status']}",
+        f"- Timing Mechanical Status: {timing['status']}",
         (
-            "- 当前四级时间链："
+            "- Four-level Period Chain: "
             + " / ".join(
                 f"{item['level']}={item['lord']}"
                 for item in timing["moon_periods"]["current"]
             )
         ),
         (
-            "- 事件行星与主宰行星交集："
-            + ("/".join(timing["period_lords"]) or "无")
+            "- Event Lords and Ruling Lords Intersection: "
+            + ("/".join(timing["period_lords"]) or "None")
         ),
-        f"- 已接受的主宰行星：{accepted_ruling_planets}",
-        f"- 四级周期候选：{period_candidates}",
-        f"- 过运入口：{transit_reading}",
-        f"- 5′ 内敏感点：{sensitive}",
+        f"- Accepted Ruling Planets: {accepted_ruling_planets}",
+        f"- Four-level Period Candidates: {period_candidates}",
+        f"- Transit Entry: {transit_reading}",
+        f"- Sensitive Points within 5': {sensitive}",
         f"- {timing_boundary}",
         (
-            "- 本判读单只解释 KP 1–249 结果。它不读取或修改 "
-            "structured_prashna.md，也不把 KP 状态换算为标准层内部三档（偏成／持平／偏不成）。"
+            "- This sheet interprets KP 1–249 horary results independently. It does not modify "
+            "structured_prashna.md nor translate KP states into standard internal tiers (Favorable / Balanced / Unfavorable)."
         ),
-        f"- 研究验证状态：{data['production_status']}。",
+        f"- Research Validation Status: {data['production_status']}.",
     ]
     return "\n".join(lines) + "\n"
 

@@ -38,7 +38,7 @@ firewall without inventing the missing procedure.
   the same chart structure and weigh each group once.
 - Settle with the main-line judgment, a one-time runner-up advocacy, a
   confidence level, and the decisive or most discriminating items, as the
-  skill's "每层统一流程" requires. The reference score is shown; if it runs
+  skill's "unified layer workflow" requires. The reference score is shown; if it runs
   opposite to the judgment, state why.
 - Only decisive opposing evidence (user-confirmed objective fact or dated
   event that one candidate strongly predicts and the other predicts the

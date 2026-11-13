@@ -1,195 +1,165 @@
-# Prashna 宫义、星义与关键词库
+# Prashna House Meanings, Planetary Significations, and Keyword Lexicon
 
-> **用途**：取象与叙述的唯一含义来源。拆题时查行动者与关键词对应哪一宫、哪颗星（第 5、6 节），按问题读影响（第 7 节），
-> 判断连没连上（第 8 节）与限定语成不成立（第 9 节）；写判读单时查宫义、星义、星座性质（第 2–4 节）。
+> **Purpose**: The sole semantic source for symbolic extraction and narrative interpretation. Use when decomposing queries to map actors and keywords to specific houses and planets (§5, §6), evaluating their influence according to the query's nature (§7), determining connection status (§8), and verifying qualifiers (§9); use when writing judgment sheets to inspect house significations, planetary meanings, and sign characteristics (§2–§4).
 >
-> **权限**：本文件不计分、不改档。含义只有被判定脚本的规则调用时才影响结论（能力层按需减项、类比偈语境检验、限定语检验，
-> `judgment-rubric.md`）；其余只进叙述。
+> **Authority**: This file does not score points and does not alter outcome tiers independently. Meanings influence conclusions only when invoked by rules within the judgment script (e.g. contextual exceptions in the ability layer, context filtering for analogical verses, qualifier verification per `judgment-rubric.md`); otherwise, they enter narrative explanation only.
 >
-> **来源纪律**：只取印度本土典籍。第 2 层译文正式引用前须对校印本（见各格标注）。西方现代占星不作来源；现代说法只能作为
-> 第 1、2 层条目的白话举例。
+> **Classical Sourcing**: Sourced strictly from classical Indian authorities. Sourcing from Western modern astrology is prohibited; modern phrasing is used only as plain-English explanatory examples for Classical Tier 1 and Tier 2 entries.
 
 ---
 
-## 1. 三层来源
+## 1. Three Source Tiers
 
-| 层 | 来源 | 用法 |
+| Tier | Source | Application |
 |---|---|---|
-| 第 1 层：即时盘专用 | *Prasna Marga* XIV.3–14（十二宫所主）、XIV.20–22（外名、内名、身体部位）、XIV.12 与 XIV.118–120（公开与隐蔽）、XXVII.15–16（12 宫与睡眠、床榻）、XXVIII（交合专章：7 宫、暗处、在家在外） | 即时盘叙述与限定语检验优先用 |
-| 第 2 层：Parashari 本命经典 | *Brihat Parashara Hora Shastra* 11.8、11.9、11.13（网上梵文与逐词释义已核，待对 Santhanam 译本）；*Phaladeepika* 1.13–1.18（梵文转录本已核，有 OCR 错误，待对 Kapoor 或 Sareen 印本） | 问题性质与宫义对上时作"应象"；不覆盖第 1 层 |
-| 第 3 层：现代或西方说法 | — | 不作来源，只作白话举例 |
+| Tier 1: Horary Specific | *Prasna Marga* XIV.3–14 (12 house rulerships), XIV.20–22 (external names, internal names, body parts), XIV.12 & XIV.118–120 (public vs concealed), XXVII.15–16 (12th house, sleep, couch), XXVIII (union chapter: 7th house, privacy, domestic vs foreign) | Prioritized for Horary narrative and qualifier verification |
+| Tier 2: Parashari Natal Classical | *Brihat Parashara Hora Shastra* 11.8, 11.9, 11.13; *Phaladeepika* 1.13–1.18 | Applied as symbolic manifestations when question aligns; does not override Tier 1 |
+| Tier 3: Modern Explanations | — | Never treated as authority; used solely as plain-language examples |
 
-两层读法冲突时，判读单并列写出各自出处，不择一。同一主题跨多宫时并列列出，不只取一宫。
+When readings from different tiers diverge, list both citations side-by-side in the judgment sheet. When a theme spans multiple houses, present all relevant houses rather than arbitrarily selecting only one.
 
 ---
 
-## 2. 十二宫
+## 2. The Twelve Houses
 
-宫与本宫主有连接（本宫主落本宫或照本宫）时，读内名那一层（`M-XIV.21`）；否则读外名那一层。内名的白话取同宫 PM 释义（Raman 注只明释
-Pratibha＝智力，其余不另加含义）。
+When a house is connected with its own lord (lord occupying or aspecting its own house), read its internal name layer (`M-XIV.21`); otherwise, read its external name layer.
 
-| 宫 | 外名／内名 | 第 1 层（即时盘） | 第 2 层（本命经典） |
+| House | External / Internal Name | Tier 1 (Horary Specific) | Tier 2 (Natal Classical) |
 |---:|---|---|---|
-| 1 | Thanu／Kala | 身体、形貌、健康、气力、福祉、名声、一般安乐、**一切事业之成**（XIV.3）；提问人（XIV.24） | — |
-| 2 | Kutumba／Swa | 家庭、财富、**言语**、右眼、一切学识（XIV.4） | — |
-| 3 | Sahotta／Vikrama | **勇气、活力**、邪念、兄弟、右耳、**帮助**（XIV.5） | — |
-| 4 | Bandhu／Gruha | 母亲、亲属、住宅房产、安乐、车乘、**床榻**、人望、水、牛群、出生之屋（XIV.6）；Moon 落 4 宫主事在暗处（XXVIII.19） | bandhu 亲眷（*Phaladeepika* 1.18） |
-| 5 | Putra／Pratibha | 智力、审慎、记忆、判断、前世功德、谋议之能、大臣、子女、心境（XIV.7） | — |
-| 6 | Ari／Kshata | 盗贼、敌人、阻碍、忧虑、疾病、伤、因敌或兵器致死（XIV.8） | 债、兵器、盗、伤、病、敌、族人、争斗、恶行、恐惧、受辱（*Phaladeepika* 1.13 前半） |
-| 7 | Patni／Chitotta | 婚姻、**情欲**、配偶、**一般人际往来**、**床榻**、配偶出生地、**失物与隐藏之物、两性关系**（XIV.9）；交合之事、与谁、情愿与否（XXVIII.1–3、6） | 妻、出行、贸易、寻找失物、死（BPHS 11.8）；cittottha（情欲）、mada（情热）、kāma（欲）、夫、妻、道路（*Phaladeepika* 1.13 后半） |
-| 8 | Marana／Randhra | 一切之毁坏、危险、**恶名**、死因死处、仆从、外屋、慢性病、**阻碍**（XIV.10）；内名 **Randhra（孔隙、暗处的破绽）**（XIV.20）；**隐私部位**（XIV.22） | 寿数、争战、敌人、要塞、亡者之财（遗产）、身后去向（BPHS 11.9）；māṅgalya（婚姻存续）、randhra、malina（污浊）、ādhi（忧苦）、parābhava（受辱）、kleśa（苦）、apavāda（丑闻、诽谤）、aśuci（不净）、vighna（阻碍）（*Phaladeepika* 1.14） |
-| 9 | Subha／Guru | 运气、正法、仁慈、功德、灵性、父亲、孙辈、布施、上师（XIV.11） | — |
-| 10 | Aspada／Mana | 庙宇、**城镇、议事厅、路边客栈**、仆从、一切行动、发号施令之权、受雇于人（XIV.12） | — |
-| 11 | Aya／Bhava | **所欲之事的获得**、兄长、已生之子、左耳、钱财收益（XIV.13） | — |
-| 12 | Ripha／Vyaya | 罪行、支出、断裂与跌落、左眼、失位失业、身体伤害（XIV.14）；**睡眠与床榻**：12 宫吉星安眠、凶星不安，12 宫主入旺睡好床、落陷睡地上（XXVII.15–16） | 支出、敌事、末事（BPHS 11.13）；苦、耗损、sūcaka（告密者）、贫、罪、**śayana（床榻）**、bandha（拘禁）（*Phaladeepika* 1.16） |
+| 1 | Thanu / Kala | Physical body, appearance, health, vitality, well-being, fame, general comfort, **success of all undertakings** (XIV.3); Querent (XIV.24) | — |
+| 2 | Kutumba / Swa | Family, wealth, **speech**, right eye, all learning and knowledge (XIV.4) | — |
+| 3 | Sahotta / Vikrama | **Courage, vigor**, wicked thoughts, younger siblings, right ear, **help/assistance** (XIV.5) | — |
+| 4 | Bandhu / Gruha | Mother, relatives, residence and real estate, comfort, conveyances, **couch/bed**, popularity, water, cattle, house of birth (XIV.6); Moon in 4th indicates events in seclusion (XXVIII.19) | Relatives (*Phaladeepika* 1.18) |
+| 5 | Putra / Pratibha | Intellect, prudence, memory, discrimination/judgment, past merit (purva punya), counsel, ministers, progeny, mental disposition (XIV.7) | — |
+| 6 | Ari / Kshata | Thieves, enemies, obstacles, anxiety, diseases, wounds, death through weapons or enemies (XIV.8) | Debts, weapons, thieves, injuries, sickness, enemies, relatives, strife, evil deeds, fear, disgrace (*Phaladeepika* 1.13a) |
+| 7 | Patni / Chitotta | Marriage, **desire/passion**, spouse, **general interpersonal transactions**, **bed/couch**, birthplace of spouse, **lost and hidden articles, sexual relations** (XIV.9); union, partners, willingness (XXVIII.1–3, 6) | Wife, travels, trade, recovery of lost articles, death (BPHS 11.8); desire, passion, spouse, roads (*Phaladeepika* 1.13b) |
+| 8 | Marana / Randhra | Destruction of all things, danger, **ill-repute/scandal**, cause and place of death, servants, outhouses, chronic illness, **impediments** (XIV.10); Internal name **Randhra (crevice, hidden flaw/aperture)** (XIV.20); **private parts** (XIV.22) | Longevity, battles, enemies, fortresses, inheritance/wealth of deceased, post-mortem state (BPHS 11.9); marital longevity (mangalya), distress, humiliation, scandal, impurity, obstacles (*Phaladeepika* 1.14) |
+| 9 | Subha / Guru | Fortune/luck, Dharma, benevolence, virtue, spirituality, father, grandchildren, charities, preceptor/Guru (XIV.11) | — |
+| 10 | Aspada / Mana | Temples, **towns, assembly halls, public road-inns**, servants, all activities, authority to command, service/employment (XIV.12) | — |
+| 11 | Aya / Bhava | **Acquisition of desired objectives**, elder siblings, born children, left ear, gains/profits (XIV.13) | — |
+| 12 | Ripha / Vyaya | Sin, expenditure, fractures and falls, left eye, loss of position/employment, bodily injury (XIV.14); **sleep and couch**: benefics bring peaceful sleep, malefics cause distress; exalted lord sleeps on luxury beds, debilitated lord sleeps on bare ground (XXVII.15–16) | Expenditure, hostile actions, final matters (BPHS 11.13); grief, losses, informants, poverty, imprisonment, **bed/sleep (sayana)** (*Phaladeepika* 1.16) |
 
-第 2 层空格待对校印本后补；在补齐前，这几宫只用第 1 层。叙述不提死亡与寿数（`judgment-writing.md` §1）。
+Narratives must omit references to death and mortality lifespan predictions (`judgment-writing.md` §1).
 
 ---
 
-## 3. 七曜
+## 3. The Seven Classical Planets
 
-所主依 `M-XIV.31–32`；自然吉凶取 Bhattotpala（宫表吉凶标签另按 Ayer 功能吉凶，`standard-layer.md` §2.1）。征象星有力则所主之事显，无力则
-徒有其名，Saturn 相反（`M-XIV.32`）。
+Governed by `M-XIV.31–32`. Natural benefics/malefics follow classical Bhattotpala definitions (functional roles follow Ayer's functional criteria per `standard-layer.md` §2.1). When a significator is strong, its signified matters manifest; when weak, it holds title in name only; Saturn acts conversely (`M-XIV.32`).
 
-| 星 | 所主（Karaka） | 自然吉凶 | 所问需要时（供给） | 所问不需要时（阻力） | 出处 |
+| Planet | Natural Karaka | Natural Disposition | When Needed by Query (Supply) | When Not Needed by Query (Friction) | Source |
 |---|---|---|---|---|---|
-| Sun | 父亲、精神感召；君主、权威（`M-XIV.90`） | 凶 | 官方、上级、录用；问公开 | 问私下时：Sun 照 Moon 或同宫主"不暗" | `M-XIV.31`、`M-XIV.90`；`M-XXVIII.19` |
-| Moon | 母亲、心意 | 盈月未定、亏月凶 | 心意、情绪 | 只作背景 | `M-XIV.31` |
-| Mars | 手足、地产、**勇气** | 凶 | 主动、开口、争取、竞争 | 相处、和睦题读作争执；健康题读作病 | `M-XIV.31`；`M-XIV.115`、`M-XIV.117` |
-| Mercury | 言语、学识 | 与凶星同宫则凶，否则吉 | 联系、谈判、考试 | 与凶星同宫则凶 | `M-XIV.31` |
-| Jupiter | 智力、子女、智慧、健康 | 吉 | 判断、贵人、子女 | 只作背景 | `M-XIV.31` |
-| Venus | 车乘、妻室、感官之乐 | 吉 | 恋爱、和好、吸引 | 只作背景 | `M-XIV.31` |
-| Saturn | 忧劳、病苦、仆从 | 凶 | 问下属、仆从、劳作 | 迟滞、压力、顾虑；有力时反而减轻 | `M-XIV.31–32` |
+| Sun | Father, spiritual authority; sovereign, command (`M-XIV.90`) | Malefic | Official authority, superiors, hiring; public visibility | If private: Sun aspecting or conjoining Moon makes matter non-secret | `M-XIV.31`, `M-XIV.90`; `M-XXVIII.19` |
+| Moon | Mother, mind/emotions | Conditional (waning=malefic, waxing=benefic) | Mental intent, emotion | Background context | `M-XIV.31` |
+| Mars | Siblings, landed property, **courage** | Malefic | Initiative, speaking up, striving, competitive drive | In relational/harmony queries: disputes; in health: disease | `M-XIV.31`; `M-XIV.115`, `M-XIV.117` |
+| Mercury | Speech, education/learning | Benefic (becomes malefic if conjoined malefic) | Communication, negotiation, exams | Malefic if conjoined with malefics | `M-XIV.31` |
+| Jupiter | Wisdom, progeny, knowledge, health | Benefic | Sound judgment, benefactors/mentors, children | Background context | `M-XIV.31` |
+| Venus | Conveyances, spouse, sensory pleasures | Benefic | Romance, reconciliation, mutual attraction | Background context | `M-XIV.31` |
+| Saturn | Sorrow, toil, sickness, servitude | Malefic | Subordinates, domestic workers, heavy labor | Delay, severe pressure, reservations; when strong, burdens lighten | `M-XIV.31–32` |
 
-Rahu／Ketu 只作位置事实，不贴吉凶、不讲 Karaka。
+Rahu and Ketu provide situational placement facts; they do not carry standalone natural benefic/malefic tags or Karaka assignments.
 
 ---
 
-## 4. 星座性质
+## 4. Zodiacal Sign Characteristics
 
-| 星座 | 动／固／双 | 升起方式 | 其他 |
+| Sign | Modality (Movable/Fixed/Dual) | Rising Type | Other Attributes |
 |---|---|---|---|
-| 白羊 | 动（Chara） | 背升 | 四足座；东 |
-| 金牛 | 固定（Sthira） | 背升 | 四足座；南 |
-| 双子 | 双体 | 头升（`P-VI.3` 注列表无双子，两说） | 人形座；西 |
-| 巨蟹 | 动 | 背升 | 水象（两说皆是）；北 |
-| 狮子 | 固定 | 头升 | 四足座；东 |
-| 处女 | 双体 | 头升 | 人形座；南 |
-| 天秤 | 动 | 头升 | 人形座；西 |
-| 天蝎 | 固定 | 头升 | 水象（Horasara）；北 |
-| 射手 | 双体 | 背升 | 后半为四足座；东 |
-| 摩羯 | 动 | 背升 | 水象（Horasara 全座；Mantreswara 后半）；南 |
-| 水瓶 | 固定 | 头升 | 人形座；西 |
-| 双鱼 | 双体 | 双升（Ubhayodaya） | 水象（两说皆是）；北 |
+| Aries | Movable (Chara) | Prishtodaya (hind-rising) | Quadruped; East |
+| Taurus | Fixed (Sthira) | Prishtodaya | Quadruped; South |
+| Gemini | Dual (Dwiswabhava) | Shirshodaya (head-rising) | Human/Biped; West |
+| Cancer | Movable | Prishtodaya | Watery; North |
+| Leo | Fixed | Shirshodaya | Quadruped; East |
+| Virgo | Dual | Shirshodaya | Human/Biped; South |
+| Libra | Movable | Shirshodaya | Human/Biped; West |
+| Scorpio | Fixed | Shirshodaya | Watery (Horasara); North |
+| Sagittarius | Dual | Prishtodaya | Hind half is quadruped; East |
+| Capricorn | Movable | Prishtodaya | Watery (Horasara; second half per Mantreswara); South |
+| Aquarius | Fixed | Shirshodaya | Human/Biped; West |
+| Pisces | Dual | Ubhayodaya (both ways) | Watery; North |
 
-动座多主变动、出发；固定座多主安定、得位；双体座前半近固定、后半近动（`P-II.1~2` 注引 Bhattotpala）。出处：动／固／双 `P-II.1~2`、
-头升／背升 `P-I.4` 注、人形座 `P-III.3` 注、四足座 `P-II.4` 注、水象两说 `P-VII.4` 注、方位 `P-VI.4` 注。具体到哪一题，按账本里的规则讲。
+Movable signs signify change, departure, movement; fixed signs indicate stability, staying in position; dual signs are fixed in the first half and movable in the second half (`P-II.1~2` note citing Bhattotpala).
 
 ---
 
-## 5. 行动者 → 宫
+## 5. Actors Mapped to Houses
 
-| 行动者 | 宫 | 出处 |
+| Actor | House | Source |
 |---|---:|---|
-| 提问人 | 1 | XIV.24；`B-article-99` |
-| 对方（伴侣、合作方、谈判对方、想见的人） | 7 | XIV.9（一般人际往来）；`B-article-99` 的 1／7 双方 |
-| 母亲 | 4 | XIV.6 |
-| 父亲 | 9 | XIV.11 |
-| 子女 | 5 | XIV.7 |
-| 兄弟（弟妹） | 3 | XIV.5 |
-| 兄长 | 11 | XIV.13 |
-| 上级、雇主、官方 | 10 | XIV.12（发号施令之权、受雇于人） |
-| 敌人、对手 | 6 | XIV.8 |
+| Querent | 1 | XIV.24; `B-article-99` |
+| The Other Party (partner, counterpart, desired contact) | 7 | XIV.9 (general interpersonal transactions); `B-article-99` |
+| Mother | 4 | XIV.6 |
+| Father | 9 | XIV.11 |
+| Children / Progeny | 5 | XIV.7 |
+| Younger Siblings | 3 | XIV.5 |
+| Elder Siblings | 11 | XIV.13 |
+| Superiors, Employer, Authorities | 10 | XIV.12 (authority to command, employment) |
+| Enemies, Rivals, Competitors | 6 | XIV.8 |
 
-行动者在表外时，按第 2 节宫义找最贴近的一宫并写明出处。行动者的动作以行动者的宫为命宫转宫（`question-decomposition.md` 第 3 节）。
+When an actor is not explicitly listed, identify the closest house using §2 and cite the classical authority. The other person's actions are read using their house as the 1st house via derived houses (bhavat bhavam per `question-decomposition.md` §3).
 
 ---
 
-## 6. 关键词库：措辞 → 宫与星
+## 6. Keyword Lexicon: Query Terms to Houses and Planets
 
-拆题时逐句对照（`question-decomposition.md` 第 4 节）。只给第 2、3 节已有出处的宫义星义建索引，不新增含义；表里没有的词，按第 2 节宫义
-自己找并写明出处。别人的动作从那个人的宫起算同一宫（例：对方的言语＝本盘 8 宫）。
-
-| 措辞（举例） | 宫与星 | 出处 | 相反的措辞 |
+| Wording (Examples) | Houses & Planets | Source | Opposite Wording |
 |---|---|---|---|
-| 私下、单独、偷偷、瞒着、地下、不让人知道 | 8 宫（Randhra 暗处）、12 宫（床榻、睡眠）、4 宫（床榻）；不可见半球 | XIV.20；XXVII.15–16；XIV.6；XIV.118–120 | 公开 |
-| 公开、官宣、公布、当众、让别人知道 | 10 宫（城镇、议事厅）；可见半球；Sun | XIV.12；XIV.118–120 | 私下 |
-| 在家、住处、搬家、房子 | 4 宫 | XIV.6 | 在外 |
-| 主动、发起、敢不敢、先开口、出力 | 行动者起第 3 宫（对方＝本盘 9 宫）；Mars | XIV.5；XIV.31；XVII.8–9 | 被动、等对方 |
-| 说话、聊天、联系、消息、回复 | 行动者起第 2 宫（提问人＝2 宫，对方＝8 宫）；Mercury | XIV.4；XIV.31 | — |
-| 喜欢、情意、吸引、心动 | 7 宫（情欲）；Venus | XIV.9；XIV.31；*Phaladeepika* 1.13 | — |
-| 亲密、同房、床 | 7 宫（床榻、两性）；12 宫、4 宫（床榻） | XIV.9；XXVII.15–16；XIV.6 | — |
-| 收入、工资、借出去的钱回来 | 11 宫（收益）；2 宫（财） | XIV.13；XIV.4 | 花钱、损失 |
-| 花钱、开销、损失、失去、断了 | 12 宫（支出、断裂） | XIV.14 | 收入 |
-| 吵架、冲突、对手、官司、竞争 | 6 宫（敌、争斗）；Mars | XIV.8；*Phaladeepika* 1.13；XIV.117 | 和好 |
-| 生病、手术、住院 | 6 宫（疾病、伤）；8 宫（慢性病） | XIV.8；XIV.10 | 康复 |
-| 职位、录用、上级、官方 | 10 宫；Sun | XIV.12；XIV.90 | — |
-| 考试、学习、发挥 | 2 宫（学识）、5 宫（智力、记忆）；Mercury、Jupiter | XIV.4；XIV.7；XIV.31 | — |
-| 名声、丑闻、被说坏话 | 8 宫（恶名；apavāda 丑闻） | XIV.10；*Phaladeepika* 1.14 | — |
-| 孩子、怀孕 | 5 宫 | XIV.7 | — |
+| Private, secretly, discreetly, hidden, confidential | 8th (Randhra, secrecy), 12th (bed, seclusion), 4th (couch); invisible hemisphere | XIV.20; XXVII.15–16; XIV.6; XIV.118–120 | Public |
+| Public, official announcement, open, visible | 10th (assembly hall, town); visible hemisphere; Sun | XIV.12; XIV.118–120 | Private |
+| At home, residence, moving, domestic premises | 4th house | XIV.6 | Away / Abroad |
+| Initiative, proactive, dare to speak first, effort | 3rd from actor (other party = natal 9th); Mars | XIV.5; XIV.31; XVII.8–9 | Passive, waiting |
+| Talking, chatting, communication, messages, reply | 2nd from actor (querent = 2nd, other party = 8th); Mercury | XIV.4; XIV.31 | — |
+| Affection, mutual attraction, romance | 7th house (desire); Venus | XIV.9; XIV.31; *Phaladeepika* 1.13 | — |
+| Intimacy, physical closeness, bed | 7th (bed, union); 12th, 4th (couch) | XIV.9; XXVII.15–16; XIV.6 | — |
+| Income, salary, recovery of lent money | 11th house (gains); 2nd house (wealth) | XIV.13; XIV.4 | Expenses, loss |
+| Spending, costs, losses, severance, cut off | 12th house (expenditure, severance) | XIV.14 | Income |
+| Arguing, dispute, lawsuit, competition, rival | 6th house (enemies, strife); Mars | XIV.8; *Phaladeepika* 1.13; XIV.117 | Reconciliation |
+| Sickness, medical surgery, hospitalization | 6th (illness, wounds); 8th (chronic ailment) | XIV.8; XIV.10 | Recovery |
+| Position, recruitment, promotion, official role | 10th house; Sun | XIV.12; XIV.90 | — |
+| Examination, academic study, intellectual performance | 2nd (speech/learning), 5th (intellect, memory); Mercury, Jupiter | XIV.4; XIV.7; XIV.31 | — |
+| Reputation, scandal, defamation, malicious talk | 8th house (ill-repute, apavada) | XIV.10; *Phaladeepika* 1.14 | — |
+| Children, pregnancy | 5th house | XIV.7 | — |
 
 ---
 
-## 7. 按问题读：相合、相反、没点到
+## 7. Contextual Interpretation: Aligned, Conflicting, or Unmentioned
 
-同一宫、同一颗星，好坏取决于问的是什么（`M-XIV.47`：卜卦按所落之处筛去不合适的象义；`M-XIV.44–46`：凶星落 3、6、11 宫转吉，6 宫凶星给出
-它所主之物但该宫受损，疾病题例外；吉星在 6 宫灭敌、凶星增敌）。按措辞分三种：
+The auspiciousness of a house or planet depends on the exact question asked (`M-XIV.47`: Horary filters signification according to the nature of the placement; `M-XIV.44–46`: Malefics in 3, 6, 11 turn auspicious; in 6th they deliver what they rule but damage the house, disease being an exception; benefics in 6th destroy enemies, malefics multiply enemies):
 
-| 措辞 | 读法 | 例 |
+| Query Context | Interpretation Protocol | Example |
 |---|---|---|
-| 直接点到该宫或该星的象义，方向**相合** | 应象，不算折损 | 问"私下见面"，7 宫主落 8 宫＝在暗处见；问"竞争能不能赢"，Mars 照事项宫＝给冲劲 |
-| 直接点到，方向**相反** | 与所问相反，对应限定语不成立 | 问"会不会公开关系"，7 宫主飞 8 宫、8 宫主坐 8 宫，取隐藏之意，偏向不公开 |
-| **没有点到** | 默认读法：6／8／12 宫记折损，凶星照记不利；但单条不定"不行"，写成"若发生，多半是……的方式" | 只问"会不会见面"，8 宫偏减分，"如果发生，多半在隐秘处" |
+| Directly matches the signification, direction **Aligned** | Manifestation of the matter; not scored as damage | Query "meet privately": 7th lord in 8th = meeting in seclusion; Query "win competition": Mars aspecting matter house = providing drive |
+| Directly matches, direction **Conflicting** | Opposite to query; corresponding qualifier fails | Query "will relationship become public": 7th lord in 8th and 8th lord in 8th signifies concealment; leaning against public exposure |
+| **Unmentioned** in query | Default protocol: 6/8/12 scored as damage; malefic aspects scored as unfavorable; phrased as "if it occurs, likely through..." | Query only "will we meet": 8th house leans negative; "if it happens, likely in a private setting" |
 
-所问之事本身属 6、8、12 宫领域时（官司、手术、隐私、出国、开销），就以该宫为事项宫，不按"凶宫"判；宫主坐本宫是本位（`M-XIV.42`）。
+When the query matter itself naturally belongs to houses 6, 8, or 12 (litigation, surgery, privacy, overseas journeys, expenditures), that house serves as the primary matter house and is not judged as an "evil house"; a lord in its own house represents its canonical dignity (`M-XIV.42`).
 
-**影响者三问**（同宫或照射一颗星、一宫的行星）：
-1. **它带来什么**：行星所主（第 3 节），以及典籍归给它的一切象义（`M-XIV.33`）；
-2. **这题要不要**：按上表的相合、相反、没点到；
-3. **它有没有力送到**：征象星有力则所主之事显，无力则徒有其名，Saturn 相反（`M-XIV.32`）；能吉能凶之星有力出吉、无力出凶（`M-XIV.37`）；
-   凶星无力则凶全（`M-XIV.35`）。读"宫主能力与连接"表与 D1 尊贵度。
-
-**在哪里生效**（判定脚本按取象单执行，模型不手算）：
-- 能力层：`needed_planets` 不计"受凶星占照"，改记供给；相合关键词点到的宫，指标星"落该宫"改记应象（`judgment-rubric.md` §5）；
-- 成事账：`P-I.3` 不把 `needed_planets` 按凶星计；类比偈读到相合关键词点到的宫时不入账（rubric §1）；其余 `P-I.3`、`P-IV.1` 仍按宫表吉凶标签；
-- 意愿层、限定语、叙述：同宫、照射之星逐个按三问写。
-
-例：问"对方会不会主动约"，Mars 照 7 宫主 → 行动链里是起意的供给；同一个 Mars 在"见不见得成"里照 8 宫落陷 Sun → 摩擦。两件事分开讲
-（`judgment-writing.md` §3 第 9 条）。
+**The Three Inquiries of Influencing Grahas** (planets conjoined with or aspecting a planet or house):
+1. **What does it bring?** The planet's natural Karaka (§3) and all classical significations (`M-XIV.33`);
+2. **Does this query need it?** Classified as Aligned, Conflicting, or Unmentioned;
+3. **Does it possess the strength to deliver?** Strong significators deliver their matters; weak ones hold title in name only; Saturn acts conversely (`M-XIV.32`). Dual-nature planets deliver good when strong, evil when weak (`M-XIV.37`); malefics without strength cause complete affliction (`M-XIV.35`). Inspect the Dignity and Ability tables.
 
 ---
 
-## 8. 连接口径（`M-XIV.43`）
+## 8. Connection Standards (`M-XIV.43`)
 
-与 Lagna 或 Lagna 主有照射、同宫、角宫关系等的宫，其事必应验：
+Matters of houses that connect with Lagna or Lagna lord through aspect, conjunction, or kendra relationship will surely materialize:
 
-- **直连**：同宫；照射，单向即可，写明谁照谁；互照；互换；两星互为 4／10 宫（角宫关系；相隔 7 宫已是互照）；
-- **串联**（执行口径，B 级）：所问动作的征象星（第 6 节：起意 Mars、言语 Mercury、情意 Venus、官方 Sun）与两端都同宫或由它照射，算连上，
-  写"经某星串联"。依据是宫、宫主、征象星三者同判一宫（`M-XIV.28`、`M-XIV.30`、`M-XIV.39–41`、`M-XIV.116`）。只认所问动作的征象星，其他行星的
-  间接关系不算。Mercury、Venus、Sun 只有第七宫照射，它们串得起的两端必已直连；串联用来说明"靠什么连上"（经 Mars＝靠行动，经 Venus＝靠情意，
-  经 Mercury＝靠言语）。
-
-连接、串联读 `structured_prashna.md`"宫主能力与连接""行动者视角（转宫）与行动链"两节，不手推。指标星与 Lagna 主连上，在成事账记一条有利；
-没连上不记不利（`judgment-rubric.md` §1）。
+- **Direct Connection**: Conjunction; aspect (unilateral suffices; specify who aspects whom); mutual aspect; mutual exchange (Parivartana); mutual 4th/10th relationship (kendra; 7th house apart already constitutes mutual aspect);
+- **Bridge Connection (Tier B)**: The significator of the requested action (§6: Initiative Mars, Communication Mercury, Affection Venus, Authority Sun) conjoins or aspects both parties; noted as "connected via intermediary graha". Grounded in the classical rule that house, house lord, and significator jointly judge a house (`M-XIV.28`, `M-XIV.30`, `M-XIV.39–41`, `M-XIV.116`). Only specific action Karakas qualify; arbitrary planetary connections do not.
 
 ---
 
-## 9. 限定语检验
+## 9. Qualifier Verification
 
-由判定脚本按取象单的 `qualifiers` 算，结论写在 `prashna_verdict.md`，模型照读；下面是脚本用的检验法。宫从提问人（Lagna）起算；限定语说的是
-别人的动作时，从那个人的宫起算同一宫。
+Computed by the judgment script based on the intake sheet's `qualifiers` and recorded in `prashna_verdict.md`:
 
-- **一般限定语**（关键词库里的词）：指标星（事项宫主）与对应宫主或对应星按第 8 节连上，或指标星落入对应宫 → **成立**；对应宫主在能力表为
-  "严重受损" → **成立但无力**；都没有 → **不成立**。依据 M-XIV.21、M-XIV.43：宫与宫主相连则该宫之事被带入。
-- **主动、发起**：读行动链（`judgment-rubric.md` §8）：偏会、偏会·停在念头或言语 → 成立；有心无力 → 成立但无力；有起意未指向你、盘面未见
-  主动 → 不成立。
-- **私下、公开**（显隐定序，前一步有结论即定，三条不一致时并列写出）：
-  1. 两性、私会语境（取象单 `context: 恋爱`）先看 XXVIII.19：Moon 落 Saturn 的座或受 Saturn 照、与之同宫，或 Moon 落 4 宫、落水象座 → 暗处；
-     Sun 照 Moon 或与之同宫 → 不暗；
-  2. 指标星落入 10 宫主公开，落入 4、8、12 宫主私密，落入即定（`M-XIV.47`：卜卦按所落之处取象义）；都不落入，再看它与这些宫主的
-     连接，两边都有则本步不定；
-  3. 半球（XIV.118–120）：指标星落 7–12 宫主公开，落 1–6 宫主隐蔽。
-- **在家、在外**（XXVIII.5，执行口径）：照 Lagna 的行星落本座 → 在自己家；落他星之座 → 在外处；两种都有则两说。
+- **Standard Qualifiers**: If the significator (matter lord) connects with the corresponding house lord or significator per §8, or occupies that house → **Established**; if that lord is severely damaged in the ability table → **Established but Incapacitated**; otherwise → **Not Established**.
+- **Initiative / Proactive Action**: Inspect action chain (`judgment-rubric.md` §8): Favorable, Favorable-arrested in thought/speech → Established; Willing but unable → Established but Incapacitated; Initiated without targeting querent, or no initiative in chart → Not Established.
+- **Private vs Public** (Precedence Order):
+  1. Relational/private meeting queries (`context: romance`) consult XXVIII.19: Moon in Saturn sign, aspected by Saturn, conjoined Saturn, or Moon in 4th house or watery sign → Seclusion/Private; Sun aspecting or conjoined Moon → Not Private;
+  2. Significator in 10th house indicates public; in 4th, 8th, 12th indicates private (`M-XIV.47`); if not occupied, evaluate connections to these lords;
+  3. Hemisphere distribution (XIV.118–120): Significator in 7th–12th indicates public; in 1st–6th indicates concealed.
+- **Domestic vs External**: Planets aspecting Lagna in own sign → In own residence; in another planet's sign → External premises; both present → Mixed indications.
 
-限定语是问题的必要条件而检验**不成立**时，答"按这个条件不能"；内部档仍按成事账（rubric §7）。
+When a qualifier represents an essential prerequisite of the query and is verified as **Not Established**, state clearly: "Under this specific condition, it cannot materialize." The internal outcome tier continues to follow the standard success ledger (rubric §7).

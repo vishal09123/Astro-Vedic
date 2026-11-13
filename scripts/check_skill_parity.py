@@ -9,8 +9,7 @@ import sys
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-# 2026-09-04：真源目录 antigravity/skills/ → skills/。它不是某个平台的发行面，
-# 而是所有发行面的来源，故用中立名并去掉多余的一层。
+# Canonical source directory is skills/. It serves as the source for all distribution surfaces.
 CANONICAL = REPO_ROOT / "skills"
 SURFACES = {
     "claude-code": REPO_ROOT / "claude-code" / "skills",

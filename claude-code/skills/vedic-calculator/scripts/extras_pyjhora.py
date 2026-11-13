@@ -1,6 +1,6 @@
 """
-extras_pyjhora.py - PyJHora 额外功能封装
-包含: Bhava Bala, Special Lagnas, Vimsopaka/Vargeeya Bala
+extras_pyjhora.py - PyJHora additional features wrapper
+Includes: Bhava Bala, Special Lagnas, Vimsopaka/Vargeeya Bala
 """
 
 
@@ -40,14 +40,14 @@ def _setup():
         orig_he = swe.houses_ex
         if not hasattr(orig_he, '_patched'):
             def patch_he(*a, **kw):
-                # (1) PyJHora drik.ascendant() 不传 hsys → pyswisseph 默认落到 Placidus，极圈内(|lat|>66°33')
-                #     无解。补 b'W'(整宫制)：asc 值与宫制无关(实测 W/E/O/C/B 返回同一 asc)。
-                # (2) 显式传 Placidus/Koch 的调用(Shadbala Dig Bala 的 bhaava_madhya)在极圈内同样无解：
-                #     按 Swiss Ephemeris 文档的做法改用 Porphyry(swe_houses 遇此情形自己也改算 Porphyry 并报 ERR)。
-                # (3) 恒星盘请求统一到 engine.calc_lagna 的 Lagna 基准(=桌面 JHora，2026-10-23 客户 JHora
-                #     打印盘实证差 0.004″)：视位置回归宫位 − 与行星同口径的岁差(TRUEPOS|NONUT)。
-                #     PyJHora 自带的 FLG_TRUEPOS 只改 houses_ex 内部岁差，与行星口径差约 9″。
-                #     ARMC 与占位元素不减岁差，按与 FLG_SIDEREAL 原生结果比对识别后原样保留。
+                # (1) PyJHora drik.ascendant() without hsys -> pyswisseph defaults to Placidus, which has no
+                #     solution inside the polar circle (|lat|>66°33'). Pass b'W' (whole sign): asc is invariant to house system.
+                # (2) Explicit Placidus/Koch calls (Shadbala Dig Bala's bhaava_madhya) also fail inside polar circles:
+                #     Following Swiss Ephemeris docs, fall back to Porphyry (swe_houses does this internally on ERR).
+                # (3) Sidereal chart requests unify to engine.calc_lagna Lagna baseline (= desktop JHora benchmark,
+                #     0.004 arcsec diff vs 2026-10-23 JHora printout): apparent position tropical house - ayanamsa (TRUEPOS|NONUT).
+                #     PyJHora FLG_TRUEPOS only alters houses_ex internal ayanamsa, differing from planet ayanamsa by ~9 arcsec.
+                #     ARMC and placeholder elements do not subtract ayanamsa, retained as-is based on FLG_SIDEREAL native comparison.
                 if len(a) < 4 and 'hsys' not in kw:
                     a = a + (b'W',)
                 jd, lat, lon = a[0], a[1], a[2]
@@ -84,7 +84,7 @@ def _setup():
 
 def calculate_bhava_bala(year, month, day, hour, minute, lat, lon, tz_offset, second=0):
     """
-    使用 PyJHora 计算 Bhava Bala (宫位力量)。
+    Calculate Bhava Bala (house strengths) using PyJHora.
     
     Returns:
         dict: house_num (1-12) -> {
@@ -126,12 +126,12 @@ def calculate_bhava_bala(year, month, day, hour, minute, lat, lon, tz_offset, se
 
 def calculate_pushkara(year, month, day, hour, minute, lat, lon, tz_offset, second=0):
     """
-    计算 Pushkara Navamsa / Pushkara Bhaga（落陷补丁维度，S3-07）。
-    行星落在 Pushkara Navamsa 区段 = 受滋养保护，受损行星有恢复力缓冲。
+    Calculate Pushkara Navamsa / Pushkara Bhaga (debilitation mitigation dimension, S3-07).
+    Planet in Pushkara Navamsa segment = nourished and protected, afflicted planets gain resilience.
 
     Returns:
         dict: {'pushkara_navamsa': ['Mars', ...], 'pushkara_bhaga': ['Venus', ...]}
-        失败时 {'error': str}
+        On failure {'error': str}
     """
     swe, const, drik = _setup()
     from jhora.panchanga.drik import Place, Date
@@ -155,7 +155,7 @@ def calculate_pushkara(year, month, day, hour, minute, lat, lon, tz_offset, seco
 
 def calculate_special_lagnas(year, month, day, hour, minute, lat, lon, tz_offset, second=0):
     """
-    计算特殊 Lagna: Hora Lagna, Ghati Lagna, Sree Lagna, Indu Lagna, 
+    Calculate Special Lagnas: Hora Lagna, Ghati Lagna, Sree Lagna, Indu Lagna, 
     Pranapada Lagna, Bhava Lagna.
     
     Returns:
@@ -208,7 +208,7 @@ def calculate_special_lagnas(year, month, day, hour, minute, lat, lon, tz_offset
 
 def calculate_vargeeya_bala(year, month, day, hour, minute, lat, lon, tz_offset, second=0):
     """
-    计算 Pancha Vargeeya Bala 和 Dwadhasa Vargeeya Bala。
+    Calculate Pancha Vargeeya Bala and Dwadhasa Vargeeya Bala.
     
     Returns:
         dict: {

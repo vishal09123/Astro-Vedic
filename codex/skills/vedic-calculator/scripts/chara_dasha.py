@@ -1,26 +1,28 @@
-"""Chara Dasha (K.N. Rao 变体) — 自研实现。
+"""Chara Dasha (K.N. Rao method) implementation.
 
-规则来源：JHora "Chara dasa of K.N.Rao" 双盘金标准对照钉死（2026-07-03，
-同一出生数据 UT 1:30/2:30 两张盘共 24 个大运数据点 24/24 全中）：
-  1. 起始 = Lagna 座；
-  2. 方向 = 第9宫足性：奇足{Ar,Ta,Ge,Li,Sc,Sg}→顺行，偶足{Cn,Le,Vi,Cp,Aq,Pi}→逆行；
-  3. 年数 = 从该座沿"该座自身足性方向"数到其宫主所在座，count−1；
-     宫主在本座 = 12 年；
-     双主座 Scorpio(Mars/Ketu)、Aquarius(Saturn/Rahu) 取二者中年数较大者；
-  4. 年长 = 恒星太阳年（sidereal solar year ≈ 365.2564 天）。
+Rules reference: JHora "Chara dasa of K.N.Rao" dual-chart golden benchmark cross-verification (2026-07-03,
+same birth data UT 1:30 and 2:30 across 2 charts with 24 total Mahadasha checkpoints, 24/24 exact match):
+  1. Starting sign = Lagna sign;
+  2. Progression direction = 9th house sign-footedness:
+     Odd-footed {Ar,Ta,Ge,Li,Sc,Sg} -> Direct / Zodiacal (forward),
+     Even-footed {Cn,Le,Vi,Cp,Aq,Pi} -> Indirect / Reverse (backward);
+  3. Duration (years) = Count from sign in its own footedness direction to sign occupied by its lord, count - 1;
+     Lord in own sign = 12 years;
+     Dual-lord signs Scorpio (Mars/Ketu) and Aquarius (Saturn/Rahu): take max(years) between both co-lords;
+  4. Year length = Sidereal solar year (approx 365.2564 days).
 
-注：PyJHora 的 KN_RAO duration 与 JHora 在 Sg/Aq/Pi 存在偏差（8/1/9 vs 7/2/8），
-故弃用其年数函数；其 ascendant 亦与本系统 engine 存在口径差，本模块只接受
-engine 计算的真值输入。v1 只输出 Mahadasha 级（双系统交叉验证足够）；
-Antardasha 级待 JHora AD 金标准对照后再启用。
+Note: PyJHora KN_RAO duration deviates from JHora for Sg/Aq/Pi (8/1/9 vs 7/2/8),
+so we use our own verified duration logic; ascendant also has slight calibration differences,
+so this module strictly expects verified engine calculation outputs.
+v1 outputs Mahadasha level (sufficient for dual-system cross validation).
 """
 
 SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
          'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
 
-# 奇足(顺数)/偶足(逆数)分组
+# Odd-footed (forward count) / Even-footed (reverse count) grouping
 ODD_FOOTED = {0, 1, 2, 6, 7, 8}       # Ar Ta Ge Li Sc Sg
-# 各座宫主（行星名与 engine 一致）；Sc/Aq 双主
+# Sign lords (planet names consistent with engine); Sc/Aq have co-lords
 SIGN_LORDS = {
     0: ['Mars'], 1: ['Venus'], 2: ['Mercury'], 3: ['Moon'],
     4: ['Sun'], 5: ['Mercury'], 6: ['Venus'], 7: ['Mars', 'Ketu'],
@@ -30,14 +32,14 @@ SIDEREAL_YEAR_DAYS = 365.256363
 
 
 def _count(from_sign, to_sign, forward):
-    """从 from 数到 to（含两端）的格数。"""
+    """Count houses from from_sign to to_sign (inclusive of both ends)."""
     if forward:
         return ((to_sign - from_sign) % 12) + 1
     return ((from_sign - to_sign) % 12) + 1
 
 
 def _duration_years(sign, planet_signs):
-    """单座年数（KN Rao）。planet_signs: {行星名: sign_idx}"""
+    """Single sign duration in years (KN Rao method). planet_signs: {planet_name: sign_idx}"""
     forward = sign in ODD_FOOTED
     years = []
     for lord in SIGN_LORDS[sign]:
@@ -50,12 +52,12 @@ def _duration_years(sign, planet_signs):
 
 
 def calc_chara_dasha(lagna_sign_idx, planet_signs, birth_jd_ut):
-    """KN Rao Chara Dasha 大运时间线（一个完整周期，12 座）。
+    """KN Rao Chara Dasha Mahadasha timeline (one full cycle of 12 signs).
 
     Args:
-        lagna_sign_idx: engine 计算的 Lagna 星座索引（0=Aries）
-        planet_signs: {行星名: 星座索引}，engine 真值（9 星含 Rahu/Ketu）
-        birth_jd_ut: 出生时刻 UT 儒略日（engine to_jd 的产物）
+        lagna_sign_idx: Lagna sign index from engine (0=Aries)
+        planet_signs: {planet_name: sign_idx}, engine true positions (9 grahas including Rahu/Ketu)
+        birth_jd_ut: Birth UT Julian Day (from engine to_jd)
     Returns:
         {'method': ..., 'direction': 'forward'/'reverse', 'mahadashas': [
             {'sign','start_jd','end_jd','years'} ...]}
@@ -78,13 +80,13 @@ def calc_chara_dasha(lagna_sign_idx, planet_signs, birth_jd_ut):
 
 
 if __name__ == '__main__':
-    # 金标准自测：JHora 双盘（1990-08-15 上海坐标）
+    # Golden benchmark self-test: JHora dual-chart (1990-08-15 Shanghai coordinates)
     import swisseph as swe
     planet_signs_common = {'Sun': 3, 'Moon': 1, 'Mars': 0, 'Mercury': 4,
                            'Jupiter': 3, 'Venus': 3, 'Saturn': 8,
                            'Rahu': 9, 'Ketu': 3}
-    # 盘A: UT 2:30 → Lagna Libra(6)；JHora: Li9 Sc8 Sg7 Cp1 Aq2 Pi8 Ar12 Ta2 Ge2 Cn2 Le1 Vi1
-    # 盘B: UT 1:30 → Lagna Virgo(5)；JHora: Vi1 Li9 Sc8 Sg7 Cp1 Aq2 Pi8 Ar12 Ta2 Ge2 Cn2 Le1
+    # Chart A: UT 2:30 -> Lagna Libra(6); JHora: Li9 Sc8 Sg7 Cp1 Aq2 Pi8 Ar12 Ta2 Ge2 Cn2 Le1 Vi1
+    # Chart B: UT 1:30 -> Lagna Virgo(5); JHora: Vi1 Li9 Sc8 Sg7 Cp1 Aq2 Pi8 Ar12 Ta2 Ge2 Cn2 Le1
     expects = {
         6: [('Libra',9),('Scorpio',8),('Sagittarius',7),('Capricorn',1),('Aquarius',2),
             ('Pisces',8),('Aries',12),('Taurus',2),('Gemini',2),('Cancer',2),('Leo',1),('Virgo',1)],
@@ -102,4 +104,4 @@ if __name__ == '__main__':
         if not match:
             for g, e in zip(got, exp):
                 print(' ', g, 'vs', e, '' if g == e else '<<<')
-    print('金标准对照:', f'{ok}/2 盘通过')
+    print('Golden benchmark verification:', f'{ok}/2 charts passed')

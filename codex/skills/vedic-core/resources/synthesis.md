@@ -1,13 +1,36 @@
-# 合成判法
+# Synthesis Principles
 
-> 一个宫、一件事同时有几处盘面信号时怎么合成结论。本命分析各步与追问共用；时间校准、验前事不用（它们逐事件比对，判据见各自文件）。
+> How to synthesize conclusions when multiple astrological signals converge on a single house or life matter. Used jointly across natal analysis steps and follow-up Q&A; not used for rectification or pre-validation (which evaluate event-by-event matches).
 
-## 合成判法
+## Synthesis Method
 
-判一件事，把有关的星都摆出来，逐颗问：这颗星的性质和它管的宫，碰到这件事会怎样。
-九星各有性质：太阳面子与权威，月亮情绪与照顾，火星冲劲与冲动，水星算计与规划，木星宽裕与保护，金星享受与关系，土星克制、节省、担忧与慢，罗睺放大与越界，计都抽离与看淡。
-吉定结果保底、凶定过程摩擦是大框架，摩擦是什么样看星的性质；同一颗星对不同的事读法不同（火星照到管钱的星，可以是花钱冲动，也可以是挣钱有冲劲）。
-一件事的几条信息不是比输赢、压过了就成，而是各在自己那一层起作用：宫主落在哪、和谁同宫、那几颗星各管什么宫，说这件事有没有、从哪来、和谁有关；强弱是办事的力度，它和照到的星、星的性质一起，说这件事的过程怎么走、顺不顺。每层都照盘直说。
-来路不分高下：自己挣的、别人给的、沾光得来的一样算数。盘上有就直说，不用劝读者还得靠自己。
-同一层有几条就都写。几处相反，先分清每股力量各落在哪件事、哪一面，各写各的。
-方向仍是盘面 → 经历，不拿用户的经历反推盘面。
+When evaluating a life matter, identify all relevant planets and ask systematically: How do the natural archetype of each planet and the houses it rules interact with this matter?
+
+The nine grahas carry distinct intrinsic qualities:
+- **Sun**: Dignity, authority, ego, and executive prominence.
+- **Moon**: Emotional receptivity, nourishment, public fluctuation, and care.
+- **Mars**: Vitality, direct initiative, technical courage, and impetuous friction.
+- **Mercury**: Analytical calculation, commerce, communication, and adaptable strategy.
+- **Jupiter**: Generosity, abundance, ethical protection, and expansive wisdom.
+- **Venus**: Aesthetic pleasure, diplomatic balance, relational devotion, and material refinement.
+- **Saturn**: Discipline, conservation, chronic anxiety, endurance, and structural delay.
+- **Rahu**: Amplification, transgression, unconventional appetite, and obsessive obsession.
+- **Ketu**: Dissociation, detachment, non-material insight, and sudden termination.
+
+### Multi-Layer Synthesis Framework
+
+1. **Benefics establish the baseline floor; malefics determine process friction**:
+   Benefics guarantee fundamental recovery and outcome sustenance. Malefics dictate the texture and nature of friction during manifestation.
+2. **Context-Dependent Manifestation**:
+   The same planetary quality manifests differently across domains. For example, Mars aspecting the 2nd lord can signify aggressive wealth accumulation or impulsive spending.
+3. **Layered Reality (No Artificial Cancellation)**:
+   Astrological indicators do not cancel each other out in a zero-sum battle; each operates at its own structural level:
+   - **House Placement & Conjunctions**: State whether the phenomenon exists, where it originates, and who is involved.
+   - **Planetary Dignity & Shadbala**: Reflect operational potency and execution capacity.
+   - **Aspects (Graha Drishti) & Natural Karakas**: Describe how the process unfolds and whether manifestation is smooth or arduous.
+4. **Legitimacy of Origin**:
+   Resources acquired through personal exertion, institutional grants, gifts, or inheritance are all legitimate reflections of planetary wealth indicators. Report indications factually without moralistic lectures.
+5. **Divergent Forces**:
+   When divergent indicators exist, identify which specific facet of life each force governs, reporting each dimension distinctly rather than averaging them into vague generalizations.
+6. **Strict Directionality**:
+   Chart geometry -> Life experience. Never invert the direction to fit personal anecdotes.

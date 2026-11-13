@@ -78,8 +78,8 @@ def main() -> None:
             args.topic,
         )
     except ValueError as exc:
-        # 如极圈内 Placidus 无解：按 kp-optional.md「不收时的出口」回答，不起盘
-        raise SystemExit(f"[KP 不收] {exc}")
+        # e.g., polar circles Placidus unsolvable: fail closed per kp-optional.md, do not cast chart
+        raise SystemExit(f"[KP rejected] {exc}")
     data["question"] = args.question
     out_dir = (
         Path(args.out_parent).expanduser().resolve()

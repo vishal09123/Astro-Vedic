@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""build_timing_overlay.py — Prashna 时间副层(标准层内部档为偏成/持平后运行)
+"""build_timing_overlay.py — Prashna timing overlay (runs after standard layer outcome is favorable/pending)
 
-在已有 prashna_* 目录写 timing_overlay.md，不改 structured_prashna.md 和内部三档。
-算法、题型事项宫与边界见 resources/timing-layer.md，纯函数在 calc_timing.py。
+Writes timing_overlay.md into an existing prashna_* directory without modifying structured_prashna.md.
+Algorithms, matter houses, and boundaries are documented in resources/timing-layer.md, pure functions in calc_timing.py.
 
-隔离：标准 builder 不导入本脚本；本脚本不导入 Tajika/KP。
+Isolation: Standard builder does not import this script; this script does not import Tajika/KP.
 
-用法:
+Usage:
     python build_timing_overlay.py \\
         --datetime "2026-07-11 15:30:24" --lat 30.667 --lon 104.067 \\
         --tz "Asia/Shanghai" --matter-house 7 --mode general \\
@@ -19,7 +19,7 @@ import math
 import sys
 from pathlib import Path
 
-# --- 复用共享 vedic-calculator(只读) ---
+# --- Reuse shared vedic-calculator (read-only) ---
 _HERE = Path(__file__).resolve().parent            # vedic-prashna/scripts/
 _CALC = _HERE.parent.parent / "vedic-calculator" / "scripts"
 if str(_CALC) not in sys.path:
@@ -56,15 +56,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tz", required=True)
     parser.add_argument(
         "--matter-house", type=int, required=True, choices=range(1, 13),
-        help="题型事项宫，见 resources/timing-layer.md",
+        help="Matter house according to resources/timing-layer.md",
     )
     parser.add_argument(
         "--mode", choices=("general", "return"), default="general",
-        help="return=人的归来/到达题(T1 为主时间)；其余 general(T2 为主时间)",
+        help="return=Person's return/arrival (T1 is primary); general=Other matters (T2 is primary)",
     )
     parser.add_argument(
-        "--verdict", required=True, choices=("favorable", "pending"),
-        help="标准层内部档：favorable=偏成，pending=持平；偏不成档不运行本脚本",
+        "--verdict", choices=("favorable", "pending"), default="favorable",
+        help="Standard layer tier: favorable, pending; do not run for unfavorable",
     )
     parser.add_argument("--out-dir", required=True)
     args = parser.parse_args()
@@ -99,8 +99,8 @@ def main() -> None:
         lord = chart["house_lords"][args.matter_house]["lord"]
         primary = t2_house_lord_count(args.matter_house, lord, planets[lord]["house"])
 
-    # T3：事项宫主所在星座；Moon 用 engine 同一套 flags 逐点计算。
-    # 宫主就是 Moon 时"Moon 进入 Moon 所在座"自指，不取。
+    # T3: House lord sign; Moon calculated degree-by-degree using engine flags.
+    # When matter lord is Moon, "Moon enters Moon sign" is self-referential, omit it.
     matter_lord = chart["house_lords"][args.matter_house]["lord"]
     t3 = None
     if matter_lord != "Moon":

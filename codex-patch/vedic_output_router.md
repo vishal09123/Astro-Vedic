@@ -29,11 +29,11 @@ conditions.
   separate analyst-edit workflow.
 - Activate core analyst-edit mode only when the user explicitly asks for an
   analyst-edited complete report, consultative integrated full report,
-  client-readable complete report, or invokes `印占咨询式整合模式`.
+  client-readable complete report, or invokes Consultative Integration Mode.
 - Do not activate the full analyst-edit prompt merely because the user asks a
   normal QA answer to use humane, consultative language.
 - Use the exact output filename and directory required by the selected skill.
-  For normal core QA this is `qa_主题.md`; another skill's own filename rule
+  For normal core QA this is `qa_<topic>.md`; another skill's own filename rule
   remains authoritative.
 - The technical report, analyst-edited complete report, blind-audit artifact,
   and normal QA artifact are separate layers. Never rename or overwrite one
@@ -47,7 +47,7 @@ conditions.
 
 ## Packaging intent
 
-- “生成报告”, “打包”, or “导出HTML” selects a presentation copy of an
+- "Generate report", "package", or "export HTML" selects a presentation copy of an
   existing source artifact. It is not permission to change, merge, summarize,
   or rewrite that source.
 - If the user explicitly names a source file or report layer, package exactly

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Prashna 默认标准层 formatter。
+"""Prashna default standard layer formatter.
 
-只消费 `resources/standard-layer.md` 白名单字段。共享 engine 即使计算了本命
-Dasha、Chara Karaka、SAV、分盘、Yoga 或过运，本 formatter 也不读取、不输出。
+Consumes only whitelisted fields from `resources/standard-layer.md`.
+Even if the shared engine calculates natal Dasha, Chara Karaka, SAV, divisional
+charts, Yogas, or transits, this formatter does not read or output them.
 """
 
 CLASSICAL_PLANETS = [
@@ -26,9 +27,9 @@ SIGN_LORDS = {
 KENDRA_FROM = {4, 7, 10}
 TRIKONA_FROM = {5, 9}
 STRONG_BASIC = {"exalted", "own_sign", "moolatrikona"}
-# 能力层（M-XIV.39–40 Raman 注：强＝本座、入旺、友座，友指天然友；弱＝落陷；凶位＝6／8／12）。
-# engine 的 moolatrikona（根本三角）是本座里的一段度数，这里归"本座"，不另立一档。
-# 天然友谊按 BPHS Naisargika 表，与 engine 同表。
+# Ability layer (M-XIV.39–40 Raman commentary: strong = own sign, exalted, friend's sign (natural friend); weak = debilitated; dusthana = 6/8/12).
+# Engine's moolatrikona is a degree span within own sign, categorized under "own sign" here without separate tier.
+# Natural friendship follows BPHS Naisargika table, consistent with engine.
 NATURAL_FRIENDS = {
     "Sun": {"Moon", "Mars", "Jupiter"}, "Moon": {"Sun", "Mercury"},
     "Mars": {"Sun", "Moon", "Jupiter"}, "Mercury": {"Sun", "Venus"},
@@ -36,53 +37,55 @@ NATURAL_FRIENDS = {
     "Saturn": {"Mercury", "Venus"},
 }
 DUSTHANA = {6, 8, 12}
-# M-XIV.40 Raman 注：吉位＝角宫、三方宫、11 宫（从 Lagna 起，与凶位同一参照）。
+# M-XIV.40 Raman commentary: good places = kendras, trikonas, 11th house (from Lagna, same reference as dusthana).
 GOOD_PLACES = {1, 4, 5, 7, 9, 10, 11}
 
-# 描述题查表（P-VI.4、P-VII.13 注），只给查表事实，不生成结论。
+# Descriptive questions lookup table (P-VI.4, P-VII.13 notes), provides facts only, no conclusions.
 PLANET_DIRECTIONS = {
-    "Sun": "东", "Venus": "东南", "Mars": "南", "Rahu": "西南",
-    "Saturn": "西", "Moon": "西北", "Mercury": "北", "Jupiter": "东北",
+    "Sun": "East", "Venus": "Southeast", "Mars": "South", "Rahu": "Southwest",
+    "Saturn": "West", "Moon": "Northwest", "Mercury": "North", "Jupiter": "Northeast",
 }
 SIGN_DIRECTIONS = {
-    "Aries": "东", "Leo": "东", "Sagittarius": "东",
-    "Taurus": "南", "Virgo": "南", "Capricorn": "南",
-    "Gemini": "西", "Libra": "西", "Aquarius": "西",
-    "Cancer": "北", "Scorpio": "北", "Pisces": "北",
+    "Aries": "East", "Leo": "East", "Sagittarius": "East",
+    "Taurus": "South", "Virgo": "South", "Capricorn": "South",
+    "Gemini": "West", "Libra": "West", "Aquarius": "West",
+    "Cancer": "North", "Scorpio": "North", "Pisces": "North",
 }
-DREKKANA_PLACES = ["门槛", "中间部分", "后院"]
-OBJECT_KINDS_ODD = ["Dhatu（金属矿物）", "Moola（植物）", "Jeeva（生物）"]
-OBJECT_KINDS_EVEN = ["Jeeva（生物）", "Moola（植物）", "Dhatu（金属矿物）"]
+DREKKANA_PLACES = ["Threshold", "Middle section", "Backyard"]
+OBJECT_KINDS_ODD = ["Dhatu (Minerals/Metals)", "Moola (Vegetable/Flora)", "Jeeva (Living beings/Fauna)"]
+OBJECT_KINDS_EVEN = ["Jeeva (Living beings/Fauna)", "Moola (Vegetable/Flora)", "Dhatu (Minerals/Metals)"]
 NAVAMSA_SIZES = {
-    "Aquarius": "短（含圆形）", "Pisces": "短（含圆形）",
-    "Aries": "短（含圆形）", "Taurus": "短（含圆形）",
-    "Gemini": "中", "Cancer": "中", "Sagittarius": "中", "Capricorn": "中",
-    "Leo": "长", "Scorpio": "长", "Virgo": "长", "Libra": "长",
+    "Aquarius": "Short (incl. round)", "Pisces": "Short (incl. round)",
+    "Aries": "Short (incl. round)", "Taurus": "Short (incl. round)",
+    "Gemini": "Medium", "Cancer": "Medium", "Sagittarius": "Medium", "Capricorn": "Medium",
+    "Leo": "Long", "Scorpio": "Long", "Virgo": "Long", "Libra": "Long",
 }
 NIGHT_SIGNS = {"Aries", "Taurus", "Gemini", "Cancer", "Sagittarius", "Capricorn"}
 HIDING_PLACES = {
-    "Aries": "步道", "Taurus": "牛棚", "Gemini": "礼堂／剧场／战场",
-    "Cancer": "近水", "Leo": "林区", "Virgo": "近港口", "Libra": "店铺",
-    "Scorpio": "洞穴", "Sagittarius": "寺庙周边", "Capricorn": "近水",
-    "Aquarius": "艺术环境或储藏室", "Pisces": "近水",
+    "Aries": "Walkway", "Taurus": "Cattle shed", "Gemini": "Hall/theater/battleground",
+    "Cancer": "Near water", "Leo": "Forest area", "Virgo": "Near port", "Libra": "Shop/market",
+    "Scorpio": "Cave", "Sagittarius": "Around temple", "Capricorn": "Near water",
+    "Aquarius": "Artistic place or storage room", "Pisces": "Near water",
 }
 LORD_AGES = {
-    "Moon": "儿童", "Mars": "四岁以上", "Mercury": "5–12 岁",
-    "Venus": "至 23 岁的年轻人", "Jupiter": "中年", "Sun": "年长",
-    "Saturn": "老年",
+    "Moon": "Child", "Mars": "Over four years", "Mercury": "5–12 years",
+    "Venus": "Youth up to 23", "Jupiter": "Middle aged", "Sun": "Senior",
+    "Saturn": "Elderly",
 }
-# P-VII.12 注"other karakas too can be handled in an identical manner"；人与 karaka 依 M-XIV.31（house-meanings 第 3 节）。
-RELATIVE_KARAKAS = {"Sun": "父亲", "Moon": "母亲", "Mars": "手足", "Jupiter": "子女", "Venus": "妻子", "Saturn": "仆从、下属"}
-# P-VII.4 注：水象座两说并列，不择一。
+# P-VII.12 note: "other karakas too can be handled in an identical manner"; persons & karakas per M-XIV.31.
+RELATIVE_KARAKAS = {
+    "Sun": "Father", "Moon": "Mother", "Mars": "Siblings",
+    "Jupiter": "Children", "Venus": "Spouse", "Saturn": "Servants/subordinates"
+}
+# P-VII.4 note: Watery signs have dual classical views listed in parallel.
 WATERY_HORASARA = {"Cancer", "Capricorn", "Scorpio", "Pisces"}
 
-# P-I.4 注的六分盘（Lagna、Hora、Drekkana、Navamsa、Dwadasamsa、Trimsamsa）。
-# Hora 取传统 Sun／Moon Hora（奇数座前半 Leo、后半 Cancer，偶数座反之）；共享 engine
-# 的 D2 是 Uma Shambhu Hora（同 JHora "D-2 (US)"，PyJHora 注释亦称 PVR parivritti），不是这一口径，不读。其余四分盘按 Parashara
-# 公式算，并与 engine 分盘的 Lagna 逐一核对，不一致整表 unavailable。
-# 公式核对样例：M-XVIII.148 注 Virgo 30° → Mercury、Sun、Venus、Mercury、Sun、Mars。
+# P-I.4 note sixfold divisional charts (Lagna, Hora, Drekkana, Navamsa, Dwadasamsa, Trimsamsa).
+# Hora takes traditional Sun/Moon Hora (odd signs: 1st half Leo, 2nd half Cancer; even signs inverted);
+# shared engine D2 is Uma Shambhu Hora (JHora "D-2 (US)", PyJHora parivritti), distinct standard, not read.
+# Other divisions use Parashara formula and cross-check Lagna against engine division; any mismatch marks unavailable.
 SHADVARGA_NAMES = {
-    "D1": "Lagna 本座", "D2": "Hora（传统 Sun／Moon）", "D3": "Drekkana",
+    "D1": "Lagna Rashi", "D2": "Hora (Traditional Sun/Moon)", "D3": "Drekkana",
     "D9": "Navamsa", "D12": "Dwadasamsa", "D30": "Trimsamsa",
 }
 TRIMSAMSA_ODD = ((5, "Aries"), (10, "Aquarius"), (18, "Sagittarius"), (25, "Gemini"), (30, "Libra"))
@@ -124,7 +127,7 @@ def _classical_aspecting_house(chart, house):
 
 
 def _simple_exchanges(chart):
-    """返回宫主交换事实，不消费共享 engine 的 natal yoga 分类。"""
+    """Returns house lord exchange facts without consuming engine natal yoga classification."""
     pairs = []
     lords = chart["house_lords"]
     planets = chart["planets"]
@@ -143,14 +146,14 @@ def _simple_exchanges(chart):
 
 
 def _natural_role(chart, name):
-    """Bhattotpala 自然吉凶，只在 Ayer 判据 F1～F3 都不命中时回落使用。"""
+    """Bhattotpala natural benefic/malefic role, fallback when Ayer criteria F1~F3 do not trigger."""
     if name in {"Jupiter", "Venus"}:
-        return "吉"
+        return "Benefic"
     if name in {"Sun", "Mars", "Saturn"}:
-        return "凶"
+        return "Malefic"
     if name == "Moon":
         phase = chart.get("moon_phase", {})
-        return "盈月未定" if phase.get("waxing") else "凶"
+        return "Waxing (Undefined)" if phase.get("waxing") else "Malefic"
     if name == "Mercury":
         malefics = {"Sun", "Mars", "Saturn"}
         mercury_house = chart["planets"]["Mercury"]["house"]
@@ -159,21 +162,21 @@ def _natural_role(chart, name):
             for planet in malefics
             if chart["planets"][planet]["house"] == mercury_house
         ]
-        return "凶" if joined else "吉"
+        return "Malefic" if joined else "Benefic"
     raise ValueError(name)
 
 
 def _natural_role_text(chart, name):
     role = _natural_role(chart, name)
-    if role == "盈月未定":
-        return "盈月；原文只明确满月为吉"
-    if name == "Mercury" and role == "凶":
-        return "凶（与凶星同宫）"
+    if role == "Waxing (Undefined)":
+        return "Waxing Moon; text only specifies Full Moon as benefic"
+    if name == "Mercury" and role == "Malefic":
+        return "Malefic (conjoined with malefic)"
     return role
 
 
 def _houses_ruled_from(planet, sign):
-    """planet 以 sign 为 1 宫时主管的宫位。"""
+    """Houses ruled by planet taking sign as the 1st house."""
     base = SIGNS.index(sign)
     return {
         house
@@ -183,21 +186,22 @@ def _houses_ruled_from(planet, sign):
 
 
 def _ayer_role(chart, planet, sign):
-    """Ayer P-I.3 注的功能吉凶：planet 对它占据或照射的星座 sign 吉还是凶。
+    """Ayer P-I.3 functional benefic/malefic role: planet relative to occupied/aspected sign.
 
-    F1 本宫主恒吉；F2 主 3、12 宫且落陷为凶（注例一 Jupiter/Capricorn）；
-    F3 主角宫兼三方宫且强（exalted／own_sign／moolatrikona）为吉（注例二 Mars/Leo）；
-    其余回落 Bhattotpala 自然吉凶。
+    F1 Own lord is always benefic;
+    F2 Rules houses 3, 12 and is debilitated -> malefic (Note Example 1: Jupiter/Capricorn);
+    F3 Rules kendra and trikona and is strong (exalted/own_sign/moolatrikona) -> benefic (Note Example 2: Mars/Leo);
+    Otherwise falls back to Bhattotpala natural role.
     """
     ruled = _houses_ruled_from(planet, sign)
     basic = chart.get("dignity", {}).get(planet, {}).get("basic")
     if 1 in ruled:
-        return "吉(宫主)"
+        return "Benefic (Own Lord)"
     if {3, 12} <= ruled and basic == "debilitated":
-        return "凶(注例一)"
+        return "Malefic (Note Example 1)"
     if ruled & KENDRA_FROM and ruled & TRIKONA_FROM and basic in STRONG_BASIC:
-        return "吉(注例二)"
-    return f"{_natural_role(chart, planet)}(回落)"
+        return "Benefic (Note Example 2)"
+    return f"{_natural_role(chart, planet)} (Fallback)"
 
 
 def _labelled(chart, names, sign):
@@ -205,14 +209,16 @@ def _labelled(chart, names, sign):
 
 
 def _lord_ability(chart, house):
-    """能力层事实：宫主的折损项、救应与结论。不进账本合计，只供否决与叙述。
+    """Ability layer facts: afflictions, mitigations, and capacity verdict of house lord.
+    Does not enter ledger sum; used exclusively for veto power and narrative explanation.
 
-    折损项（M-XIV.39–40；M-XIV.30 只取作用于宫主自身的几项，不取 6／8／12 宫主连接）：
-    落陷、落 6／8／12 宫、燃烧、逆行、受凶星占照而无吉星。宫主坐本宫不算落 6／8／12 宫
-    （M-XIV.42：宫主落本宫起算的吉位，该宫之事圆满；坐本宫＝本宫起算第 1 宫）。
-    救应：吉星同宫或照射；宫主入旺、本座或落天然友座（落陷星不算）；落陷而落吉位（M-XIV.40"弱而落吉位，多少能得"，
-    落陷一项照记，只作救应）。
-    结论：三项及以上，或两项而无救应 → 严重受损；一到两项 → 能力打折；无折损项时有力或正常。
+    Afflictions (M-XIV.39–40; M-XIV.30):
+    Debilitated, in houses 6/8/12, combust, retrograde, aspected/occupied by malefics without benefics.
+    Lord occupying own house is not counted as placed in 6/8/12 (M-XIV.42).
+    Mitigations: Benefic conjunction/aspect; exalted, own sign, natural friend's sign (debilitated planet excluded);
+    debilitated but in good place (M-XIV.40).
+    Verdict: 3+ afflictions, or 2 afflictions without mitigation -> Severely Afflicted;
+    1–2 afflictions -> Compromised Capacity; 0 afflictions -> Strong or Normal.
     """
     planet = chart["house_lords"][house]["lord"]
     data = chart["planets"][planet]
@@ -221,41 +227,39 @@ def _lord_ability(chart, house):
     others = [name for name in _occupants(chart, where, CLASSICAL_PLANETS) if name != planet]
     others += [name for name in _classical_aspecting_house(chart, where) if name != planet]
     roles = [_ayer_role(chart, name, sign) for name in others]
-    malefics = [name for name, role in zip(others, roles) if role.startswith("凶")]
+    malefics = [name for name, role in zip(others, roles) if role.startswith("Malefic")]
     malefic = bool(malefics)
-    benefic = any(role.startswith("吉") for role in roles)
+    benefic = any(role.startswith("Benefic") for role in roles)
     factors = []
     if basic == "debilitated":
-        factors.append("落陷")
+        factors.append("Debilitated")
     if where in DUSTHANA and where != house:
-        factors.append(f"落{where}宫")
+        factors.append(f"Placed in house {where}")
     if planet in chart.get("combustion", {}):
-        factors.append("燃烧")
+        factors.append("Combust")
     if data.get("retrograde"):
-        factors.append("逆行")
+        factors.append("Retrograde")
     if malefic and not benefic:
-        # 写出是哪几颗凶星：所问动作需要的征象星不计此项（judgment-rubric §2.1 按需减项）
-        factors.append(f"受凶星占照（{'、'.join(malefics)}）、无吉星")
-    # 落陷星不因落天然友座算强（Raman 注"弱＝落陷"；Mars 巨蟹、Venus 处女不再既弱又强，10-30 D18）
+        factors.append(f"Aspected/occupied by malefic ({', '.join(malefics)}), no benefic")
     strong = basic in STRONG_BASIC or (basic != "debilitated" and SIGN_LORDS[sign] in NATURAL_FRIENDS[planet])
     rescue = []
     if benefic:
-        rescue.append("吉星占照")
+        rescue.append("Aspected/occupied by benefic")
     if strong:
-        rescue.append("入旺" if basic == "exalted" else "本座" if basic in {"own_sign", "moolatrikona"} else "天然友座")
+        rescue.append("Exalted" if basic == "exalted" else "Own sign" if basic in {"own_sign", "moolatrikona"} else "Natural friend sign")
     if basic == "debilitated" and where in GOOD_PLACES:
-        rescue.append(f"弱而落吉位（{where}宫）")
+        rescue.append(f"Weak but in good place (house {where})")
     if len(factors) >= 3 or (len(factors) == 2 and not rescue):
-        verdict = "严重受损"
+        verdict = "Severely Afflicted"
     elif factors:
-        verdict = "能力打折"
+        verdict = "Compromised Capacity"
     else:
-        verdict = "有力" if strong else "正常"
+        verdict = "Strong" if strong else "Normal"
     return planet, factors, rescue, verdict
 
 
 def _lord_links(chart, house):
-    """意愿层事实：宫主同宫、照射之星（及其从 Lagna 起所管宫），与 Lagna 主的连接。"""
+    """Desire layer facts: planets conjoined/aspecting house lord (and houses ruled from Lagna), and link to Lagna lord."""
     lagna_sign = chart["lagna"]["sign"]
     planets = chart["planets"]
     planet = chart["house_lords"][house]["lord"]
@@ -263,7 +267,7 @@ def _lord_links(chart, house):
 
     def with_rule(names):
         return ", ".join(
-            f"{name}（管{'、'.join(map(str, sorted(_houses_ruled_from(name, lagna_sign)))) or '—'}）"
+            f"{name} (rules {', '.join(map(str, sorted(_houses_ruled_from(name, lagna_sign)))) or '—'})"
             if name in CLASSICAL_PLANETS else name
             for name in names
         ) or "—"
@@ -272,177 +276,176 @@ def _lord_links(chart, house):
     aspecting = [n for n in _classical_aspecting_house(chart, where) if n != planet]
     first_lord = chart["house_lords"][1]["lord"]
     if planet == first_lord:
-        link = "即 Lagna 主"
+        link = "Lagna lord itself"
     else:
-        link = "、".join(_relation(chart, first_lord, planet)) or "无"
+        link = ", ".join(_relation(chart, first_lord, planet)) or "None"
     return planet, with_rule(joined), with_rule(aspecting), link
 
 
 def _sees(chart, a, b):
-    """a 的 Graha Drishti 落在 b 所在的宫。"""
+    """True if a's Graha Drishti falls on the house where b is located."""
     where = chart["planets"][b]["house"]
     return where in chart["graha_drishti"].get(a, {}).get("aspected_houses", [])
 
 
 def _relation(chart, a, b):
-    """M-XIV.43 的连接：同宫；照射（单向即可，写明谁照谁）；互换；互为 4／10 宫（角宫关系）。"""
+    """M-XIV.43 Connections: same house; aspect; mutual exchange; mutual 4/10 relationship."""
     if a == b:
-        return ["同一颗星"]
+        return ["Same planet"]
     planets = chart["planets"]
     kinds = []
     if planets[a]["house"] == planets[b]["house"]:
-        kinds.append("同宫")
+        kinds.append("Same house")
     ab, ba = _sees(chart, a, b), _sees(chart, b, a)
     if ab and ba:
-        kinds.append("互照")
+        kinds.append("Mutual aspect")
     elif ab or ba:
-        kinds.append(f"{a} 照 {b}" if ab else f"{b} 照 {a}")
+        kinds.append(f"{a} aspects {b}" if ab else f"{b} aspects {a}")
     if SIGN_LORDS[planets[a]["sign"]] == b and SIGN_LORDS[planets[b]["sign"]] == a:
-        kinds.append("互换")
+        kinds.append("Mutual exchange")
     if (planets[b]["house"] - planets[a]["house"]) % 12 in (3, 9):
-        kinds.append("互为4/10宫")
+        kinds.append("Mutual 4/10 relationship")
     return kinds
 
 
 def _touches(chart, karaka, planet):
-    """征象星串联（执行口径，B 级）：征象星与 planet 同宫，或由征象星照射 planet。"""
+    """Karaka bridging check: karaka conjoined with planet or aspects planet."""
     if karaka == planet:
-        return "即本星"
+        return "Same planet directly"
     if chart["planets"][karaka]["house"] == chart["planets"][planet]["house"]:
-        return "同宫"
-    return f"{karaka} 照 {planet}" if _sees(chart, karaka, planet) else ""
+        return "Same house"
+    return f"{karaka} aspects {planet}" if _sees(chart, karaka, planet) else ""
 
 
 def _derived(actor, n):
-    """以 actor 宫为命宫的第 n 宫（M-XVII.8–9：对方从 7 宫读；M-XIV.116 注：从 7 宫起算）。"""
+    """The nth house taking actor house as 1st house (derived house)."""
     return (actor + n - 2) % 12 + 1
 
 
 def _action_chain(chart, actor):
-    """行动链（judgment-rubric §2.5，执行口径）：只回答"行动者会不会动"，不进账本合计。
+    """Action chain: evaluates whether actor will act; does not enter ledger sum.
 
-    ① 起意：行动者起第 3 宫主与行动者宫主相连，或 Mars 触及行动者宫主（M-XIV.5、31、43）；
-    ② 行动：行动者起第 10 宫主与行动者宫主相连或同星（M-XIV.12）；
-    ③ 指向你：行动者宫主、起意宫主、行动宫主之一与 Lagna 主相连，或经 Mars 串联（M-XIV.43）；
-    ④ 能力：行动者宫主或起意宫主严重受损（M-XIV.39）。
-    Mercury、Venus、Sun 只有第七宫照射，它们串得起的两端必已直连，所以③只需另查 Mars。
+    1. Initiative: Derived 3rd lord connects with actor lord, or Mars touches actor lord (M-XIV.5, 31, 43);
+    2. Action: Derived 10th lord connects with actor lord or is identical planet (M-XIV.12);
+    3. Directed at querent: Actor lord, initiative lord, or action lord connects with Lagna lord, or bridged via Mars (M-XIV.43);
+    4. Capacity: Actor lord or initiative lord is Severely Afflicted (M-XIV.39).
     """
     lord = lambda house: chart["house_lords"][house]["lord"]
-    rel = lambda a, b: "、".join(_relation(chart, a, b))
+    rel = lambda a, b: ", ".join(_relation(chart, a, b))
     first, doer = lord(1), lord(actor)
     starter, mover = lord(_derived(actor, 3)), lord(_derived(actor, 10))
-    pair = lambda a, b: f"即行动者宫主 {b}" if a == b else (f"{a}–{b}：{rel(a, b)}" if rel(a, b) else "")
-    start = [f"起意宫主 {pair(starter, doer)}"] if pair(starter, doer) else []
+    pair = lambda a, b: f"Actor lord {b} directly" if a == b else (f"{a}–{b}: {rel(a, b)}" if rel(a, b) else "")
+    start = [f"Initiative lord {pair(starter, doer)}"] if pair(starter, doer) else []
     if doer == "Mars":
-        start.append("行动者宫主即 Mars")
+        start.append("Actor lord is Mars directly")
     elif _touches(chart, "Mars", doer):
-        start.append(f"Mars–{doer}：{_touches(chart, 'Mars', doer)}")
+        start.append(f"Mars–{doer}: {_touches(chart, 'Mars', doer)}")
     move = pair(mover, doer)
-    point = [f"{p} 即 Lagna 主" if p == first else f"{p}–{first}：{rel(p, first)}"
+    point = [f"{p} is Lagna lord directly" if p == first else f"{p}–{first}: {rel(p, first)}"
              for p in dict.fromkeys((doer, starter, mover)) if rel(p, first)]
     to_first, to_doer = _touches(chart, "Mars", first), _touches(chart, "Mars", doer)
     if to_first and to_doer and "Mars" not in (first, doer) and doer != first:
-        point.append(f"经 Mars 串联（Mars–{first}：{to_first}；Mars–{doer}：{to_doer}）")
-    weak = [f"{h}宫主" for h in dict.fromkeys((actor, _derived(actor, 3)))
-            if _lord_ability(chart, h)[3] == "严重受损"]
+        point.append(f"Bridged via Mars (Mars–{first}: {to_first}; Mars–{doer}: {to_doer})")
+    weak = [f"House {h} lord" for h in dict.fromkeys((actor, _derived(actor, 3)))
+            if _lord_ability(chart, h)[3] == "Severely Afflicted"]
     if not start:
-        verdict = "盘面未见主动"
+        verdict = "No Initiative in Chart"
     elif not point:
-        verdict = "有起意未指向你"
+        verdict = "Initiative not Directed at Querent"
     elif weak:
-        verdict = "有心无力"
+        verdict = "Willing but Incapacitated"
     else:
-        verdict = "偏会" if move else "偏会·停在念头或言语"
+        verdict = "Favorable (Action Expected)" if move else "Favorable (Arrested in Thought/Speech)"
     return start, move, point, weak, verdict
 
 
-ACTION_KARAKAS = [("Mars", "勇气"), ("Mercury", "言语、学识"), ("Venus", "情意"),
-                  ("Sun", "君主、官方"), ("Jupiter", "智力")]
+ACTION_KARAKAS = [
+    ("Mars", "Courage/Initiative"), ("Mercury", "Speech/Intellect"), ("Venus", "Affection"),
+    ("Sun", "Authority/Ruler"), ("Jupiter", "Wisdom")
+]
 
 
 def _chain_lines(chart):
     lagna_sign = chart["lagna"]["sign"]
     lord = lambda house: chart["house_lords"][house]["lord"]
-    lines = ["### 行动者视角（转宫）与行动链（行动型问题输入）\n"]
+    lines = ["### Actor Perspective (Derived Houses) and Action Chain\n"]
     lines.append(
-        "> 以行动者所在的宫为命宫取第 n 宫（M-XVII.8–9、M-XIV.116 注）：起第 2 宫言语、第 3 宫起意、"
-        "第 7 宫情意的对象、第 10 宫行动、第 11 宫落实。本盘该宫原来的宫义照常存在。"
-        "行动链只回答“行动者会不会动”，不进账本合计（`judgment-rubric.md` §2.5）。\n"
+        "> Taking the actor's house as Lagna, evaluate derived houses (M-XVII.8–9, M-XIV.116 note): "
+        "2nd for speech, 3rd for initiative, 7th for partner/object of affection, 10th for action, 11th for fruition. "
+        "Action chains evaluate whether the actor acts; they do not score in the ledger (`judgment-rubric.md` §2.5).\n"
     )
-    lines.append("| 行动者 | 言语（起第2宫） | 起意（起第3宫） | 情意对象（起第7宫） | 行动（起第10宫） | 落实（起第11宫） |")
+    lines.append("| Actor | Speech (Derived 2nd) | Initiative (Derived 3rd) | Affection Object (Derived 7th) | Action (Derived 10th) | Fruition (Derived 11th) |")
     lines.append("|---|---|---|---|---|---|")
-    cell = lambda h: f"{h}宫（{lord(h)}·{_lord_ability(chart, h)[3]}）"
+    cell = lambda h: f"House {h} ({lord(h)} · {_lord_ability(chart, h)[3]})"
     for actor in range(2, 13):
         lines.append(
-            f"| {actor}宫（{lord(actor)}） | "
+            f"| House {actor} ({lord(actor)}) | "
             + " | ".join(cell(_derived(actor, n)) for n in (2, 3, 7, 10, 11)) + " |"
         )
     lines.append("")
-    lines.append("| 行动者 | ① 起意 | ② 行动 | ③ 指向你（Lagna 主） | ④ 严重受损 | 行动链 |")
+    lines.append("| Actor | (1) Initiative | (2) Action | (3) Directed at Querent | (4) Severely Afflicted | Action Chain Verdict |")
     lines.append("|---|---|---|---|---|---|")
     for actor in range(2, 13):
         start, move, point, weak, verdict = _action_chain(chart, actor)
         lines.append(
-            f"| {actor}宫 | {'；'.join(start) or '—'} | {move or '—'} | "
-            f"{'；'.join(point) or '—'} | {'、'.join(weak) or '—'} | {verdict} |"
+            f"| House {actor} | {'; '.join(start) or '—'} | {move or '—'} | "
+            f"{'; '.join(point) or '—'} | {', '.join(weak) or '—'} | {verdict} |"
         )
     lines.append("")
     lines.append(
-        "> 征象星串联（执行口径，B 级）：征象星与两端都同宫或由它照射，算连上，写“经某星串联”。"
-        "只认所问动作的征象星（`question-decomposition.md` 投射表）。Mercury、Venus、Sun 只有第七宫照射，"
-        "它们串得起的两端必已直连；串联在这里说明“靠什么连上”。\n"
+        "> Karaka Bridging: When a natural Karaka conjoins or aspects both parties, it bridges them. "
+        "Applies only to Karakas relevant to the requested action (`question-decomposition.md`).\n"
     )
-    lines.append("| 征象星（象义） | 触及的宫主（同宫或由它照射） | 与 Lagna 主一起串起的宫 |")
+    lines.append("| Karaka (Signification) | Touched House Lords (Conjunction/Aspect) | Houses Bridged with Lagna Lord |")
     lines.append("|---|---|---|")
     first = lord(1)
     for karaka, meaning in ACTION_KARAKAS:
         touched = []
         for planet in dict.fromkeys(lord(h) for h in range(1, 13)):
             how = _touches(chart, karaka, planet)
-            if how and how != "即本星":
-                houses = "、".join(map(str, sorted(_houses_ruled_from(planet, lagna_sign))))
-                touched.append(f"{planet}（管{houses}；{how}）")
+            if how and how != "Same planet directly":
+                houses = ", ".join(map(str, sorted(_houses_ruled_from(planet, lagna_sign))))
+                touched.append(f"{planet} (rules {houses}; {how})")
         if karaka == first:
-            bridged = "即 Lagna 主"
+            bridged = "Lagna lord itself"
         elif not _touches(chart, karaka, first):
-            bridged = "—（不触及 Lagna 主）"
+            bridged = "— (Does not touch Lagna lord)"
         else:
-            bridged = "、".join(
-                f"{h}（{lord(h)}）" for h in range(2, 13)
+            bridged = ", ".join(
+                f"House {h} ({lord(h)})" for h in range(2, 13)
                 if lord(h) not in (first, karaka) and _touches(chart, karaka, lord(h))
             ) or "—"
-        lines.append(f"| {karaka}（{meaning}） | {'、'.join(touched) or '—'} | {bridged} |")
+        lines.append(f"| {karaka} ({meaning}) | {', '.join(touched) or '—'} | {bridged} |")
     lines.append("")
     return lines
 
 
 def _lord_lines(chart):
-    lines = ["### 宫主能力与连接（能力层、意愿层输入）\n"]
+    lines = ["### House Lord Ability and Connections\n"]
     lines.append(
-        "> 能力层：按 M-XIV.39–40 与 M-XIV.30（只取作用于宫主自身的几项）列折损项与救应。"
-        "宫主坐本宫不记落 6／8／12 宫（M-XIV.42）。燃烧、逆行只算折损，不单独算无力；只有多项叠加且无救应才记“严重受损”。"
-        "本表不进账本合计，“严重受损”只用于 `judgment-rubric.md` 能力层否决。\n"
+        "> Ability Layer: Afflictions and mitigations per M-XIV.39–40 and M-XIV.30. "
+        "A lord in own house is not penalized for occupying 6/8/12 (M-XIV.42). "
+        "Combustion or retrogradation alone is an affliction, not standalone incapacity; "
+        "multiple afflictions without mitigation yield 'Severely Afflicted'. "
+        "This table does not enter ledger sum; 'Severely Afflicted' serves solely as an ability veto.\n"
     )
-    lines.append("| 宫 | 宫主 | 宫主落宫（星座） | D1尊贵度 | 折损项 | 救应 | 能力 |")
+    lines.append("| House | Lord | Lord Placement (Sign) | D1 Dignity | Afflictions | Mitigations | Capacity Verdict |")
     lines.append("|---:|---|---|---|---|---|---|")
     dignity = chart.get("dignity", {})
     for house in range(1, 13):
         planet, factors, rescue, verdict = _lord_ability(chart, house)
         data = chart["planets"][planet]
         lines.append(
-            f"| {house} | {planet} | {data['house']}（{data['sign']}） | "
-            f"{dignity.get(planet, {}).get('basic', '—')} | {'、'.join(factors) or '—'} | "
-            f"{'、'.join(rescue) or '—'} | {verdict} |"
+            f"| {house} | {planet} | House {data['house']} ({data['sign']}) | "
+            f"{dignity.get(planet, {}).get('basic', '—')} | {', '.join(factors) or '—'} | "
+            f"{', '.join(rescue) or '—'} | {verdict} |"
         )
     lines.append("")
     lines.append(
-        "> 意愿层：按 M-XIV.33／47／48 取象、M-XIV.43 看与 Lagna 主的连接。这里只列事实："
-        "同宫与照射之星各管哪几宫（从 Lagna 起）；与 Lagna 主的连接按 M-XIV.43 列同宫、照射"
-        "（单向即可，写明谁照谁）、互照、互换、互为4/10宫（角宫关系）。"
-        "同宫、照射之星按“带来什么、这题要不要、有没有力送到”读（`house-meanings.md` §5）；"
-        "本表不进账本合计。\n"
+        "> Desire Layer: Facts on conjunctions, aspects, and connections to Lagna lord per M-XIV.33/47/48 and M-XIV.43. "
+        "Does not enter ledger sum.\n"
     )
-    lines.append("| 宫 | 宫主 | 同宫之星（所管宫） | 照射宫主之星（所管宫） | 与 Lagna 主 |")
+    lines.append("| House | Lord | Conjoined Planets (Houses Ruled) | Aspecting Planets (Houses Ruled) | Connection to Lagna Lord |")
     lines.append("|---:|---|---|---|---|")
     for house in range(1, 13):
         planet, joined, aspecting, link = _lord_links(chart, house)
@@ -456,7 +459,7 @@ def _navamsa_number(degree):
 
 
 def _shadvarga_signs(sign, degree):
-    """Lagna 落在 sign 的 degree 度时，六分盘各自的星座。"""
+    """Signs of each of the 6 divisional charts when Lagna falls at degree in sign."""
     si = SIGNS.index(sign)
     odd = si % 2 == 0
     trimsamsa = TRIMSAMSA_ODD if odd else TRIMSAMSA_EVEN
@@ -471,7 +474,7 @@ def _shadvarga_signs(sign, degree):
 
 
 def _shadvarga_cuts(sign):
-    """六分盘各自在本座内的分界度数（不含 0° 与 30°）。"""
+    """Cut-off degrees within the sign for each of the 6 divisional charts."""
     trimsamsa = TRIMSAMSA_ODD if SIGNS.index(sign) % 2 == 0 else TRIMSAMSA_EVEN
     return {
         "D1": [],
@@ -484,15 +487,15 @@ def _shadvarga_cuts(sign):
 
 
 def _shadvarga_majority(chart, sign, degree):
-    """座主对 Lagna 星座的功能吉凶计数：(吉, 凶, 多数)；“盈月未定”不计。"""
+    """Count functional benefic/malefic roles of divisional lords relative to Lagna sign."""
     roles = [_ayer_role(chart, SIGN_LORDS[s], sign) for s in _shadvarga_signs(sign, degree).values()]
-    good = sum(role.startswith("吉") for role in roles)
-    bad = sum(role.startswith("凶") for role in roles)
-    return good, bad, "多吉" if good > bad else "多凶" if bad > good else "相等"
+    good = sum(role.startswith("Benefic") for role in roles)
+    bad = sum(role.startswith("Malefic") for role in roles)
+    return good, bad, "Benefic dominant" if good > bad else "Malefic dominant" if bad > good else "Equal"
 
 
 def _shadvarga_critical(chart, sign, degree):
-    """Lagna 在本座内前后移动多少度，六分盘多数会变；本座内都不变时返回 None。"""
+    """Degrees Lagna must move within the sign before Shadvarga majority flips."""
     base = _shadvarga_majority(chart, sign, degree)[2]
     cuts = sorted({c for values in _shadvarga_cuts(sign).values() for c in values})
     found = []
@@ -511,35 +514,35 @@ def _shadvarga_lines(chart):
     lagna = chart["lagna"]
     sign, degree = lagna["sign"], lagna["degree"]
     signs = _shadvarga_signs(sign, degree)
-    lines = ["### Lagna 六分盘座主（`P-I.4` 注）\n"]
+    lines = ["### Lagna Shadvarga Lords (`P-I.4` Note)\n"]
     engine_charts = chart.get("divisional_charts", {})
     problems = []
     for key in ("D3", "D9", "D12", "D30"):
         entry = engine_charts.get(key)
         if not entry:
-            problems.append(f"{key} 缺失（engine 未给出该分盘）")
+            problems.append(f"{key} missing (engine did not supply this division)")
         elif "error" in entry:
-            problems.append(f"{key} 出错（{entry['error']}）")
+            problems.append(f"{key} error ({entry['error']})")
         elif "Lagna" not in entry:
-            problems.append(f"{key} 缺失 Lagna 行")
+            problems.append(f"{key} missing Lagna entry")
         elif entry["Lagna"]["sign"] != signs[key]:
             edge = min(abs(degree - c) for c in _shadvarga_cuts(sign)[key] + [0.0, 30.0])
             problems.append(
-                f"{key} 不一致（engine {entry['Lagna']['sign']}／公式 {signs[key]}；"
-                f"Lagna {sign} {degree:.4f}°，距本分盘分界 {edge:.4f}°）"
+                f"{key} mismatch (engine {entry['Lagna']['sign']} / formula {signs[key]}; "
+                f"Lagna {sign} {degree:.4f}°, boundary distance {edge:.4f}°)"
             )
     if problems:
         lines.append(
-            f"- 六分盘 unavailable：{'；'.join(problems)}。凡与 engine 分盘不一致，不得手推补造；"
-            "`P-I.4` 本盘不读 varga 一项，在输入栏写明。"
+            f"- Shadvarga unavailable: {'; '.join(problems)}. Formula mismatches are not manually interpolated; "
+            "`P-I.4` omits varga factor in this chart."
         )
         lines.append("")
         return lines
-    lines.append("| 分盘 | 星座 | 座主 | 座主对 Lagna 星座的功能吉凶 | 距本分盘座内分界 |")
+    lines.append("| Division | Sign | Lord | Functional Role of Lord to Lagna Sign | Distance to Sub-Division Boundary |")
     lines.append("|---|---|---|---|---|")
     for key, cuts in _shadvarga_cuts(sign).items():
         lord = SIGN_LORDS[signs[key]]
-        edge = f"{min(abs(degree - c) for c in cuts):.3f}°" if cuts else "见“Lagna 距 sign 边界”"
+        edge = f"{min(abs(degree - c) for c in cuts):.3f}°" if cuts else "See Lagna distance to sign boundary"
         lines.append(
             f"| {SHADVARGA_NAMES[key]} | {signs[key]} | {lord} | "
             f"{_ayer_role(chart, lord, sign)} | {edge} |"
@@ -547,22 +550,22 @@ def _shadvarga_lines(chart):
     good, bad, majority = _shadvarga_majority(chart, sign, degree)
     critical = _shadvarga_critical(chart, sign, degree)
     critical_text = (
-        f"{critical:.3f}°" if critical is not None else "本座内不变（只看 Lagna 距 sign 边界）"
+        f"{critical:.3f}°" if critical is not None else "Unchanged within sign (boundary only)"
     )
     lines.append("")
-    lines.append(f"- 合计：吉 {good}、凶 {bad}、不计 {6 - good - bad} → **{majority}**")
-    lines.append(f"- 六分盘多数临界距离：{critical_text}（Lagna 前移或后移这么多，多数结论会变）")
+    lines.append(f"- Total: Benefic {good}, Malefic {bad}, Excluded {6 - good - bad} → **{majority}**")
+    lines.append(f"- Shadvarga majority critical shift distance: {critical_text}")
     lines.append(
-        "- 用途边界：只供 `P-I.4` “falls in a benefic's varga”：多吉＝落吉 varga，"
-        "多凶＝落凶 varga，相等不计（数法见 `judgment-rubric.md` §4.1）；"
-        "禁止由此展开 D2、D3、D9、D12、D30 解读。"
+        "- Scope restriction: Sourced exclusively for `P-I.4` ('falls in a benefic's varga'): "
+        "Benefic dominant = benefic varga, Malefic dominant = malefic varga, Equal = excluded; "
+        "do not expand into D2, D3, D9, D12, D30 life readings."
     )
     lines.append("")
     return lines
 
 
 def tithi_facts(sun_longitude, moon_longitude):
-    """tithi 用未舍入的经度差；满月窗按 P-I.5 注：白半月第 10 至黑半月第 5 tithi。"""
+    """Tithi computation using unrounded longitudinal difference; Full Moon window per P-I.5 note (Tithi 10 to 20)."""
     elongation = (moon_longitude - sun_longitude) % 360.0
     tithi = int(elongation // 12.0) + 1
     return tithi, 10 <= tithi <= 20
@@ -579,44 +582,44 @@ def _watery_mantreswara(sign, degree):
 
 
 def _yes(flag):
-    return "是" if flag else "否"
+    return "yes" if flag else "no"
 
 
 def _descriptive_facts(chart, d9_lagna):
-    """描述题（P-VI.1～4、P-VII.13、P-I.7）、亲属下落（P-VII.12）与天气题（P-VII.3～4）的查表事实。"""
+    """Descriptive lookup tables (P-VI.1~4, P-VII.13, P-I.7), absentee location (P-VII.12), and weather (P-VII.3~4)."""
     lagna = chart["lagna"]
     planets = chart["planets"]
     sign = lagna["sign"]
     degree = lagna["degree"]
     lines = []
 
-    lines.append("### 描述题与天气查表事实\n")
+    lines.append("### Descriptive and Weather Lookup Facts\n")
     lines.append(
-        "> 只在 `matter-rules.md` 第 5 节查表题（描述题、亲属下落、天气）消费；描述输出不进内部三档。"
-        "原文歧义处两说并列，不择一。\n"
+        "> Consumed exclusively for lookup queries (`matter-rules.md` §5). "
+        "Descriptive outputs do not enter internal outcome tiers. Dual classical views are presented in parallel.\n"
     )
 
-    lines.append("**P-VI.1～2 失物是否在家、藏在何处**\n")
+    lines.append("**P-VI.1~2 Lost Article Inside House and Location**\n")
     if d9_lagna:
         d9_sign = d9_lagna["sign"]
         lines.append(
-            f"- Lagna 固定座：{_yes(sign in FIXED_SIGNS)}；rising Navamsa 固定座："
-            f"{_yes(d9_sign in FIXED_SIGNS)}；vargottama（Lagna 星座＝rising Navamsa 星座）："
+            f"- Lagna fixed sign: {_yes(sign in FIXED_SIGNS)}; rising Navamsa fixed sign: "
+            f"{_yes(d9_sign in FIXED_SIGNS)}; vargottama (Lagna sign = rising Navamsa sign): "
             f"{_yes(sign == d9_sign)}"
         )
     else:
         lines.append(
-            f"- Lagna 固定座：{_yes(sign in FIXED_SIGNS)}；rising Navamsa unavailable，"
-            "VI.1 只能读 Lagna 一项"
+            f"- Lagna fixed sign: {_yes(sign in FIXED_SIGNS)}; rising Navamsa unavailable, "
+            "VI.1 reads Lagna only"
         )
     drekkana = min(int(degree // 10), 2)
     lines.append(
-        f"- Lagna 在第 {drekkana + 1} 个 drekkana（每 10°）→ 屋内藏处："
-        f"{DREKKANA_PLACES[drekkana]}（只在 VI.1 读作“屋内”时用）"
+        f"- Lagna in drekkana #{drekkana + 1} (10° segments) → Hiding spot in house: "
+        f"{DREKKANA_PLACES[drekkana]} (used only when VI.1 indicates 'inside house')"
     )
     lines.append("")
 
-    lines.append("**P-VI.4 方向与距离**\n")
+    lines.append("**P-VI.4 Direction and Distance**\n")
     kendra_planets = [
         name
         for name in CLASSICAL_PLANETS + ["Rahu"]
@@ -624,90 +627,89 @@ def _descriptive_facts(chart, d9_lagna):
     ]
     lagna_direction = SIGN_DIRECTIONS[sign]
     listed = ", ".join(
-        f"{name}（{planets[name]['house']}宫，{PLANET_DIRECTIONS[name]}）"
+        f"{name} (House {planets[name]['house']}, {PLANET_DIRECTIONS[name]})"
         for name in kendra_planets
     )
     lines.append(
-        f"- 角宫行星（含 Rahu；Ketu 原文未列方向，不计）：{listed or '无'}"
+        f"- Planets in kendras (incl. Rahu; Ketu omitted in text): {listed or 'None'}"
     )
-    lines.append(f"- Lagna 星座方向：{lagna_direction}")
+    lines.append(f"- Lagna sign direction: {lagna_direction}")
     if not kendra_planets:
-        lines.append(f"- 方向读法：角宫无星，按 Lagna 星座 → {lagna_direction}")
+        lines.append(f"- Direction interpretation: No planets in kendras, read by Lagna sign → {lagna_direction}")
     elif len(kendra_planets) == 1:
         only = kendra_planets[0]
         lines.append(
-            f"- 方向读法：角宫仅 1 星，正文（In their absence, by the lagna）读作 "
-            f"{PLANET_DIRECTIONS[only]}；注（Two or more planets in kendras）读作 "
-            f"{lagna_direction}；两读并列"
+            f"- Direction interpretation: Single planet in kendra: text reads {PLANET_DIRECTIONS[only]}; "
+            f"note reads {lagna_direction}; dual views presented in parallel"
         )
     else:
         directions = sorted({PLANET_DIRECTIONS[name] for name in kendra_planets})
         lines.append(
-            f"- 方向读法：角宫 {len(kendra_planets)} 星，按行星方向 → "
-            f"{'／'.join(directions)}（不止一个方向时并列）"
+            f"- Direction interpretation: {len(kendra_planets)} planets in kendras, read by planets → "
+            f"{' / '.join(directions)}"
         )
     number = _navamsa_number(degree)
     first_half = degree < 15
     offset = number - 1 if first_half else number - 5
     lines.append(
-        f"- Lagna 在本座{'前' if first_half else '后'}半，rising Navamsa 序号 {number}，"
-        f"距{'第 1' if first_half else '中间第 5'} 个 Navamsa {offset} 格 → 距离读数 {offset}"
-        "（0～4，只作相对远近；原文单位 yojana，注称按现代条件另定尺度）"
+        f"- Lagna in {'first' if first_half else 'second'} half of sign, rising Navamsa ordinal #{number}, "
+        f"offset from {'1st' if first_half else 'middle 5th'} Navamsa is {offset} units → Distance reading {offset} "
+        "(relative distance scale 0–4)"
     )
     lines.append("")
 
-    lines.append("**P-I.7、P-VII.13 物品与人**\n")
+    lines.append("**P-I.7, P-VII.13 Articles and Persons**\n")
     odd_sign = SIGNS.index(sign) % 2 == 0
     kinds = OBJECT_KINDS_ODD if odd_sign else OBJECT_KINDS_EVEN
     lines.append(
-        f"- 物品属性（I.7，Lagna {'奇' if odd_sign else '偶'}数座第 {number} 个 Navamsa）："
+        f"- Article classification (I.7, Lagna in {'odd' if odd_sign else 'even'} sign Navamsa #{number}): "
         f"{kinds[(number - 1) % 3]}"
     )
     if d9_lagna:
         lines.append(
-            f"- 物品大小（VII.13 注，按 rising Navamsa {d9_lagna['sign']}）："
+            f"- Article size (VII.13 note, rising Navamsa {d9_lagna['sign']}): "
             f"{NAVAMSA_SIZES[d9_lagna['sign']]}"
         )
     lines.append(
-        f"- 失窃时段（按 Lagna {sign}）：{'夜间' if sign in NIGHT_SIGNS else '白天'}"
+        f"- Theft timeframe (Lagna {sign}): {'Night' if sign in NIGHT_SIGNS else 'Day'}"
     )
-    lines.append(f"- 去向方向（按 Lagna {sign}）：{lagna_direction}")
-    lines.append(f"- 藏放处（按 Lagna {sign}）：{HIDING_PLACES[sign]}")
+    lines.append(f"- Direction of removal (Lagna {sign}): {lagna_direction}")
+    lines.append(f"- Concealment place (Lagna {sign}): {HIDING_PLACES[sign]}")
     lagna_lord = SIGN_LORDS[sign]
     lines.append(
-        f"- 拿走者或失踪者年龄（按 Lagna 主 {lagna_lord}）：{LORD_AGES[lagna_lord]}"
+        f"- Age of taker / missing person (Lagna lord {lagna_lord}): {LORD_AGES[lagna_lord]}"
     )
     lines.append("")
 
-    lines.append("**P-VII.12 亲属是否在外地（karaka 带吉星落 8 宫且受吉星照则在外，否则在本地）**\n")
+    lines.append("**P-VII.12 Absentee Location (Karaka conjoined with and aspected by benefic in 8th house = away, else local)**\n")
     eighth = chart["house_lords"][8]["sign"]
-    with_b = [n for n in _occupants(chart, 8, CLASSICAL_PLANETS) if _ayer_role(chart, n, eighth).startswith("吉")]
-    asp_b = [n for n in _classical_aspecting_house(chart, 8) if _ayer_role(chart, n, eighth).startswith("吉")]
+    with_b = [n for n in _occupants(chart, 8, CLASSICAL_PLANETS) if _ayer_role(chart, n, eighth).startswith("Benefic")]
+    asp_b = [n for n in _classical_aspecting_house(chart, 8) if _ayer_role(chart, n, eighth).startswith("Benefic")]
     for name, who in RELATIVE_KARAKAS.items():
         if planets[name]["house"] != 8:
-            lines.append(f"- {who}（{name}）：落 {planets[name]['house']} 宫，不在 8 宫 → 在本地")
+            lines.append(f"- {who} ({name}): Placed in house {planets[name]['house']}, not in 8th → Local")
             continue
         comp = [n for n in with_b if n != name]
         seen = [n for n in asp_b if n != name]
         lines.append(
-            f"- {who}（{name}）：落 8 宫；同宫吉星 {'、'.join(comp) or '无'}；"
-            f"照 8 宫吉星 {'、'.join(seen) or '无'} → {'在外地' if comp and seen else '在本地'}"
+            f"- {who} ({name}): In 8th house; conjoined benefics {', '.join(comp) or 'None'}; "
+            f"aspecting benefics {', '.join(seen) or 'None'} → {'Away' if comp and seen else 'Local'}"
         )
     lines.append("")
 
-    lines.append("**P-VII.3～4 天气（雨季前提由用户提供）**\n")
+    lines.append("**P-VII.3~4 Weather Facts**\n")
     moon_house = planets["Moon"]["house"]
     sun_house = planets["Sun"]["house"]
     venus_house = planets["Venus"]["house"]
     saturn_house = planets["Saturn"]["house"]
-    lines.append(f"- 白半月（盈）：{_yes(chart.get('moon_phase', {}).get('waxing'))}")
+    lines.append(f"- Waxing Moon: {_yes(chart.get('moon_phase', {}).get('waxing'))}")
     lines.append(
-        f"- VII.3(a)：Venus 在 Moon 起第 {_house_from(moon_house, venus_house)} 宫；"
-        f"Saturn 在 Moon 起第 {_house_from(moon_house, saturn_house)} 宫、"
-        f"Sun 起第 {_house_from(sun_house, saturn_house)} 宫（注：Venus 不可能在 Sun 起第 7）"
+        f"- VII.3(a): Venus in house #{_house_from(moon_house, venus_house)} from Moon; "
+        f"Saturn in house #{_house_from(moon_house, saturn_house)} from Moon, "
+        f"house #{_house_from(sun_house, saturn_house)} from Sun"
     )
     lines.append(
-        f"- VII.3(b)：Venus 在 Lagna 起第 {venus_house} 宫；Saturn 在第 {saturn_house} 宫"
+        f"- VII.3(b): Venus in house #{venus_house} from Lagna; Saturn in house #{saturn_house}"
     )
     rain_houses = (3, 2, 1, 4, 7, 10)
     rain_planets = [
@@ -719,17 +721,17 @@ def _descriptive_facts(chart, d9_lagna):
         for name in rain_planets:
             planet = planets[name]
             lines.append(
-                f"- VII.4(a)：{name} 在第 {planet['house']} 宫 {planet['sign']}，"
-                f"{_ayer_role(chart, name, planet['sign'])}；水象 Horasara："
-                f"{_yes(planet['sign'] in WATERY_HORASARA)}；Mantreswara："
+                f"- VII.4(a): {name} in house {planet['house']} {planet['sign']}, "
+                f"{_ayer_role(chart, name, planet['sign'])}; Watery Horasara: "
+                f"{_yes(planet['sign'] in WATERY_HORASARA)}; Mantreswara: "
                 f"{_yes(_watery_mantreswara(planet['sign'], planet['degree']))}"
             )
     else:
-        lines.append("- VII.4(a)：第 3、2 宫与角宫无七曜")
+        lines.append("- VII.4(a): No classical planets in houses 3, 2, or kendras")
     moon = planets["Moon"]
     lines.append(
-        f"- VII.4(b)：Moon 在 Lagna：{_yes(moon_house == 1)}；Moon 星座 {moon['sign']} 水象 "
-        f"Horasara：{_yes(moon['sign'] in WATERY_HORASARA)}；Mantreswara："
+        f"- VII.4(b): Moon in Lagna: {_yes(moon_house == 1)}; Moon sign {moon['sign']} Watery "
+        f"Horasara: {_yes(moon['sign'] in WATERY_HORASARA)}; Mantreswara: "
         f"{_yes(_watery_mantreswara(moon['sign'], moon['degree']))}"
     )
     lines.append("")
@@ -742,20 +744,20 @@ def format_standard_layer(chart):
     d9_lagna = chart.get("divisional_charts", {}).get("D9", {}).get("Lagna")
     lines = []
 
-    lines.append("## Prashna 默认标准层数据\n")
+    lines.append("## Prashna Default Standard Layer Data\n")
     lines.append(
-        "> 来源契约：Shatpanchasika-rooted classical Prashna，经 KN Rao／"
-        "Bhavan 兼容性筛选。这里只给事实，不在数据层生成成败结论。"
+        "> Source Contract: Shatpanchasika-rooted classical Prashna, screened via KN Rao / Bhavan compatibility. "
+        "Provides facts only; success/failure conclusions are not generated in this data layer."
     )
     lines.append(
-        "> 判读前必须读取 `resources/standard-layer.md`，按题型支持级和适用规则账本消费。\n"
+        "> Consult `resources/standard-layer.md` before interpretation.\n"
     )
 
-    lines.append("### Lagna 与 rising Navamsa\n")
-    lines.append("| 项 | 值 | 用途边界 |")
+    lines.append("### Lagna and Rising Navamsa\n")
+    lines.append("| Item | Value | Scope / Restriction |")
     lines.append("|---|---|---|")
     gemini_note = (
-        "；P-VI.3 注的头升列表无 Gemini，两说并列"
+        "; P-VI.3 note list omits Gemini, dual commentary presented"
         if lagna["sign"] == "Gemini"
         else ""
     )
@@ -764,30 +766,29 @@ def format_standard_layer(chart):
         f"{_modality(lagna['sign'])}; {_rising_type(lagna['sign'])}{gemini_note} |"
     )
     lines.append(
-        f"| Lagna 距 sign 边界 | {_distance_to_boundary(lagna['degree'], 30):.3f}° | "
-        "时间／地点粗略时据此标敏感，不自动判盘无效 |"
+        f"| Lagna Distance to Sign Boundary | {_distance_to_boundary(lagna['degree'], 30):.3f}° | "
+        "Input sensitivity fact; does not invalidate chart |"
     )
     lines.append(
-        f"| Lagna 距 Navamsa 边界 | "
+        f"| Lagna Distance to Navamsa Boundary | "
         f"{_distance_to_boundary(lagna['degree'], 30 / 9):.3f}° | "
-        "仅作输入敏感性事实 |"
+        "Input sensitivity fact |"
     )
     if d9_lagna:
         lines.append(
-            f"| rising Navamsa | {d9_lagna['sign']} {d9_lagna['degree']:.4f}°"
-            f"（本座第 {_navamsa_number(lagna['degree'])} 个 Navamsa） | "
-            "仅用于 P-I.7、P-VI.1、P-VI.4、P-VII.13；座主吉凶见下表六分盘；"
-            "禁止展开完整 D9 人生解读 |"
+            f"| Rising Navamsa | {d9_lagna['sign']} {d9_lagna['degree']:.4f}° "
+            f"(Navamsa #{_navamsa_number(lagna['degree'])} of sign) | "
+            "Used for P-I.7, P-VI.1, P-VI.4, P-VII.13 only; do not expand into full D9 reading |"
         )
     else:
-        lines.append("| rising Navamsa | unavailable | 不得手推补造 |")
+        lines.append("| Rising Navamsa | unavailable | Do not manually interpolate |")
     lines.append("")
     lines.extend(_shadvarga_lines(chart))
 
-    lines.append("### D1 七曜\n")
+    lines.append("### D1 Classical Planets\n")
     lines.append(
-        "| 行星 | Sign | 度数 | 宫 | 月宿（描述） | 顺逆 | D1尊贵度 | 燃烧事实 | "
-        "自然吉凶（Bhattotpala，回落用） |"
+        "| Planet | Sign | Degree | House | Nakshatra | Motion | D1 Dignity | Combustion | "
+        "Natural Role (Bhattotpala Fallback) |"
     )
     lines.append("|---|---|---:|---:|---|---|---|---|---|")
     combustion = chart.get("combustion", {})
@@ -796,7 +797,7 @@ def format_standard_layer(chart):
         planet = planets[name]
         nak = planet.get("nakshatra", {})
         combustion_text = (
-            f"yes, Sun距 {combustion[name]['distance']}°"
+            f"yes, Sun dist {combustion[name]['distance']}°"
             if name in combustion
             else "no"
         )
@@ -809,11 +810,11 @@ def format_standard_layer(chart):
         )
     lines.append("")
 
-    lines.append("### Nodes 位置事实\n")
+    lines.append("### Nodes Facts\n")
     lines.append(
-        "> Rahu／Ketu 不贴 P-I.3 吉凶标签；默认层只保留位置，不赋予全局成败权重。\n"
+        "> Rahu/Ketu do not carry P-I.3 functional benefic/malefic tags; default layer retains positions only.\n"
     )
-    lines.append("| Node | Sign | 度数 | 宫 | 月宿（描述） |")
+    lines.append("| Node | Sign | Degree | House | Nakshatra |")
     lines.append("|---|---|---:|---:|---|")
     for name in NODES:
         planet = planets[name]
@@ -824,18 +825,17 @@ def format_standard_layer(chart):
         )
     lines.append("")
 
-    lines.append("### 12宫、宫主与扶压事实\n")
+    lines.append("### 12 Houses, Lords, and Support / Affliction Facts\n")
     lines.append(
-        "> 本表是 P-I.3 的核心输入。第6宫等位置必须按题目语义解释，禁止套用"
-        "“3／6／8／12一律不利”。\n"
+        "> Core input for P-I.3. 6th house and dusthanas must be interpreted by question semantics.\n"
     )
     lines.append(
-        "> 吉凶标签按 Ayer P-I.3 注的功能口径，相对本宫星座计算：吉(宫主)＝本宫主；"
-        "凶(注例一)＝主 3、12 宫且落陷；吉(注例二)＝主角宫兼三方宫且 exalted／own_sign／moolatrikona；"
-        "其余为“(回落)”，即 Bhattotpala 自然吉凶。\n"
+        "> Functional tags follow Ayer P-I.3 criteria relative to the house sign: Benefic (Own Lord) = own lord; "
+        "Malefic (Note Example 1) = rules 3, 12 and debilitated; Benefic (Note Example 2) = kendra+trikona and strong; "
+        "otherwise (Fallback) to Bhattotpala natural role.\n"
     )
     lines.append(
-        "| 宫 | Sign | 宫主 | 宫主落宫 | 七曜占据（吉凶标签） | Nodes | 七曜照射本宫（吉凶标签） |"
+        "| House | Sign | Lord | Lord House | Occupants (Functional Tags) | Nodes | Aspects to House (Functional Tags) |"
     )
     lines.append("|---:|---|---|---:|---|---|---|")
     for house in range(1, 13):
@@ -852,12 +852,11 @@ def format_standard_layer(chart):
         )
     lines.append("")
 
-    lines.append("### 七曜 Graha Drishti\n")
+    lines.append("### Graha Drishti (Classical Planetary Aspects)\n")
     lines.append(
-        "> 整宫 Parashari Graha Drishti；不使用西方 orb，也不在默认层计算 "
-        "applying／separating。\n"
+        "> Whole-sign Parashari Graha Drishti; does not use Western orbs or applying/separating aspects.\n"
     )
-    lines.append("| 行星 | 从宫 | 照射宫 | 照射七曜 |")
+    lines.append("| Planet | From House | Aspected Houses | Aspected Planets |")
     lines.append("|---|---:|---|---|")
     for name in CLASSICAL_PLANETS:
         data = chart["graha_drishti"][name]
@@ -879,31 +878,30 @@ def format_standard_layer(chart):
         if all(name in CLASSICAL_PLANETS for name in pair)
     ]
     exchanges = _simple_exchanges(chart)
-    lines.append("### 派生结构事实\n")
+    lines.append("### Derived Structural Facts\n")
     lines.append(
-        f"- 七曜互视：{'; '.join(' ↔ '.join(pair) for pair in mutual) or '无'}"
+        f"- Mutual Aspects: {'; '.join(' ↔ '.join(pair) for pair in mutual) or 'None'}"
     )
     if exchanges:
         for first, second, first_lord, second_lord in exchanges:
             lines.append(
-                f"- 宫主交换：{first}宫主 {first_lord} ↔ "
-                f"{second}宫主 {second_lord}"
+                f"- House Lord Exchange: House {first} lord {first_lord} ↔ "
+                f"House {second} lord {second_lord}"
             )
     else:
-        lines.append("- 宫主交换：无")
+        lines.append("- House Lord Exchange: None")
     lines.append(
-        "- 边界：这里只记录连接结构；不得自动套用 natal Raja／Dhana／"
-        "Dainya／Khala Yoga 分类。\n"
+        "- Scope restriction: Records connection structures only; do not apply natal Yoga categories.\n"
     )
 
     lines.extend(_lord_lines(chart))
     lines.extend(_chain_lines(chart))
     lines.extend(_descriptive_facts(chart, d9_lagna))
 
-    lines.append("### 时间边界\n")
+    lines.append("### Timing Boundary\n")
     lines.append(
-        "> 本文件不含时间。标准层定为偏成或持平后，时间副层另写 timing_overlay.md"
-        "（resources/timing-layer.md）；偏不成档不给时间。提问盘生成的120年 Vimshottari、"
-        "Chara Dasha、当前过运均不作为 Prashna 时间。\n"
+        "> This file contains zero timing predictions. When the standard layer yields Favorable or Balanced, "
+        "the timing sub-layer runs separately (`resources/timing-layer.md`). Unfavorable verdicts receive no timing. "
+        "Natal 120-year Vimshottari, Chara Dasha, and transits are never used as Prashna event timing.\n"
     )
     return "\n".join(lines)

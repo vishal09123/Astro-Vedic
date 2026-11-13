@@ -3,7 +3,7 @@
 
 The implementation follows Tajika Nilakanthi, Samjnatantra,
 Sodasayogadhyaya 2.3-59.  It remains isolated from the Parashari standard
-layer: no result produced here can alter the standard-layer internal tiers ``偏成/持平/偏不成``.
+layer: no result produced here can alter the standard-layer internal tiers ``Favorable / Balanced / Unfavorable``.
 """
 from __future__ import annotations
 
@@ -898,23 +898,23 @@ def compute(chart: dict, querent_lord: str, matter_lord: str) -> dict:
 
 def _format_contact(record: dict | None) -> str:
     if not record:
-        return "无当前 deeptamsha 内接触"
+        return "No contact within current deeptamsha"
     aliases = {
-        "itthasala": "Itthasala / Muthashila（正在应用）",
-        "itthasala_perfected": "Itthasala / Muthashila（已精确成相）",
-        "recent_perfection": "刚过精确点（不足 1°）",
-        "isharafa": "Isharafa / Musharipha（正在分离）",
-        "indeterminate": "相对运动不确定",
+        "itthasala": "Itthasala / Muthashila (applying)",
+        "itthasala_perfected": "Itthasala / Muthashila (exact aspect)",
+        "recent_perfection": "Recent perfection (within 1 deg)",
+        "isharafa": "Isharafa / Musharipha (separating)",
+        "indeterminate": "Relative motion indeterminate",
     }
     quality = {
-        "friendly": "友好相位",
-        "hostile": "敌意相位",
+        "friendly": "Friendly Aspect",
+        "hostile": "Inimical Aspect",
     }[record["quality"]]
     return (
         f"{record['faster']}–{record['slower']} {record['aspect_name']} "
-        f"({record['aspect_angle']}°)，{aliases[record['yoga']]}；{quality}；"
-        f"距精确 {record['distance_from_exact_deg']:.3f}° / "
-        f"边界 {record['orb_limit_deg']:.3f}°"
+        f"({record['aspect_angle']} deg), {aliases[record['yoga']]}; {quality}; "
+        f"Separation from exact: {record['distance_from_exact_deg']:.3f} deg / "
+        f"Orb limit: {record['orb_limit_deg']:.3f} deg"
     )
 
 
@@ -927,160 +927,155 @@ def format_tajika_section(data: dict) -> str:
     contact = primary["contact"]
     if not contact:
         contact_reading = (
-            "代表双方的两颗星目前没有形成这套方法认可的直接靠近；"
-            "这只说明推进方式不直接，不能单独解释成失败。"
+            "The two indicator planets do not currently form a recognized direct approach; "
+            "this indicates non-direct progression and does not by itself mean failure."
         )
     elif contact["yoga"] in {"itthasala", "itthasala_perfected"}:
         contact_reading = (
-            "代表双方的两颗星正在直接靠近；"
+            "The two indicator planets are directly applying towards each other; "
             + (
-                "过程相对协调，但仍需要现实行动承接。"
+                "the dynamic is harmonious, but requires real-world action to materialize."
                 if contact["quality"] == "friendly"
-                else "靠近本身带有摩擦，重新接触不等于相处会自动顺利。"
+                else "the approach carries friction; contact does not automatically guarantee ease."
             )
         )
     elif contact["yoga"] == "recent_perfection":
-        contact_reading = "两主星刚越过精确接触点，接触高点已发生但尚未完全远离。"
+        contact_reading = "The two indicator planets have just crossed exact perfection; peak contact has passed but separation is incomplete."
     elif contact["yoga"] == "isharafa":
-        contact_reading = "两主星正在分离，表示直接接触已越过高点，不等于永久失败。"
+        contact_reading = "The two indicator planets are separating, indicating direct contact has passed its peak."
     else:
-        contact_reading = "两主星接触状态不确定，只保留几何事实。"
+        contact_reading = "Contact status is indeterminate; geometric facts retained."
 
     plain_process_notes = []
     technical_process_notes = []
     if data["nakta"]:
         plain_process_notes.append(
-            "有第三个因素先接住一方，再把互动传向另一方"
+            "A third factor bridges the interaction between the two sides"
         )
-        technical_process_notes.append("Nakta：存在第三星传光候选")
+        technical_process_notes.append("Nakta: third-planet transmission candidate present")
     if data["yamaya"]:
         plain_process_notes.append(
-            "有第三个因素同时接住双方，可能形成协调点"
+            "A third factor simultaneously connects both sides, forming a potential coordination point"
         )
-        technical_process_notes.append("Yamaya：存在第三星集光候选")
+        technical_process_notes.append("Yamaya: third-planet collection candidate present")
     if data["dutthotthadivira"]["present"]:
         plain_process_notes.append(
-            "有额外力量扶住较弱的一方，帮助互动继续"
+            "Additional assistance supports the weaker party to continue interaction"
         )
         technical_process_notes.append(
-            "Dutthotthadivira：弱主星得到第三星接援"
+            "Dutthotthadivira: weaker primary planet receives assistance"
         )
     if data["manau"]:
         plain_process_notes.append(
-            "在双方真正接上之前，有压力或冲突因素抢先介入"
+            "Stress or conflict intervenes before direct connection can establish"
         )
-        technical_process_notes.append("Manau：Mars／Saturn 抢先干扰候选")
+        technical_process_notes.append("Manau: Mars/Saturn intervention candidate")
     if data["radda"]["present"]:
         plain_process_notes.append(
-            "接收的一方存在靠近后退回，或受阻后再恢复的可能"
+            "The receiving side exhibits hesitation, retraction, or recovery after obstacle"
         )
-        technical_process_notes.append("Radda：接收方退回或撤回接触候选")
+        technical_process_notes.append("Radda: receiving planet retraction candidate")
     if data["duphalikuttha"]["present"]:
         plain_process_notes.append(
-            "双方承接能力不对称，需要较强的一方承担更多推进"
+            "Asymmetric capacity; the stronger side must take on greater progression effort"
         )
         technical_process_notes.append(
-            "Duphalikuttha：较快主星弱、较慢主星强"
+            "Duphalikuttha: faster planet weak, slower planet strong"
         )
     if data["durapha"]["present"]:
         plain_process_notes.append(
-            "参与的一方目前缺少把接触真正承接下去的能力"
+            "A participating party currently lacks capacity to sustain contact"
         )
-        technical_process_notes.append("Durapha：接触参与星存在承事失能")
+        technical_process_notes.append("Durapha: participating planet shows functional disability")
     if data["kamboola"]["present"]:
         plain_process_notes.append(
-            "当前情势对双方的直接接触还有额外推动"
+            "Current conditions provide additional momentum to direct contact"
         )
-        technical_process_notes.append("Kamboola：Moon 对主接触形成分级增强")
+        technical_process_notes.append("Kamboola: Moon provides graduated reinforcement")
     if data["khallasara"]["present"]:
         plain_process_notes.append(
-            "当前情势没有接住双方的互动，因此不会提供额外推动"
+            "Current conditions do not sustain the interaction, providing no extra momentum"
         )
         technical_process_notes.append(
-            "Khallasara：Shunyamarga 条件成立，修正 Kamboola"
+            "Khallasara: Shunyamarga condition active, modifying Kamboola"
         )
     if data["kuttha"]["present"]:
         plain_process_notes.append(
-            "参与接触的一方具备较强的现实承接能力"
+            "Participating planet exhibits strong real-world capacity"
         )
-        technical_process_notes.append("Kuttha：接触参与星具强势条件")
+        technical_process_notes.append("Kuttha: participating planet has strong conditions")
     if data["gairikamboola"]["present"] or data["tambira"]["present"]:
         plain_process_notes.append(
-            "条件变化后可能出现新的接触机会，但现在还没有发生"
+            "New contact opportunities may emerge after conditions shift"
         )
         technical_process_notes.append(
-            "Gairikamboola／Tambira：换座后存在未来接触候选"
+            "Gairikamboola/Tambira: future contact candidate after ingress"
         )
 
     if not contact:
         if data["dutthotthadivira"]["present"]:
             plain_summary = (
-                "两边目前不是自然、直接地重新靠近，但存在其他因素帮助较弱的一方"
-                "重新接上。这不是彻底断线，更像需要借助合适的互动方式、环境或"
-                "中间条件才能推进。"
+                "Direct natural approach is not currently present, but auxiliary factors assist the weaker party. "
+                "Progress requires appropriate communication channels or environmental intermediaries."
             )
         elif data["nakta"] or data["yamaya"]:
             plain_summary = (
-                "两边目前没有直接推进，但存在通过第三方、信息转达或共同环境重新"
-                "接上的路径。"
+                "Direct approach is absent, but reconnecting pathways exist via third parties, messages, or shared environments."
             )
         elif data["gairikamboola"]["present"] or data["tambira"]["present"]:
             plain_summary = (
-                "当前还没有形成直接推进；条件变化后可能出现新的接触机会，但那个"
-                "机会尚未发生。"
+                "Direct momentum is not yet formed; contact opportunities may arise following future shifts in conditions."
             )
         else:
             plain_summary = (
-                "两边目前没有直接推进，副层也未找到足以替代直接接触的明确机制。"
-                "这只描述当前过程，不等于永久失败。"
+                "Direct momentum is absent, and no substitute mechanisms were identified. This describes current process, not permanent failure."
             )
     elif contact["yoga"] in {"itthasala", "itthasala_perfected"}:
         plain_summary = (
-            "两边存在直接靠近或重新接通的趋势。"
+            "Direct approach or reconnection trend is present. "
             + (
-                "过程相对协调，但仍需要现实行动承接。"
+                "Progress is relatively coordinated, though real-world follow-through is essential."
                 if contact["quality"] == "friendly"
-                else "不过接触本身带有摩擦，重新靠近不代表相处会自动顺利。"
+                else "However, contact carries friction; reaching out does not automatically imply smooth relation."
             )
         )
     elif contact["yoga"] == "recent_perfection":
         plain_summary = (
-            "两边刚刚越过一次最强接触点；重点应放在已经发生的互动，而不是把它"
-            "当成尚未开始。"
+            "A peak contact point was recently crossed; focus should remain on recent interactions rather than treating them as unstarted."
         )
     elif contact["yoga"] == "isharafa":
         plain_summary = (
-            "两边正在从一次接触高点离开；关系可能转淡，但不能据此断成永久结束。"
+            "Parties are moving away from peak contact; dynamic may quiet down, but this does not signify definitive conclusion."
         )
     else:
-        plain_summary = "当前接触方向不够明确，只保留过程事实。"
+        plain_summary = "Current contact direction is indeterminate; process facts retained."
 
     timing_reading = (
         (
-            f"存在约 {timing['candidate_days']} 日的原典比例候选；它只属于 "
-            "Tajika 副层，不是保证发生的日期。"
+            f"Classical ratio candidate of approximately {timing['candidate_days']} days present; "
+            "belongs strictly to the Tajika sub-layer, not an astronomical guarantee."
         )
         if timing["status"] == "candidate"
-        else "双方没有形成直接、正在靠近的主接触，因此这套副层不允许给出时间。"
+        else "No direct applying primary contact; this sub-layer does not permit timing output."
     )
 
     lines = [
-        "# Tajika 副层判读单（研究验证版）：双方怎样接近或受阻",
+        "# Tajika Sub-Layer Technical Sheet: Interaction Dynamics and Obstacles",
         "",
-        "> 这份副层只回答“事情怎样接上或受阻”，不改写标准层结论。",
+        "> This sub-layer explains how parties interact or meet obstacles; it does not alter standard-layer verdicts.",
         "",
     ]
     if data.get("judgment_time"):
         lines.extend(
             [
-                "## 输入",
+                "## Input",
                 "",
                 (
-                    f"- 时刻：{data['judgment_time']} "
-                    f"（{data['judgment_timezone']}）"
+                    f"- Instant: {data['judgment_time']} "
+                    f"({data['judgment_timezone']})"
                 ),
                 (
-                    f"- 地点：{data['judgment_location']['latitude']}, "
+                    f"- Location: {data['judgment_location']['latitude']}, "
                     f"{data['judgment_location']['longitude']}"
                 ),
                 "",
@@ -1088,164 +1083,156 @@ def format_tajika_section(data: dict) -> str:
         )
     lines.extend(
         [
-        "## 先说人话",
+        "## Summary",
         "",
-        f"**结论**：{plain_summary}",
+        f"**Verdict**: {plain_summary}",
         "",
-        f"**双方是否直接靠近**：{contact_reading}",
+        f"**Direct Approach**: {contact_reading}",
         "",
-        f"**过程中的帮助或阻力**："
-        f"{'；'.join(plain_process_notes) if plain_process_notes else '没有检出额外帮助或阻断。'}",
+        f"**Process Factors / Obstacles**: "
+        f"{'; '.join(plain_process_notes) if plain_process_notes else 'No additional assistance or interference detected.'}",
         "",
-        f"**时间**：{timing_reading}",
+        f"**Timing**: {timing_reading}",
         "",
         (
-            "**你应该怎样使用这份结果**：把它当作过程说明，不要拿某个技术"
-            "名称直接等同于“成”或“不成”。"
+            "**Usage Guidelines**: Treat this as process explanation. Technical terms should not be conflated with success or failure."
         ),
         "",
-        "## 技术核对（不想看术语可以跳过）",
+        "## Technical Audit",
         "",
-        f"- 检出的 Yoga：{' / '.join(active_yogas) or '无'}",
+        f"- Active Yogas: {' / '.join(active_yogas) or 'None'}",
         (
-            "- 过程修正："
+            "- Process Corrections: "
             + (
-                "；".join(technical_process_notes)
+                "; ".join(technical_process_notes)
                 if technical_process_notes
-                else "无额外过程修正"
+                else "None"
             )
         ),
-        "- 判读权限：只解释接触过程，不产生或改写标准层内部三档（偏成／持平／偏不成）。",
+        "- Authority Boundary: Explains contact dynamics only; does not generate or alter standard-layer internal tiers (Favorable / Balanced / Unfavorable).",
         "",
-        "## 主星对",
+        "## Primary Planet Pair",
         "",
-        f"- 问者星：**{primary['querent_lord']}**",
-        f"- 事项星：**{primary['matter_lord']}**",
-        f"- 当前关系：{_format_contact(primary['contact'])}",
+        f"- Querent Lord: **{primary['querent_lord']}**",
+        f"- Matter Lord: **{primary['matter_lord']}**",
+        f"- Current Relationship: {_format_contact(primary['contact'])}",
         "",
-        "## 十六 Yoga 检出表",
+        "## Sixteen Yogas Table",
         "",
-        "| # | Yoga | 状态 |",
+        "| # | Yoga | Status |",
         "|---:|---|---|",
         ]
     )
     for index, name in enumerate(data["yoga_order"], start=1):
         record = data["yogas"][name]
-        lines.append(f"| {index} | {name} | {'有' if record['present'] else '无'} |")
+        lines.append(f"| {index} | {name} | {'Present' if record['present'] else 'Absent'} |")
 
-    lines.extend(["", "## 检出明细", ""])
+    lines.extend(["", "## Detection Details", ""])
     details = []
     if data["nakta"]:
         details.append(
-            "- Nakta："
-            + "；".join(item["mediator"] for item in data["nakta"])
+            "- Nakta: "
+            + "; ".join(item["mediator"] for item in data["nakta"])
         )
     if data["yamaya"]:
         details.append(
-            "- Yamaya："
-            + "；".join(item["collector"] for item in data["yamaya"])
+            "- Yamaya: "
+            + "; ".join(item["collector"] for item in data["yamaya"])
         )
     if data["manau"]:
         details.append(
-            "- Manau："
-            + "；".join(
+            "- Manau: "
+            + "; ".join(
                 f"{item['interferer']} / {item['variant']}"
                 for item in data["manau"]
             )
         )
     if data["gairikamboola"]["present"]:
         details.append(
-            "- Gairikamboola："
-            + "；".join(
-                f"{item['moving_planet']} 换入 {item['next_sign']} 后接触 "
-                f"{item['target']}"
+            "- Gairikamboola: "
+            + "; ".join(
+                f"{item['moving_planet']} ingresses into {item['next_sign']} before contacting {item['target']}"
                 for item in data["gairikamboola"]["candidates"]
             )
         )
     if data["duphalikuttha"]["present"]:
         details.append(
-            "- Duphalikuttha：较快星 "
-            f"{primary['contact']['faster']} 弱，较慢星 "
-            f"{primary['contact']['slower']} 强"
+            f"- Duphalikuttha: Faster planet {primary['contact']['faster']} weak, slower planet {primary['contact']['slower']} strong"
         )
     if data["dutthotthadivira"]["present"]:
         details.append(
-            "- Dutthotthadivira："
-            + "；".join(
-                f"弱主星 {item['weak_primary']} 由 {item['helper']} 接援"
-                f"（{_format_contact(item['contact'])}）"
+            "- Dutthotthadivira: "
+            + "; ".join(
+                f"Weaker primary {item['weak_primary']} assisted by {item['helper']} ({_format_contact(item['contact'])})"
                 for item in data["dutthotthadivira"]["candidates"]
             )
         )
     if data["tambira"]["present"]:
         details.append(
-            "- Tambira："
-            + "；".join(
-                f"{item['moving_planet']} 换入 {item['next_sign']} 后接触 "
-                f"{item['target']}"
+            "- Tambira: "
+            + "; ".join(
+                f"{item['moving_planet']} ingresses into {item['next_sign']} before contacting {item['target']}"
                 for item in data["tambira"]["candidates"]
             )
         )
     if data["kuttha"]["present"]:
         details.append(
-            "- Kuttha："
-            + "；".join(
-                f"{item['planet']}（{item['role']}）"
+            "- Kuttha: "
+            + "; ".join(
+                f"{item['planet']} ({item['role']})"
                 for item in data["kuttha"]["candidates"]
             )
         )
-    lines.extend(details or ["- 除主星关系外，无其他已授权 Yoga 明细。"])
+    lines.extend(details or ["- No additional authorized yoga details beyond primary pair."])
 
-    lines.extend(["", "## 关键修正", ""])
+    lines.extend(["", "## Key Corrections", ""])
     if data["kamboola"]["present"]:
         grades = " / ".join(item["grade"] for item in data["kamboola"]["grades"])
-        lines.append(f"- Kamboola：有；等级 {grades}")
+        lines.append(f"- Kamboola: Present; Grades {grades}")
     else:
-        lines.append("- Kamboola：无")
+        lines.append("- Kamboola: Absent")
     lines.append(
-        "- Khallasara："
+        "- Khallasara: "
         + (
-            "成立；Moon 同时满足 Shunyamarga 与两主星无 Itthasala／合相，"
-            "只修正 Kamboola"
+            "Active; Moon satisfies Shunyamarga and no Itthasala/conjunction with primaries; modifies Kamboola"
             if data["khallasara"]["present"]
-            else "不成立"
+            else "Inactive"
         )
     )
     if data["radda"]["present"]:
         lines.append(
-            "- Radda："
-            + "；".join(
+            "- Radda: "
+            + "; ".join(
                 f"{item['receiver']} {item['reasons']} / {item['sequence']}"
                 for item in data["radda"]["candidates"]
             )
         )
     else:
-        lines.append("- Radda：无")
+        lines.append("- Radda: Absent")
     if data["durapha"]["present"]:
         lines.append(
-            "- Durapha："
-            + "；".join(
+            "- Durapha: "
+            + "; ".join(
                 f"{item['planet']} {item['profile']['weak_reasons']}"
                 for item in data["durapha"]["candidates"]
             )
         )
     else:
-        lines.append("- Durapha：无")
+        lines.append("- Durapha: Absent")
 
-    lines.extend(["", "## Timing 与体系边界", ""])
+    lines.extend(["", "## Timing and Boundary", ""])
     if timing["status"] == "candidate":
         lines.append(
-            f"- TNK 主星 Itthasala 候选：约 **{timing['candidate_days']} 日**"
-            f"（度差 {timing['degree_difference']}° × 12）；这是原典比例候选，"
-            "不是天文保证。"
+            f"- TNK Primary Itthasala Candidate: approx **{timing['candidate_days']} days** "
+            f"(arc diff {timing['degree_difference']} deg x 12); classical ratio candidate, not astronomical guarantee."
         )
     else:
-        lines.append("- 本盘无可授权的 TNK 主星 Itthasala timing。")
+        lines.append("- No authorized TNK primary Itthasala timing for this chart.")
     lines.extend(
         [
-            "- Rahu/Ketu 不参与本副层。",
-            "- 本文件不产生标准层内部三档（偏成／持平／偏不成）。",
-            f"- 生产状态：{data['production_status']}。",
+            "- Rahu/Ketu do not participate in this sub-layer.",
+            "- This sheet does not generate or alter standard-layer internal tiers (Favorable / Balanced / Unfavorable).",
+            f"- Production status: {data['production_status']}.",
         ]
     )
     return "\n".join(lines) + "\n"

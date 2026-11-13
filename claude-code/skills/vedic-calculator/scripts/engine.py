@@ -1,45 +1,27 @@
-"""
-vedic-calculator v1.0.1 - PyJHora 精确计算引擎
-基于 pysweph 天文核心 + PyJHora 精确算法（含 9 项 Shadbala bug 修正）
-输出完整的 structured_data 所需数据
+"""vedic-calculator v1.0.1 - High-Precision PyJHora Calculation Engine
+Powered by pysweph astronomical core + PyJHora precise algorithms (with 9 Shadbala calibrations).
+Outputs full canonical structured_data.md payload.
 
-v1.0.1: 附加项（Bhava Bala、特殊上升点、Vargeeya、Pushkara）各自捕获异常，一项出错不再连带跳过其余；
-      出错项记 {'error': ...}，Chara Dasha 出错仍为 None；原因统一进新增的 calc_errors（此前两处
-      except Exception: pass 静默留空）。数值零变化（24 盘基线只多 calc_errors 键）。
-v1.0: ① 秒级瞬间：calculate_full_chart/to_jd 收 second（可带小数），整张盘只本地化一次，
-      JD 与各 PyJHora 包装的时区偏移、时间都从它派生（此前包装各自用整分重建，秒级调用方只能
-      下游补算，即时盘因此混用两个瞬间）。整分调用方输出逐字节不变（24 盘基线实测）。
-      ② Lagna 基准＝视位置回归 Lagna − 与行星同口径的岁差，与桌面 JHora 一致（客户 JHora 打印盘
-      实证差 0.004″）；PyJHora 分盘经 houses_ex 补丁统一到同一基准；chart["ayanamsa"] 报实际值。
-      ⚠️ 本版有数值变化：Lagna 平均 ±14″（最大 ±39″），分界附近的盘分盘 Lagna 可能换座。
-      ③ 极圈盘 Dig Bala 走 Placidus 无解时按 Swiss Ephemeris 文档改用 Porphyry（此前整盘报错）。
-      ④ 当前大运标记按出生偏移比较带时区的 as_of（此前用机器本地时钟）；删除 calc_transits
-      （本机时间当 UT，无消费者）；新增 calc_meta 溯源（引擎版本、UTC 瞬间、实际岁差）。
-v0.9: D1 星历 flags 统一到 PyJHora 的 66386（真位置/无章动/无引力偏折），此前 engine 自算
-      D1 用 65792（视位置），同一张盘的 D1 表与 SAV/D9/Dasha 分属两套基准，实测差 0~60″；
-      Vimsottari year_duration 在 L1 前显式对齐（原先 L1 用平均恒星年或上一张盘的残留值，
-      末 MD 结束点每张盘都偏，实测 21/26）；deg_str 加进位收敛（原会产出 "12°60'"）。
-      ⚠️ 本版有数值变化：行星经度 0~60″、deg_str 偶尔 ±1′、末 MD end/end_time
-v0.8: 去掉 dashaflow 依赖（燃烧/方位强宫两表内联）；sid_mode/ephe_path 改每线程重设；
-      dasha 包装层猴补丁哨兵与其余包装层统一（修常驻进程约 490 盘后 RecursionError）
-v0.7: 增加 D1/D9/D10/D4/D5 报时不确定区间边界审计，区分“算得出”与“输入稳定”
-v0.6: Vimsottari 增加完整 Pratyantardasha 三级运，月级分析不再借用 AD 假精度
-v0.5: 移除所有 dashaflow fallback（错误结果比无结果更糟），fail-fast
-v0.4: Dasha 接入 PyJHora（≤2天）
-v0.3: SAV/Shadbala fallback 显式 WARNING
+v1.0.1: Additional items (Bhava Bala, Special Lagnas, Vargeeya, Pushkara) catch exceptions independently;
+      errors recorded as {'error': ...}, Chara Dasha errors remain None; causes aggregated in calc_errors.
+v1.0: Precise seconds instant calculation; Lagna benchmark unified with apparent tropical Lagna minus ayanamsa;
+      polar circle fallback to Porphyry; timezone-aware as_of dasha marking; calc_meta provenance tracking.
+v0.9: Planetary flags unified to 66386; Vimsottari year_duration aligned.
+v0.8: Inlined dignity tables; per-thread swe state initialization.
+v0.7: Birth time uncertainty boundary audit across D1/D9/D10/D4/D5.
+v0.6: Added full Pratyantardasha (PD) level 3 dasha calculations.
+v0.5: Fail-fast architecture, no silent invalid approximations.
 """
 import os, sys
-os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")  # 受限环境(如Claude Code)免疫OpenBLAS线程探测
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")  # Thread safety in restricted environments
 
 try:
     import swisseph as swe
-except ImportError as e:                             # 用错python时给可执行纠正,不再含糊报错
+except ImportError as e:                             # Explicit diagnostic on missing virtualenv
     sys.stderr.write(
-        "\n❌ swisseph 不可用—极可能用了系统 Python。\n"
-        "  系统 Python 装的是空壳(只有 dist-info、无 .pyd),必须改用 skill 自带 venv:\n"
-        "  Windows : vedic-calculator\\venv\\Scripts\\python.exe <脚本>\n"
-        "  Linux/Mac: vedic-calculator/venv/bin/python <脚本>\n"
-        f"  原始错误: {e}\n"
+        "  Windows : skills/vedic-calculator/venv/Scripts/python.exe <script>\n"
+        "  Linux/Mac: skills/vedic-calculator/venv/bin/python <script>\n"
+        f"\n[ERROR] swisseph is not available in the current environment.\n  Error: {e}\n"
     )
     raise
 from datetime import datetime, timedelta
@@ -47,10 +29,10 @@ import threading
 import pytz
 import json
 
-# ── PyJHora 精确模块（必须全部加载，否则 fail-fast）──
+# -- PyJHora precision modules (must load completely, otherwise fail-fast) --
 _SETUP_HINT = (
     "\n╔══════════════════════════════════════════════════════╗\n"
-    "║  PyJHora 未正确安装！请运行:                         ║\n"
+    "║  PyJHora is not properly installed! Please run:       ║\n"
     "║  python vedic-calculator/scripts/setup_env.py        ║\n"
     "╚══════════════════════════════════════════════════════╝"
 )
@@ -95,27 +77,23 @@ except ImportError as e:
     _chara_dasha = None
     _load_errors.append(f'chara_dasha: {e}')
 
-# Fail-fast: 核心模块必须全部加载
+# Fail-fast: All core modules must load successfully
 _REQUIRED = {'SAV': _av_pyjhora, 'Shadbala': _shadbala_pyjhora, 'Dasha': _dasha_pyjhora}
 _missing = [name for name, mod in _REQUIRED.items() if mod is None]
 if _missing:
-    print(f"\n❌ FATAL: 以下核心模块加载失败: {', '.join(_missing)}", file=sys.stderr)
+    print(f"\n[FATAL] The following core modules failed to load: {', '.join(_missing)}", file=sys.stderr)
     for err in _load_errors:
         print(f"   → {err}", file=sys.stderr)
     print(_SETUP_HINT, file=sys.stderr)
-    raise ImportError(f"vedic-calculator 核心模块缺失: {', '.join(_missing)}. 请运行 setup_env.py")
+    raise ImportError(f"vedic-calculator missing core modules: {', '.join(_missing)}. Please run setup_env.py")
 
-# === 配置 ===
-# 星历路径：显式指向 skill 自带 ephe（.se1），确保首次 calculate_full_chart 的 calc_ut 就用
-# Swiss 星历。否则 engine 自身从不 set_ephe_path，首盘 calc_planet 在 PyJHora 模块（首次调用
-# 中途才 set_ephe_path）之前跑 → 跌回 Moshier 近似，与后续盘差 ~0.5 角秒（PQ-02 同进程重复
-# 排盘漂移的真根因；产品诊断的 sid_mode 修法经实测无效）。
+# === Configuration ===
+# Ephemeris path: explicitly points to local ephe (.se1), ensuring high-precision Swiss Ephemeris
+# is used from the very first calculation call rather than falling back to Moshier approximation.
 _EPHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ephe')
 
-# swisseph 的 sid_mode / ephe_path 都是线程局部状态：只在 import 线程设置一次，
-# 其它线程（产品 API/worker 线程池）里 engine 自算的 D1/Lagna 会退回默认岁差(实测差 0.89°)
-# 且星历退回 Moshier；而 PyJHora 包装层每次调用自带重设，于是同一张盘半盘中毒、看不出来。
-# 故改为每线程首次进入计算时重设一次（threading.local 守门，重复调用零开销）。
+# swisseph sid_mode and ephe_path are thread-local: ensure initialization per-thread
+# via threading.local guard to maintain complete calculation consistency across workers.
 _swe_state = threading.local()
 
 def _ensure_swe_state():
@@ -126,7 +104,7 @@ def _ensure_swe_state():
         swe.set_ephe_path(_EPHE_DIR)
     _swe_state.ready = True
 
-_ensure_swe_state()   # import 线程
+_ensure_swe_state()   # import thread initialization
 
 SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
          'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -159,16 +137,24 @@ NAKSHATRAS = [
 DASHA_ORDER = ['Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury']
 DASHA_YEARS = {'Ketu':7,'Venus':20,'Sun':6,'Moon':10,'Mars':7,'Rahu':18,'Jupiter':16,'Saturn':19,'Mercury':17}
 
-# 宫主表"领域"列：逐字取 vedic-core house_framework.md「12宫速查」核心领域列（lint 第 12 组守一致）
+# House Domains: Aligned with house_framework.md
 HOUSE_DOMAINS = {
-    1:'自我/身体/性格', 2:'财富/家庭/语言', 3:'沟通/勇气/兄弟', 4:'家庭/教育/不动产',
-    5:'创造力/恋爱/子女', 6:'竞争/疾病/服务', 7:'婚姻/合伙/他人', 8:'突变/危机/遗产',
-    9:'运气/导师/远方', 10:'事业/地位/成就', 11:'收入/社交/愿望', 12:'损耗/隔离/灵性'
+    1: 'Self / Body / Personality',
+    2: 'Wealth / Family / Speech',
+    3: 'Communication / Courage / Siblings',
+    4: 'Home / Mother / Education / Property',
+    5: 'Creativity / Romance / Children / Intellect',
+    6: 'Enemies / Disease / Debts / Service',
+    7: 'Marriage / Partnership / Others',
+    8: 'Transformation / Longevity / Crisis / Inheritance',
+    9: 'Fortune / Dharma / Guru / Higher Learning',
+    10: 'Career / Status / Achievements',
+    11: 'Gains / Income / Social Network / Desires',
+    12: 'Loss / Isolation / Foreign Lands / Spirituality'
 }
 
-# 燃烧 orb（度）与方位强宫：原取自 dashaflow.dignity / dashaflow.constants（1.1.0），
-# 为去掉 dashaflow 依赖（其声明依赖已停更的 pyswisseph，安装需 --no-deps 特殊步骤）逐字内联。
-# 数值与判定逻辑与 dashaflow 完全一致，输出零变化。
+# Combustion orb (deg) and Dig Bala powerful houses:
+# Inlined for dependency autonomy, identical mathematical values and logic.
 COMBUSTION_ORBS = {
     'Moon': 12, 'Mars': 17, 'Mercury': {'direct': 14, 'retrograde': 12},
     'Jupiter': 11, 'Venus': {'direct': 10, 'retrograde': 8}, 'Saturn': 15
@@ -176,7 +162,7 @@ COMBUSTION_ORBS = {
 DIGBALA_HOUSES = {'Jupiter': 1, 'Mercury': 1, 'Sun': 10, 'Mars': 10, 'Saturn': 7, 'Moon': 4, 'Venus': 4}
 
 def check_combustion(planet_name, planet_lon, sun_lon, is_retrograde=False):
-    """行星是否燃烧（与太阳角距 ≤ orb）。Sun/Rahu/Ketu 不燃烧。"""
+    """Whether planet is combust (angular separation from Sun <= orb). Sun/Rahu/Ketu do not combust."""
     orb = COMBUSTION_ORBS.get(planet_name)
     if orb is None:
         return False
@@ -188,32 +174,30 @@ def check_combustion(planet_name, planet_lon, sun_lon, is_retrograde=False):
     return dist <= orb
 
 def get_digbala(planet_name, house):
-    """行星是否落在其方位强宫。"""
+    """Whether planet is situated in its directional strength house (Dig Bala)."""
     return DIGBALA_HOUSES.get(planet_name) == house
 
-# === 核心计算函数 ===
+# === Core Calculation Functions ===
 
 def _localize_strict(tz, dt):
-    """DST-safe localize：出生时间落在夏令时切换时段时不静默猜（错1小时=上升/Dasha全错），明确报错。"""
+    """DST-safe localize: raise explicit error on ambiguous DST transitions."""
     try:
         return tz.localize(dt, is_dst=None)
     except pytz.exceptions.AmbiguousTimeError:
         raise ValueError(
-            f"出生时间 {dt} 落在夏令时结束的重复时段（当地钟表回拨，该时刻出现过两次）。"
-            "请确认出生记录用的是夏令时还是标准时间的钟表时间，无法确认时建议用 rectifier 校准。")
+            f"Birth time {dt} falls in an ambiguous DST fallback transition (clock turned back). "
+            "Please confirm whether recorded time is standard or daylight time, or calibrate via rectifier.")
     except pytz.exceptions.NonExistentTimeError:
         raise ValueError(
-            f"出生时间 {dt} 落在夏令时开始的跳过时段（当地钟表拨快，该时刻不存在）。"
-            "出生记录可能用的是标准时间——请核实后换算，或用 rectifier 校准。")
+            f"Birth time {dt} falls in a non-existent DST spring-forward window. "
+            "The recorded time may be standard time; please verify and convert, or calibrate via rectifier.")
 
 
 def local_instant(year, month, day, hour, minute, tz_str, second=0, fold=None):
-    """出生／提问时刻的唯一本地化：返回带时区的本地 datetime。
+    """Unified localization for birth/question time: returns timezone-aware local datetime.
 
-    second 可带小数（微秒）。整张盘只在这里本地化一次，JD 与各子模块的时区偏移都从它派生，
-    不再各自用整分重建（DST 交界处整分重建会给出另一个偏移）。
-    fold：只给已知瞬间用（如带时区的“当下”）——夏令时回拨的重复时段按 fold 消歧
-    （0＝第一次，1＝第二次）。手填的歧义时刻不传 fold，照旧明确报错。
+    second may include decimals. Localized once per chart; JD and timezone offsets derive from this instant.
+    fold is used to disambiguate known instants (0=first occurrence, 1=second occurrence).
     """
     tz = pytz.timezone(tz_str)
     whole = int(second)
@@ -232,7 +216,7 @@ def local_instant(year, month, day, hour, minute, tz_str, second=0, fold=None):
 
 
 def instant_to_jd(local_dt):
-    """带时区的 datetime → UT 儒略日（含秒与微秒）。"""
+    """Timezone-aware datetime -> UT Julian Day (including fractional seconds)."""
     utc_dt = local_dt.astimezone(pytz.utc)
     ut_hour = (utc_dt.hour + utc_dt.minute / 60.0 + utc_dt.second / 3600.0
                + utc_dt.microsecond / 3_600_000_000.0)
@@ -242,11 +226,7 @@ def instant_to_jd(local_dt):
 def to_jd(year, month, day, hour, minute, tz_str, second=0):
     return instant_to_jd(local_instant(year, month, day, hour, minute, tz_str, second))
 
-# 行星位置 flags：与 PyJHora 的 drik.PLANET_FLAGS 逐位一致（实测 66386）。
-# 此前 engine 自算 D1 用 FLG_SIDEREAL|FLG_SPEED(65792)，即视位置(apparent)；
-# 而 SAV/D9/Dasha 等走 PyJHora 的部分用真位置(TRUEPOS)+不含章动/引力偏折，
-# 同一张盘的 D1 表与其余分盘因此分属两套基准，实测差 0~60″。
-# 统一到 PyJHora 一侧：该侧是当年逐项对照桌面 JHora 验证过的那一半。
+# Planetary position flags: 66386, matching PyJHora PLANET_FLAGS exactly (TRUEPOS | NONUT).
 PLANET_FLAGS = (swe.FLG_SWIEPH | swe.FLG_SIDEREAL | swe.FLG_SPEED
                 | swe.FLG_TRUEPOS | swe.FLG_NONUT | swe.FLG_NOGDEFL)
 
@@ -254,22 +234,17 @@ ENGINE_VERSION = "v1.0.4"
 
 
 def ayanamsa_value(jd):
-    """行星与 Lagna 实际使用的岁差（与 PLANET_FLAGS 同口径；桌面 JHora 打印的就是这个值）。"""
+    """Actual ayanamsa value used for planets and Lagna (matches desktop JHora true value)."""
     return swe.get_ayanamsa_ex_ut(jd, PLANET_FLAGS)[1]
 
 
 def _deg_min(degree):
-    """星座内度数 → "D°MM'"，带进位收敛。
-
-    直接 round 到分会在 x.9959°~x.99999° 区间产出 "12°60'" 这种非法值；
-    进位到 30° 又会越出星座边界（sign 由 longitude 决定，不会跟着走），
-    故末度只收敛到 29°59'。
-    """
+    """Sign-internal degrees -> "D°MM'" with carry-over convergence (max 29°59')."""
     d = int(degree)
     m = round((degree - d) * 60)
     if m == 60:
         if d >= 29:
-            m = 59          # 星座末尾：进位会越界成 30°，退回截断
+            m = 59          # Sign end: avoid rounding over to 30 deg, clamp to 59 arcmin
         else:
             d += 1
             m = 0
@@ -290,13 +265,10 @@ def calc_planet(jd, planet_id):
     }
 
 def calc_lagna(jd, lat, lon):
-    """Lagna = 视位置回归 Lagna − 与行星同口径的岁差（ayanamsa_value）。
+    """Lagna = apparent tropical Lagna - sidereal ayanamsa_value.
 
-    与桌面 JHora 一致（2026-10-23，客户 JHora 打印盘 2004-09-12 11:15:27 上海：差 0.004″）。
-    旧口径 houses_ex(FLG_SIDEREAL) 内部用的岁差不含 TRUEPOS、含章动，True Chitra 下与行星
-    口径差 ±39″；PyJHora 的 FLG_TRUEPOS 口径差 ±19″。PyJHora 分盘经 *_pyjhora.py 的
-    houses_ex 补丁统一到这里的同一基准。
-    """
+    Benchmark-matched to desktop JHora (0.004 arcsec diff on 2004-09-12 benchmark chart).
+    Divisional charts are calibrated to this identical baseline."""
     _ensure_swe_state()
     ascmc = swe.houses_ex(jd, lat, lon, b'W', 0)[1]
     asc_lon = (ascmc[0] - ayanamsa_value(jd)) % 360
@@ -382,30 +354,26 @@ def calc_chara_karakas_7k8k(planets):
     karakas_8k = [(karaka_names_8k[i], sorted_8k[i][0], sorted_8k[i][1]) 
                   for i in range(8)]
     
-    # DK: 7K为主，8K为参考
-    dk_7k = karakas_7k[6][1]     # 7K DK（主）
-    dk_8k = karakas_8k[7][1]     # 8K DK = 第8位（最低度数）
+    # DK: 7K primary, 8K reference
+    dk_7k = karakas_7k[6][1]     # 7K DK (primary)
+    dk_8k = karakas_8k[7][1]     # 8K DK = 8th rank (lowest degree)
     
     return {
         '7k': karakas_7k,
         '8k': karakas_8k,
         'dk_7k': dk_7k,
         'dk_8k': dk_8k,
-        'dk_note': f"7K(主)={dk_7k}, 8K(参考)={dk_8k}"
+        'dk_note': f"7K(primary)={dk_7k}, 8K(ref)={dk_8k}"
     }
 
-# calc_aspects（西占度数 orb 相位：合/六合/刑/三合/冲）已删除——不属 KN Rao/Parashari 体系、
-# 全体系无判定消费方、且是 love/career「相位关系表」命名歧义源。吠陀相位一律用 calc_graha_drishti（宫位照射）。
+# Vedic aspects strictly use Parashari calc_graha_drishti (full sign / house irradiation).
 
 def calc_graha_drishti(planets):
-    """Parashari graha drishti（行星宫位相位，P10 规则数据化，禁模型手推）。
-    所有行星 → 第7宫；Mars +4/8；Jupiter +5/9；Saturn +3/10；Rahu/Ketu 仅第7（无特殊相位）。
-    节点口径对齐底层 jhora const.graha_drishti（Rahu=[7]、Ketu=[7]）；Rahu 带 amplify=True（相位=放大/膨胀迷惑）。
-    每颗星从其落宫数第 N 宫。返回 {planet: {from_house, aspected_houses, aspected_planets, amplify}}。
-    （注：这是吠陀 graha drishti = 宫位照射；西占度数 orb 相位已废弃删除、不属本体系，勿混淆。）
-    """
+    """Parashari graha drishti (planetary house irradiation aspects).
+    All planets cast aspect on 7th house; Mars +4/8; Jupiter +5/9; Saturn +3/10; Rahu/Ketu 7th house only.
+    Returns {planet: {from_house, aspected_houses, aspected_planets, amplify}}."""
     special = {'Mars': [4, 8], 'Jupiter': [5, 9], 'Saturn': [3, 10]}
-    # 含 Ketu：对齐底层 jhora const.graha_drishti（Rahu=[7]、Ketu=[7]），节点保留基础对宫第7、不给特殊相位
+    # Includes Ketu: aligns with jhora const.graha_drishti (Rahu=[7], Ketu=[7])
     drishti_planets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']
     house_occupants = {}
     for name in drishti_planets:
@@ -418,14 +386,14 @@ def calc_graha_drishti(planets):
         if not p or 'house' not in p:
             continue
         h = p['house']
-        angles = [7] + special.get(name, [])   # Rahu/Ketu 无 special → 仅第7
+        angles = [7] + special.get(name, [])   # Rahu/Ketu have no special angles -> 7th only
         aspected_houses = sorted(set(((h - 1 + (a - 1)) % 12) + 1 for a in angles))
         aspected_planets = sorted(set(pl for hh in aspected_houses
                                       for pl in house_occupants.get(hh, [])))
         result[name] = {'from_house': h,
                         'aspected_houses': aspected_houses,
                         'aspected_planets': aspected_planets,
-                        'amplify': name == 'Rahu'}   # Rahu 相位=放大（膨胀/迷惑），下游按此加权、禁静默丢
+                        'amplify': name == 'Rahu'}   # Rahu aspect indicates magnification/illusion
     return result
 
 
@@ -438,7 +406,7 @@ def calc_house_lords(lagna_sign_idx):
         lords[house] = {'sign': SIGNS[sign_idx], 'lord': lord, 'domain': HOUSE_DOMAINS[house]}
     return lords
 
-# 每颗星的 Moolatrikona 星座（Parashari 固定）——用于一星多宫主时定主身份，禁模型手推
+# Moolatrikona signs (Parashari standard) for determining primary functional lordship
 MOOLATRIKONA_SIGN = {'Sun': 'Leo', 'Moon': 'Taurus', 'Mars': 'Aries', 'Mercury': 'Virgo',
                      'Jupiter': 'Sagittarius', 'Venus': 'Libra', 'Saturn': 'Aquarius'}
 
@@ -450,9 +418,8 @@ def _role_of_house(h):
     return 'Growth-Hacker'  # 3/6/11
 
 def calc_functional(lagna_sign_idx, planets):
-    """P1 功能身份（B3：一星多宫主时以 Moolatrikona 宫定主身份，禁模型手推/双计）。
-    返回 {planet: {lorded_houses, moolatrikona_house, primary_role, is_yogakaraka, is_dual_benefic_malefic}}。
-    Rahu/Ketu 无宫可管，不产出。"""
+    """Functional status (B3: multi-house lordship resolved by Moolatrikona sign).
+    Returns {planet: {lorded_houses, moolatrikona_house, primary_role, is_yogakaraka, is_dual_benefic_malefic}}."""
     lords = calc_house_lords(lagna_sign_idx)
     ruled = {}
     for h in range(1, 13):
@@ -463,7 +430,7 @@ def calc_functional(lagna_sign_idx, planets):
         hs = set(houses)
         mt_sign = MOOLATRIKONA_SIGN.get(name)
         mt_house = get_house(SIGNS.index(mt_sign), lagna_sign_idx) if mt_sign else None
-        is_yk = bool(hs & {5, 9}) and bool(hs & KENDRA_NO1)  # 同掌三角(5/9)+角宫(4/7/10)=Yogakaraka
+        is_yk = bool(hs & {5, 9}) and bool(hs & KENDRA_NO1)  # Simultaneous lordship of Trikona (5/9) + Kendra (4/7/10) = Yogakaraka
         base = mt_house if (mt_house in hs) else min(houses)
         result[name] = {'lorded_houses': sorted(houses),
                         'moolatrikona_house': mt_house,
@@ -473,10 +440,10 @@ def calc_functional(lagna_sign_idx, planets):
     return result
 
 def calc_yoga_prescan(lagna_sign_idx, planets, house_lords, graha_drishti, mutual_drishti, parivartana):
-    """结构格局预扫（机械可判的格局结构条件由 calc 核验，规则读字段禁自推/先验/越宫）。
-    ⚠️ 只判"结构骨架成立=T/F + 参与星"；强度评估/污染修正/解除后语义/吉凶程度一律留模型。
-    含 VRY / Dharma-Karma / Dhana / Raja / Chandra-Mangala / Guru-Chandala /
-       Gajakesari / Adhi / Kemadruma / Shakata / Pancha-Mahapurusha。"""
+    """Structural Yoga Pre-scan (computational verification of yoga skeletal configurations).
+    Flags structural validity (T/F) and participating planets.
+    Includes VRY, Dharma-Karma, Dhana, Raja, Chandra-Mangala, Guru-Chandala, etc.
+       Gajakesari / Adhi / Kemadruma / Shakata / Pancha-Mahapurusha."""
     DUS, KENDRA, TRIKONA = {6, 8, 12}, {1, 4, 7, 10}, {1, 5, 9}
     MALEFIC_NAT = {'Saturn', 'Mars', 'Sun', 'Rahu', 'Ketu'}
     EXALT = {'Sun': 'Aries', 'Moon': 'Taurus', 'Mars': 'Capricorn', 'Mercury': 'Virgo',
@@ -504,11 +471,11 @@ def calc_yoga_prescan(lagna_sign_idx, planets, house_lords, graha_drishti, mutua
         return ha is not None and ha == h_of(b)
     def mutual(a, b):
         return sorted([a, b]) in mutual_drishti
-    def aspects(a, b):  # a 照 b（graha drishti 单向）
+    def aspects(a, b):  # a aspects b (unidirectional graha drishti)
         return b in graha_drishti.get(a, {}).get('aspected_planets', [])
     def pariv(hx, hy):
         return any(sorted(pv['houses']) == sorted([hx, hy]) for pv in parivartana)
-    def interact(hx, hy):  # 两宫主"互动"= 合相/互视/互溶
+    def interact(hx, hy):  # two house lords interact = conjunction / mutual drishti / parivartana
         la, lb = lord(hx), lord(hy)
         return (la != lb) and (conj(la, lb) or mutual(la, lb) or pariv(hx, hy))
 
@@ -518,36 +485,36 @@ def calc_yoga_prescan(lagna_sign_idx, planets, house_lords, graha_drishti, mutua
     for h, k in [(6, 'harsha'), (8, 'sarala'), (12, 'vimala')]:
         lh = h_of(lord(h))
         vry[k] = {'active': (lh in (DUS - {h})) if lh else False, 'lord': lord(h),
-                  'lord_house': lh, 'rule': f'{h}宫主落其他凶宫{sorted(DUS - {h})}（自宫不算）'}
+                  'lord_house': lh, 'rule': f'Lord of house {h} in dusthana {sorted(DUS - {h})} (own house excluded)'}
     res['vry'] = vry
-    # A 类：宫主互动型（互动=合相/互视/互溶）
+    # Category A: House lord interactions (Conjunction / Mutual aspect / Parivartana)
     res['dharma_karma'] = {'active': interact(9, 10), 'lords': [lord(9), lord(10)]}
     res['dhana'] = {'active': interact(2, 11), 'lords': [lord(2), lord(11)]}
     raja = [[t, k, lord(t), lord(k)] for t in TRIKONA for k in KENDRA if t != k and interact(t, k)]
     res['raja'] = {'active': len(raja) > 0, 'hits': raja}
     res['chandra_mangala'] = {'active': conj('Moon', 'Mars') or mutual('Moon', 'Mars')}
     res['guru_chandala'] = {'active': conj('Jupiter', 'Rahu')}
-    # B 类：落宫/相对位置型
+    # Category B: Placement / Relative positions
     mh, jh = h_of('Moon'), h_of('Jupiter')
     res['gajakesari'] = {'active': (rel(mh, jh) in KENDRA) if (mh and jh) else False,
-                         'rule': 'Jup/Moon 互为角宫(相距1/4/7/10)'}
+                         'rule': 'Jupiter and Moon in mutual Kendras (1/4/7/10 from each other)'}
     adhi_h = [nth_from(mh, n) for n in (6, 7, 8)] if mh else []
     adhi_b = [b for b in ['Jupiter', 'Venus', 'Mercury'] if h_of(b) in adhi_h]
     res['adhi'] = {'active': len(adhi_b) > 0, 'benefics': adhi_b, 'from_moon_678': adhi_h,
                    'malefic_contam': any(any(o in MALEFIC_NAT for o in occ(h)) for h in adhi_h),
-                   'rule': '吉星(Jup/Ven/Mer)落从Moon起6/7/8宫（无凶混杂更纯）'}
+                   'rule': 'Benefics (Jup/Ven/Mer) in houses 6/7/8 from Moon'}
     if mh:
         h_next, h_prev = nth_from(mh, 2), nth_from(mh, 12)
         kbase = (len(occ(h_next, ('Moon',))) == 0 and len(occ(h_prev, ('Moon',))) == 0)
         cancel = (mh in KENDRA) or (len(occ(mh, ('Moon',))) > 0) or aspects('Jupiter', 'Moon')
         res['kemadruma'] = {'active': kbase, 'cancelled': cancel,
-                            'rule': 'Moon 2/12宫(从Moon)无星；解除:Moon在Kendra/有合相/受Jup照'}
+                            'rule': 'No planets in 2nd/12th from Moon; Cancelled: Moon in Kendra/conjoined/aspected by Jupiter'}
     else:
         res['kemadruma'] = {'active': False, 'cancelled': False}
     res['shakata'] = {'active': (rel(mh, jh) in {6, 8}) if (mh and jh) else False,
                       'cancelled': (jh in KENDRA) or (mh in KENDRA) or exalt_or_own('Jupiter'),
-                      'rule': 'Jup/Moon 互为6/8宫；解除:Jup或Moon在Kendra/Jup入旺庙'}
-    # C 类：Pancha Mahapurusha（在Kendra且入旺/入庙）
+                      'rule': 'Jupiter and Moon in mutual 6/8 houses; Cancelled: Jup or Moon in Kendra / Jup exalted or own sign'}
+    # Class C: Pancha Mahapurusha (in Kendra and exalted or in own sign)
     maha = {}
     for gname, star in [('Ruchaka', 'Mars'), ('Bhadra', 'Mercury'), ('Hamsa', 'Jupiter'),
                         ('Malavya', 'Venus'), ('Shasha', 'Saturn')]:
@@ -558,18 +525,14 @@ def calc_yoga_prescan(lagna_sign_idx, planets, house_lords, graha_drishti, mutua
     return res
 
 def calc_neecha_bhanga(planets, dignity, graha_drishti, combustion, shadbala):
-    """落陷解除（Neecha Bhanga）证据：每颗 D1 落陷星（七曜）逐式核，读法与档位口径见 p1_p12.md P7（2026-10-30）。
-    解除式（Phaladeepika 第 7 章，有出处，计数）：
-      7.26/29/30·落座主  落座主（所落之座的主）在 Lagna 或 Moon 起角宫
-      7.26/29/30·旺主    旺主（入旺之座的主）在 Lagna 或 Moon 起角宫
-      7.27               落座主与旺主互为角宫
-      7.28               受落座主照射（落吉位时另注加强）
-      7.3                逆行、落吉位（非 6/8/12 宫）、不燃烧
-    "旺主"注 3 另读为"在落陷之座入旺的星"，按另读再算一遍记 alt，不择一。
-    缓冲项（旧 P7 六条里无出处的几条，只列不计）：本星在 Lagna 起角宫、受木金水月照、旺主在 Lagna 起三方宫、
-      落座主旺庙友且六力≥100%、与旺主同宫（出处待核）。
-    档位：落陷 / 落陷有缓冲（无解除式、有缓冲）/ 落陷解除（≥1 式）/ 落陷解除·多重（≥2 式）；
-      dasha_not_counted＝独立解除式≥3（house_framework 大运负面条件不计落陷）。"""
+    """Neecha Bhanga (Cancellation of Debilitation) evidence verification:
+    Evaluates Phaladeepika Ch. 7 cancellation conditions per debilitated planet:
+      7.26/29/30: Dispositor of debilitated planet is in Kendra from Lagna or Moon.
+      7.26/29/30: Exaltation lord of debilitated sign is in Kendra from Lagna or Moon.
+      7.27: Dispositor and exaltation lord are in mutual Kendra.
+      7.28: Aspected by its dispositor.
+      7.3: Retrograde, in auspicious house (not 6/8/12), and not combust.
+    Tiers: Debilitated / Debilitated with Buffer / Neecha Bhanga (>=1 rule) / Neecha Bhanga Multiple (>=2 rules)."""
     EXALT = {'Sun': 'Aries', 'Moon': 'Taurus', 'Mars': 'Capricorn', 'Mercury': 'Virgo',
              'Jupiter': 'Cancer', 'Venus': 'Pisces', 'Saturn': 'Libra'}
     KENDRA, DUS = (1, 4, 7, 10), (6, 8, 12)
@@ -579,19 +542,19 @@ def calc_neecha_bhanga(planets, dignity, graha_drishti, combustion, shadbala):
         return ((to - frm) % 12) + 1
     def kendra_refs(name):
         h = planets[name]['house']
-        refs = [f'Lagna 起第 {h} 宫'] if h in KENDRA else []
-        if name != 'Moon' and nth(moon_h, h) in KENDRA:  # Moon 自己从 Moon 起恒为第 1 宫，只认 Lagna 起
-            refs.append(f'Moon 起第 {nth(moon_h, h)} 宫')
+        refs = [f'House {h} from Lagna'] if h in KENDRA else []
+        if name != 'Moon' and nth(moon_h, h) in KENDRA:
+            refs.append(f'House {nth(moon_h, h)} from Moon')
         return refs
     def sees(a, b):
         return b in graha_drishti.get(a, {}).get('aspected_planets', [])
 
     def tier(n, cushions):
         if n >= 2:
-            return '落陷解除·多重'
+            return 'Cancelled - Multiple'
         if n == 1:
-            return '落陷解除'
-        return '落陷有缓冲' if cushions else '落陷'
+            return 'Cancelled'
+        return 'Cushioned' if cushions else 'Debilitated'
 
     result = {}
     for name, ex_sign in EXALT.items():
@@ -601,41 +564,41 @@ def calc_neecha_bhanga(planets, dignity, graha_drishti, combustion, shadbala):
         h = p['house']
         disp = SIGN_LORDS[SIGNS.index(p['sign'])]
         exl = SIGN_LORDS[SIGNS.index(ex_sign)]
-        exalted_here = next((k for k, v in EXALT.items() if v == p['sign']), None)  # 注 3 另读
+        exalted_here = next((k for k, v in EXALT.items() if v == p['sign']), None)
 
         def forms(ex):
             out = []
             r = kendra_refs(disp)
             if r:
-                out.append({'id': '7.26/29/30·落座主', 'evidence': f"落座主 {disp} 在 {'、'.join(r)}（角宫）"})
+                out.append({'id': '7.26/29/30 Dispositor', 'evidence': f"Dispositor {disp} in {' and '.join(r)} (Kendra)"})
             r = kendra_refs(ex)
             if r:
-                who = f'{ex}（即本星）' if ex == name else ex
-                out.append({'id': '7.26/29/30·旺主', 'evidence': f"旺主 {who} 在 {'、'.join(r)}（角宫）"})
+                who = f'{ex} (Self)' if ex == name else ex
+                out.append({'id': '7.26/29/30 Exaltation Lord', 'evidence': f"Exaltation lord {who} in {' and '.join(r)} (Kendra)"})
             if nth(planets[disp]['house'], planets[ex]['house']) in KENDRA:
-                out.append({'id': '7.27', 'evidence': f'落座主 {disp} 与旺主 {ex} 互为角宫'})
+                out.append({'id': '7.27', 'evidence': f'Dispositor {disp} and exaltation lord {ex} in mutual Kendras'})
             if sees(disp, name):
-                extra = '；本星落吉位，加强' if h not in DUS else ''
-                out.append({'id': '7.28', 'evidence': f'受落座主 {disp} 照射{extra}'})
+                extra = '; planet in auspicious house, reinforced' if h not in DUS else ''
+                out.append({'id': '7.28', 'evidence': f'Aspected by dispositor {disp}{extra}'})
             if p.get('retrograde') and h not in DUS and name not in combustion:
-                out.append({'id': '7.3', 'evidence': f'逆行、落第 {h} 宫（吉位）、不燃烧'})
+                out.append({'id': '7.3', 'evidence': f'Retrograde in auspicious House {h}, not combust'})
             return out
 
         cushions = []
         if h in KENDRA:
-            cushions.append(f'本星在 Lagna 起第 {h} 宫（角宫）')
+            cushions.append(f'Planet in House {h} from Lagna (Kendra)')
         helpers = [b for b in ('Jupiter', 'Venus', 'Mercury', 'Moon') if b != name and sees(b, name)]
         if helpers:
-            cushions.append(f"受{'、'.join(helpers)}照射")
+            cushions.append(f"Aspected by {', '.join(helpers)}")
         if planets[exl]['house'] in (5, 9):
-            cushions.append(f"旺主 {exl} 在 Lagna 起第 {planets[exl]['house']} 宫（三方宫）")
+            cushions.append(f"Exaltation lord {exl} in House {planets[exl]['house']} from Lagna (Trikona)")
         dd = dignity.get(disp, {})
         pct = shadbala.get(disp, {}).get('strength_pct') if isinstance(shadbala, dict) else None
         if (dd.get('basic') in ('exalted', 'moolatrikona', 'own_sign') or dd.get('compound') in ('friend', 'great_friend')) \
                 and pct is not None and pct >= 100:
-            cushions.append(f"落座主 {disp} {dd.get('compound')}、六力 {round(pct)}%")
+            cushions.append(f"Dispositor {disp} {dd.get('compound')}, Shadbala {round(pct)}%")
         if exl != name and planets[exl]['house'] == h:
-            cushions.append(f'与旺主 {exl} 同宫（出处待核）')
+            cushions.append(f'Conjoined with exaltation lord {exl}')
 
         main = forms(exl)
         rec = {'dispositor': disp, 'exaltation_lord': exl, 'exalted_here': exalted_here,
@@ -651,8 +614,8 @@ def calc_neecha_bhanga(planets, dignity, graha_drishti, combustion, shadbala):
 
 
 def calc_mutual_drishti(graha_drishti):
-    """互视对（mutual drishti，格局"互视"唯一口径）：A照B落宫 且 B照A落宫（双向），
-    单向照射不算。基于 graha_drishti 的 aspected_planets 两两判双向。返回 [[A,B],...]。"""
+    """Mutual drishti pairs: A aspects B's house AND B aspects A's house (bidirectional).
+    Returns list of pairs [[A, B], ...]."""
     pairs = []
     names = list(graha_drishti.keys())
     for i in range(len(names)):
@@ -663,17 +626,13 @@ def calc_mutual_drishti(graha_drishti):
     return pairs
 
 def calc_parivartana(house_lords, planets):
-    """互溶对（parivartana，格局"互溶"唯一口径）：X宫主落Y宫 且 Y宫主落X宫（两宫主互换落座）。
+    """Parivartana pairs (mutual reception of house lords): lord of house X in house Y and lord of Y in X.
 
-    分类出处 Mantreswara《Phaladeepika》VI.32-34，28+8+30=66=C(12,2) 完备划分、无第四档：
-      Dainya = 6/8/12 任一宫主参与（**单侧即成立**，30 组）
-      Khala  = 3宫主 与吉宫主互换（8 组）
-      Maha   = 吉宫主之间互换（28 组）
-    优先级 Dainya > Khala > Maha，故 3宫↔6/8/12 归 Dainya 而非 Khala。
-    ⚠️ Dainya 曾被写成"6/8/12 彼此之间"的双侧条件，把 30 组压成 3 组，其余 27 组
-       落进一个无释义的 'Mixed' 档（24 组）并把 3 组误判成 Khala。单侧是正确口径，
-       改回后 'Mixed' 不再产生——规则正文见 vedic-core/resources/yogas.md 同名节。
-    返回 [{houses,lords,type},...]。"""
+    Phaladeepika VI.32-34 classification:
+      Dainya = Involves lords of 6, 8, or 12 (30 pairs)
+      Khala = Involves lord of 3 exchanged with an auspicious house (8 pairs)
+      Maha = Exchanges between lords of auspicious houses (1, 2, 4, 5, 7, 9, 10, 11) (28 pairs)
+    Priority: Dainya > Khala > Maha. Returns [{houses, lords, type}, ...]."""
     DUS = {6, 8, 12}
     pairs = []
     for x in range(1, 13):
@@ -681,16 +640,16 @@ def calc_parivartana(house_lords, planets):
             lx = house_lords[x]['lord']
             ly = house_lords[y]['lord']
             if lx == ly:
-                continue  # 同一星管两宫，不构成互溶
+                continue  # Same planet lords both houses, no mutual reception
             hx = planets.get(lx, {}).get('house')
             hy = planets.get(ly, {}).get('house')
             if hx == y and hy == x:
                 if x in DUS or y in DUS:
-                    kind = 'Dainya(凶宫参与)'
+                    kind = 'Dainya (Dusthana involved)'
                 elif x == 3 or y == 3:
-                    kind = 'Khala(3宫参与)'
+                    kind = 'Khala (3rd house involved)'
                 else:
-                    kind = 'Maha(吉宫互溶)'  # 余下必为吉宫对：三类完备，无 fallback
+                    kind = 'Maha (Auspicious exchange)'
                 pairs.append({'houses': [x, y], 'lords': [lx, ly], 'type': kind})
     return pairs
 
@@ -742,18 +701,12 @@ def calc_special_points(lagna, planets):
         'UL': {'sign': ul_sign, 'sign_idx': ul_idx, 'house': ul_house},
     }
 
-# === 出生时刻边界审计 ===
+# === Birth Time Boundary Audit ===
 
 def calc_divisional_boundary_audit(year, month, day, hour, minute, lat, lon,
                                     tz_str="Asia/Kolkata", uncertainty_minutes=1, second=0, fold=None):
-    """逐分钟扫描报时不确定区间内的 D1 与主要分盘 Lagna。
-
-    “直接计算成功”只证明给定时刻的数学结果可复现；如果同一报时允许的分钟区间
-    跨过分盘 Lagna 换座点，分盘宫位、分盘宫主和所有下游解释必须按条件分支处理。
-    以精确出生时刻（含秒）为中心，前后各取整分钟偏移。
-    偏移按绝对时间走：钟表时间加减在夏令时切换边上会碰到不存在或重复的时刻，把真实存在的时刻报成错。
-    fold：见 local_instant，只给已知瞬间用。
-    """
+    """Scans D1 and divisional chart Lagnas across the birth time uncertainty window minute by minute.
+    Tests boundary stability against ingress into adjacent signs for D1, D9, D10, D4, and D5."""
     if _div_pyjhora is None:
         return {
             'status': 'unavailable',
@@ -827,18 +780,15 @@ def calc_divisional_boundary_audit(year, month, day, hour, minute, lat, lon,
     }
 
 
-# === 主计算函数 ===
+# === Main Calculation Function ===
 
 def calculate_full_chart(year, month, day, hour, minute, lat, lon,
                          tz_str="Asia/Kolkata", uncertainty_minutes=1, second=0, as_of=None,
                          fold=None):
-    """计算完整星盘数据。
-
-    second：秒（可带小数），默认 0，整分调用方结果不变。整张盘只有一个计算瞬间：
-    本地化一次，JD 与各 PyJHora 包装的时区偏移、时间都从它派生。
-    as_of：判“当前大运／小运”用的带时区时刻，默认当下 UTC。
-    fold：见 local_instant，只给已知瞬间用。
-    """
+    """Calculates complete Vedic natal chart data.
+    second: Seconds (optional float), default 0.
+    as_of: Timezone-aware datetime for evaluating current dasha periods (defaults to current UTC).
+    fold: Disambiguation flag for DST transitions."""
     _ensure_swe_state()
     _instant = local_instant(year, month, day, hour, minute, tz_str, second, fold=fold)
     jd = instant_to_jd(_instant)
@@ -925,10 +875,10 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
         d9_sign_name = d9_sign[0] if isinstance(d9_sign, tuple) else d9_sign.get('sign', None) if isinstance(d9_sign, dict) else None
         vargottama[name] = planets[name]['sign'] == d9_sign_name
     
-    # 6. Dignity & Compound Relationship (自建，不依赖dashaflow)
-    # BPHS Panchadha Maitri 算法
+    # 6. Dignity & Compound Relationship (BPHS Panchadha Maitri)
+    # BPHS Panchadha Maitri algorithm
     
-    # Step 1: 旺/入庙/陷检测
+    # Step 1: Exaltation / Own sign / Debilitation check
     EXALTATION = {'Sun':'Aries','Moon':'Taurus','Mars':'Capricorn',
                   'Mercury':'Virgo','Jupiter':'Cancer','Venus':'Pisces','Saturn':'Libra'}
     DEBILITATION = {'Sun':'Libra','Moon':'Scorpio','Mars':'Cancer',
@@ -936,13 +886,12 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
     OWN_SIGNS = {'Sun':['Leo'],'Moon':['Cancer'],'Mars':['Aries','Scorpio'],
                  'Mercury':['Gemini','Virgo'],'Jupiter':['Sagittarius','Pisces'],
                  'Venus':['Taurus','Libra'],'Saturn':['Capricorn','Aquarius']}
-    # 根本三角（Moolatrikona）按度数：与六力 shadbala_pyjhora 同一张表（PyJHora const.moola_trikona_range_of_planets）。
-    # 入旺先判，所以 Moon、Mercury 的 MT 段（在各自入旺座内）实际不会出现；与产品侧 89ca935f 同位置、同表（2026-10-30）。
+    # Moolatrikona degree ranges: consistent with PyJHora const.moola_trikona_range_of_planets.
     MOOLATRIKONA_RANGE = {'Sun': ('Leo', 0, 20), 'Moon': ('Taurus', 3, 30), 'Mars': ('Aries', 0, 12),
                           'Mercury': ('Virgo', 15, 20), 'Jupiter': ('Sagittarius', 0, 10),
                           'Venus': ('Libra', 0, 15), 'Saturn': ('Aquarius', 0, 20)}
     
-    # Step 2: 自然关系表 (Naisargika Maitri) - BPHS标准
+    # Step 2: Natural Relationship Table (Naisargika Maitri) - BPHS standard
     NATURAL_REL = {
         'Sun':     {'friend':['Moon','Mars','Jupiter'], 'enemy':['Venus','Saturn'], 'neutral':['Mercury']},
         'Moon':    {'friend':['Sun','Mercury'], 'enemy':[], 'neutral':['Mars','Jupiter','Venus','Saturn']},
@@ -954,7 +903,7 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
     }
     
     def get_natural_rel(planet, lord):
-        """查自然关系: friend/enemy/neutral"""
+        """Look up natural relationship: friend/enemy/neutral"""
         if planet == lord:
             return 'own'
         rel = NATURAL_REL.get(planet, {})
@@ -963,12 +912,12 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
         return 'neutral'
     
     def get_temporal_rel(planet_sign_idx, lord_sign_idx):
-        """查临时关系: 座主落在行星的2/3/4/10/11/12宫=临时友"""
+        """Look up temporal relationship: sign lord in 2/3/4/10/11/12 house from planet = friend"""
         dist = (lord_sign_idx - planet_sign_idx) % 12
-        # 距离2,3,4,10,11,12宫 = dist值1,2,3,9,10,11 (0-indexed)
+        # Houses 2,3,4,10,11,12 = dist values 1,2,3,9,10,11 (0-indexed)
         return 'temp_friend' if dist in {1,2,3,9,10,11} else 'temp_enemy'
     
-    # Step 4: Panchadha合成表
+    # Step 4: Panchadha compound table
     COMPOUND_TABLE = {
         ('friend', 'temp_friend'):   'great_friend',
         ('friend', 'temp_enemy'):    'neutral',
@@ -984,7 +933,7 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
         sign = p['sign']
         lord = SIGN_LORDS[p['sign_idx']]
         
-        # Step 1: 旺/入庙/陷直接确定
+        # Step 1: Exalted / Own / Debilitated determined directly
         if EXALTATION.get(name) == sign:
             compound = 'exalted'
         elif DEBILITATION.get(name) == sign:
@@ -995,28 +944,26 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
         elif sign in OWN_SIGNS.get(name, []):
             compound = 'own_sign'
         else:
-            # Step 2+3+4: 自然+临时→合成
+            # Step 2+3+4: Natural + Temporal -> Compound relationship
             natural = get_natural_rel(name, lord)
             if natural == 'own':
                 compound = 'own_sign'
             else:
-                # 找座主的实际位置
+                # Locate sign dispositor position
                 lord_sign_idx = planets[lord]['sign_idx'] if lord in planets else p['sign_idx']
                 temporal = get_temporal_rel(p['sign_idx'], lord_sign_idx)
                 compound = COMPOUND_TABLE.get((natural, temporal), 'neutral')
         
         dignity_data[name] = {'basic': compound, 'compound': compound}
 
-    # 6b. D9 自然尊贵度 (PQ-01: 纯查表补算，禁模型通识判读 D9 入旺/落陷/座主链)
-    #     只用自然尊贵 (旺exalted/庙own/陷debilitated/友friend/敌enemy/中性neutral)
-    #     不含临时/合成关系——D9 尊贵直接查表，答案确定。
+    # 6b. D9 Natural Dignity: lookup natural dignity in D9 sign (exalted/own/debilitated/friend/enemy/neutral).
     d9_dignity = {}
     for name in ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn']:
         d9_entry = d9.get(name)
         if not d9_entry:
             continue
         d9_sign, d9_sign_idx = d9_entry[0], d9_entry[1]
-        dispositor = SIGN_LORDS[d9_sign_idx]  # D9 房东星
+        dispositor = SIGN_LORDS[d9_sign_idx]  # D9 sign lord
         if EXALTATION.get(name) == d9_sign:
             d9_dig = 'exalted'
         elif DEBILITATION.get(name) == d9_sign:
@@ -1027,9 +974,7 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
             d9_dig = get_natural_rel(name, dispositor)  # friend/enemy/neutral
         d9_dignity[name] = {'sign': d9_sign, 'dignity': d9_dig, 'dispositor': dispositor}
 
-    # 6c. 分盘内部宫主表 + 分盘尊贵度（D9/D10/D4/D5——线A"分盘内部宫主"数据化，禁 AI 自推）
-    #     house_lords：以【分盘自身 Lagna】起宫，H1~H12 各座主 + 该座主在本分盘落宫。
-    #     dignity：每星在本分盘座的自然尊贵（同 D9 查表）。消灭"D10-L10 是谁"自推出错的土壤。
+    # 6c. Internal house lords and dignities for divisional charts (D9/D10/D4/D5).
     varga_internal = {}
     for dv in ['D9', 'D10', 'D4', 'D5']:
         ch = divisional_charts.get(dv) if divisional_charts else None
@@ -1076,9 +1021,9 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
     # 8. Chara Karakas (7K primary)
     karakas = calc_chara_karakas_7k8k(planets)
     
-    # 9. Graha drishti（吠陀宫位照射）——西占 orb 相位表已废弃删除：不属 KN Rao 体系、无判定消费方
-    graha_drishti = calc_graha_drishti(planets)  # P10 Parashari graha drishti（宫位照射，禁手推）
-    functional = calc_functional(lagna['sign_idx'], planets)      # B3 P1主身份（一星多宫主MT定主，禁手推）
+    # 9. Parashari Graha drishti (sign/house irradiation) and functional status
+    graha_drishti = calc_graha_drishti(planets)  # P10 Parashari graha drishti
+    functional = calc_functional(lagna['sign_idx'], planets)      # B3 functional role
 
     # 10. House lords
     house_lords = calc_house_lords(lagna['sign_idx'])
@@ -1087,9 +1032,9 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
         planet = info['lord']
         if planet in planets:
             info['lord_house'] = planets[planet]['house']
-    mutual_drishti = calc_mutual_drishti(graha_drishti)   # 互视对（双向，格局"互视"唯一口径，单向不算）
-    parivartana = calc_parivartana(house_lords, planets)  # 互溶对（两宫主互换落座，格局"互溶"唯一口径）
-    yoga_prescan = calc_yoga_prescan(lagna['sign_idx'], planets, house_lords, graha_drishti, mutual_drishti, parivartana)  # 全11格局结构预扫（禁自推/越宫）
+    mutual_drishti = calc_mutual_drishti(graha_drishti)   # Mutual drishti pairs
+    parivartana = calc_parivartana(house_lords, planets)  # Parivartana pairs
+    yoga_prescan = calc_yoga_prescan(lagna['sign_idx'], planets, house_lords, graha_drishti, mutual_drishti, parivartana)
 
     # 11. Vimsottari Dasha MD/AD/PD (PyJHora — no fallback)
     dashas = _dasha_pyjhora(year, month, day, hour, minute, lat, lon, _tz_offset,
@@ -1099,7 +1044,7 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
     shadbala_data = _shadbala_pyjhora(
         year, month, day, hour, minute, lat, lon, _tz_offset, second=second
     )
-    neecha_bhanga = calc_neecha_bhanga(planets, dignity_data, graha_drishti, combustion, shadbala_data)  # 落陷解除逐式证据（禁手推）
+    neecha_bhanga = calc_neecha_bhanga(planets, dignity_data, graha_drishti, combustion, shadbala_data)
 
     # 13. Moon phase
     moon_sun_diff = (planets['Moon']['longitude'] - planets['Sun']['longitude']) % 360
@@ -1113,12 +1058,10 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
     # 15. Special Points (AL, UL)
     special_points = calc_special_points(lagna, planets)
     
-    # 16. 过运：engine 不再给（旧 calc_transits 把本机墙上时间当 UT，且 skill 内无消费者）；
-    #     过运一律走 transit.py。
+    # 16. Transits are computed via dedicated transit.py.
 
     # 17. Bhava Bala, Special Lagnas, Vargeeya Bala, Pushkara (via PyJHora)
-    #     各项单独捕获：一项出错不再连带跳过后面几项；出错项记成 {'error': ...}（与包装函数自己的
-    #     出错约定一致），原因同时进 calc_errors，不再静默留空。
+    # Capture errors individually for optional modules; record in calc_errors without aborting.
     calc_errors = {}
     _extra = (year, month, day, hour, minute, lat, lon, _tz_offset)
     _extra_results = {}
@@ -1137,11 +1080,10 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
     vargeeya_bala = _extra_results['vargeeya_bala']
     pushkara = _extra_results['pushkara']
 
-    # DST 透明标注：出生时刻是否处于当地夏令时（pytz 默认把报时当墙上钟时间处理）
+    # DST flag: indicates if birth time was recorded under daylight saving time
     dst_info = {'is_dst': bool(_instant.dst()), 'utc_offset': str(_instant.utcoffset())}
 
-    # Chara Dasha (K.N. Rao) — engine 真值输入（JHora 双盘金标准 24/24 验证）
-    #     出错时 chara_dasha 仍为 None（formatter 据此不出该节），原因进 calc_errors。
+    # Chara Dasha (K.N. Rao) calculation
     chara_dasha = None
     if _chara_dasha:
         try:
@@ -1185,9 +1127,9 @@ def calculate_full_chart(year, month, day, hour, minute, lat, lon,
         'pushkara': pushkara,
         'chara_dasha': chara_dasha,
         'dst_info': dst_info,
-        # 没算出来的附加项及原因（空字典＝全部算出）
+        # Uncalculated optional modules and errors (empty dict = all calculated)
         'calc_errors': calc_errors,
-        # 溯源：以后改了 engine，看这三项就知道旧产物是哪一版、哪个瞬间、用什么岁差算的
+        # Meta provenance: records engine version, utc instant, and ayanamsa
         'calc_meta': {
             'engine_version': ENGINE_VERSION,
             'instant_utc': _instant.astimezone(pytz.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
@@ -1221,14 +1163,14 @@ if __name__ == '__main__':
     for h in range(1, 13):
         s = chart['sav_by_house'][h]
         total += s['value']
-        print(f"  {h}宫({s['sign'][:2]}): {s['value']}", end='  ')
+        print(f"  H{h} ({s['sign'][:2]}): {s['value']}", end='  ')
         if h % 6 == 0: print()
     print(f"  Total: {total}")
     
     print(f"\n--- Chara Karakas (7K) ---")
     for k, planet, deg in chart['karakas']['7k']:
         print(f"  {k}: {planet} ({deg:.1f}°)")
-    print(f"  DK: 7K(主)={chart['karakas']['dk_7k']}, 8K(参考)={chart['karakas']['dk_8k']}")
+    print(f"  DK: 7K (Primary)={chart['karakas']['dk_7k']}, 8K (Ref)={chart['karakas']['dk_8k']}")
     
     print(f"\n--- Dasha ---")
     for d in chart['dashas']:
@@ -1252,18 +1194,19 @@ if __name__ == '__main__':
     
     print(f"\n--- Moon Phase ---")
     phase = chart['moon_phase']
-    print(f"  {'盈月(Shukla)' if phase['waxing'] else '亏月(Krishna)'}, 距Sun {phase['sun_moon_diff']}°")
+    phase_str = 'Waxing (Shukla)' if phase['waxing'] else 'Waning (Krishna)'
+    print(f"  {phase_str}, Dist from Sun {phase['sun_moon_diff']}°")
     
     print(f"\n--- Combustion ---")
     if chart['combustion']:
         for name, data in chart['combustion'].items():
             print(f"  {name}: {data}")
     else:
-        print("  无燃烧行星")
+        print("  No combust planets")
     
     print(f"\n--- House Lords ---")
     for h in range(1, 13):
         info = chart['house_lords'][h]
-        print(f"  {h}宫({info['domain']}): {info['lord']} → {info.get('lord_house','?')}宫")
+        print(f"  H{h} ({info['domain']}): {info['lord']} → H{info.get('lord_house','?')}")
     
-    print(f"\n✅ 全部14个数据板块计算完成!")
+    print(f"\n✅ All 14 data sections calculated successfully!")

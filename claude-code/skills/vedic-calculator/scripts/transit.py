@@ -1,30 +1,28 @@
-"""过运计算模块 - 计算当前行星位置、Sade Sati、双过运"""
+"""Transit calculation module - Computes current planetary transits, Sade Sati, and double transits."""
 import swisseph as swe
 from datetime import datetime
 import pytz
 
-# 与 engine 共用同一套 flags 与 swisseph 线程状态，避免过运与本命分属两套基准
-# （此处原先只 set_sid_mode 不设 ephe_path，子线程里会静默退回 MOSEPH）。
 from engine import PLANET_FLAGS, _ensure_swe_state
 
-SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
-         'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
+SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+         'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
 
 def calc_transit(lagna_sign_idx, moon_sign_idx, tz_str="Asia/Kolkata"):
-    """计算当前过运数据"""
+    """Compute current transit data."""
     _ensure_swe_state()
     flags = PLANET_FLAGS
 
     now = datetime.now(pytz.timezone(tz_str))
     utc = now.astimezone(pytz.utc)
     jd = swe.julday(utc.year, utc.month, utc.day, 
-                     utc.hour + utc.minute/60.0)
+                     utc.hour + utc.minute / 60.0)
     
-    # 慢行星过运
+    # Slow-moving planet transits
     slow_planets = {
-        'Saturn': (swe.SATURN, '~2.5年/星座'),
-        'Jupiter': (swe.JUPITER, '~1年/星座'),
-        'Rahu': (swe.MEAN_NODE, '~1.5年/星座')
+        'Saturn': (swe.SATURN, '~2.5 yrs/sign'),
+        'Jupiter': (swe.JUPITER, '~1 yr/sign'),
+        'Rahu': (swe.MEAN_NODE, '~1.5 yrs/sign')
     }
     
     transit = {}
@@ -38,30 +36,30 @@ def calc_transit(lagna_sign_idx, moon_sign_idx, tz_str="Asia/Kolkata"):
             'house': house, 'cycle': cycle
         }
     
-    # Ketu = Rahu对冲
+    # Ketu = 180° opposite Rahu
     rahu_idx = transit['Rahu']['sign_idx']
     ketu_idx = (rahu_idx + 6) % 12
     transit['Ketu'] = {
         'sign': SIGNS[ketu_idx], 'sign_idx': ketu_idx,
         'house': ((ketu_idx - lagna_sign_idx) % 12) + 1,
-        'cycle': '自动取Rahu对冲'
+        'cycle': 'Opposite Rahu (180°)'
     }
     
     # Sade Sati
     saturn_idx = transit['Saturn']['sign_idx']
     relative = (saturn_idx - moon_sign_idx) % 12
     if relative == 11:
-        sade_sati = '第一阶段(升起)'
-        position = 'Moon前1宫'
+        sade_sati = 'Phase 1 (Rising)'
+        position = '12th from Moon (1 house before)'
     elif relative == 0:
-        sade_sati = '第二阶段(顶峰)'
-        position = 'Moon本宫'
+        sade_sati = 'Phase 2 (Peak)'
+        position = 'Moon house (1st from Moon)'
     elif relative == 1:
-        sade_sati = '第三阶段(消退)'
-        position = 'Moon后1宫'
+        sade_sati = 'Phase 3 (Setting)'
+        position = '2nd from Moon (1 house after)'
     else:
-        sade_sati = '未激活'
-        position = '非Sade Sati'
+        sade_sati = 'Inactive'
+        position = 'Non-Sade Sati'
     
     sade_sati_data = {
         'moon_sign': SIGNS[moon_sign_idx],
@@ -70,16 +68,16 @@ def calc_transit(lagna_sign_idx, moon_sign_idx, tz_str="Asia/Kolkata"):
         'status': sade_sati
     }
     
-    # 双过运 (Saturn-Jupiter Double Transit)
+    # Double Transit (Saturn-Jupiter Double Transit)
     saturn_house = transit['Saturn']['house']
     jupiter_house = transit['Jupiter']['house']
     
-    # Saturn aspects: 合相(1), 3rd, 7th, 10th
+    # Saturn aspects: Conjunction (1st), 3rd, 7th, 10th
     saturn_covers = set()
     for offset in [0, 2, 6, 9]:
         saturn_covers.add(((saturn_house - 1 + offset) % 12) + 1)
     
-    # Jupiter aspects: 合相(1), 5th, 7th, 9th
+    # Jupiter aspects: Conjunction (1st), 5th, 7th, 9th
     jupiter_covers = set()
     for offset in [0, 4, 6, 8]:
         jupiter_covers.add(((jupiter_house - 1 + offset) % 12) + 1)
@@ -98,11 +96,11 @@ def calc_transit(lagna_sign_idx, moon_sign_idx, tz_str="Asia/Kolkata"):
 
 
 def future_ingress_table(jd_start, years=5):
-    """未来 N 年 Saturn/Jupiter/Rahu 的恒星黄道(True Chitra)换座时间表。
+    """Compute sidereal (True Chitra) sign ingresses for Saturn, Jupiter, and Rahu over N years.
 
-    真实天文计算，替代模型凭记忆写未来过运（LLM 心算换座日期常错数月到一年）。
-    逆行导致的回跨也如实记录（同一边界可能出现 进→退→再进 多条）。
-    Returns: [{'planet','date','from_sign','to_sign'}, ...] 按日期排序
+    Calculated via astronomical ephemeris to replace approximate recall.
+    Retrograde re-crossings are chronologically reported.
+    Returns: [{'planet', 'date', 'from_sign', 'to_sign'}, ...] sorted by date
     """
     _ensure_swe_state()
     flags = PLANET_FLAGS
@@ -116,7 +114,7 @@ def future_ingress_table(jd_start, years=5):
         while jd <= jd_end:
             idx = int(swe.calc_ut(jd, pid, flags)[0][0] / 30)
             if idx != prev_idx:
-                lo, hi = jd - step, jd  # 二分到 0.01 天
+                lo, hi = jd - step, jd  # Binary search to 0.01 day
                 while hi - lo > 0.01:
                     mid = (lo + hi) / 2
                     if int(swe.calc_ut(mid, pid, flags)[0][0] / 30) == prev_idx:

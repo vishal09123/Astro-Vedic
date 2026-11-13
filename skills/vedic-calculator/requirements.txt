@@ -1,18 +1,19 @@
-# vedic-calculator 依赖清单
+# vedic-calculator dependencies manifest
 #
-# ⚠️ 请使用 scripts/setup_env.py 自动安装。
-# 原因: PyJHora 未声明其运行时依赖（numpy/geocoder/geopy/requests/timezonefinder/python-dateutil），
-# 且 pip 包缺少 .se1 星历文件；setup_env.py 会补齐依赖并从 pysweph 复制星历。
+# Note: Please use scripts/setup_env.py for automatic installation.
+# PyJHora does not declare all runtime dependencies (numpy/geocoder/geopy/requests/timezonefinder/python-dateutil),
+# and the PyPI package lacks Swiss Ephemeris .se1 files; setup_env.py fulfills dependencies
+# and copies ephemeris files directly from pysweph.
 #
-# 手动安装顺序（如果不用 setup_env.py）：
+# Manual installation sequence (if not using setup_env.py):
 #   pip install pysweph>=2.10.3.5 pytz>=2024.1 numpy geocoder geopy requests timezonefinder python-dateutil
 #   pip install PyJHora==4.8.6
 #   pip install tzdata
 #
-# Python 版本要求: 3.8 ~ 3.13（pysweph 为 C 扩展，暂无 3.14 预编译包）
+# Python version requirement: 3.8 ~ 3.13 (pysweph is a C extension, no 3.14 prebuilt wheel yet)
 #
 pysweph>=2.10.3.5
 PyJHora==4.8.6
 pytz>=2024.1
-# 时区规则库：Windows 没有系统时区库，vedic-prashna 的 zoneinfo 靠它；macOS/Linux 装了无副作用
+# Timezone rules library: Windows lacks a native timezone database; vedic-prashna zoneinfo relies on it; safe on macOS/Linux
 tzdata

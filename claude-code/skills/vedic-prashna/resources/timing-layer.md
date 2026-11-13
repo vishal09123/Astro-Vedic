@@ -1,136 +1,46 @@
-# Prashna 时间副层（timing layer）
+# Prashna Timing Layer (`timing-layer`)
 
-> **用途**：标准层定档后，给偏成和持平两档补一个有原典出处的时间候选。
-> 时间副层不进规则账本，不改三档结论，也不因时间远近升降档。
+> **Purpose**: Appends an indicatively timed classical window to favorable or pending verdicts after the standard layer judgment is established.
+> The timing layer does not enter the rule ledger, does not alter internal 3-tier verdicts, and does not upgrade or downgrade outcomes based on timing distance.
 >
-> **先读**：`standard-layer.md`、`judgment-rubric.md`。本文件只管时间。
+> **Prerequisites**: `standard-layer.md`, `judgment-rubric.md`.
 
 ---
 
-## 1. 定位与准入
+## 1. Scope & Entrance Gate
 
-- 来源只有两类：*Prasna Marga* XIV.81／82／85（Raman 译注，标签 `M`）和
-  *Shatpanchasika* V.5（Ayer 译本，标签 `P`）。`M` 在这里只是一个独立的时间模块，
-  不进入成败判读。
-- `standard-layer.md` 要求时间模块具备来源范围、完整算法、例盘和边界测试四项。
-  本模块对应：§2 的来源和算法；Raman 注的两个算例和 Moon 入座搜索已写进
-  `tests/test_prashna_isolation.py`。
-- 按内部档呈现：
-  - **偏成**：给时间，写“约……”；
-  - **持平**：写成条件式，如“如果推进顺利，大约……”；
-  - **偏不成**：不给时间，不运行脚本；写清什么变化之后可以再问。
+- Sourced strictly from classical authorities: *Prasna Marga* XIV.81, 82, 85 (BV Raman translation/commentary, prefix `M`) and *Shatpanchasika* V.5 (NC Iyer translation, prefix `P`).
+- Presentation by internal tier:
+  - **Favorable**: State timing as: "Approximately...";
+  - **Pending**: State conditionally as: "If matters proceed smoothly, approximately...";
+  - **Unfavorable**: Do not generate timing; do not run the script. State what structural conditions must change before inquiring anew.
 
 ---
 
-## 2. 四个时间候选
+## 2. Four Classical Timing Candidates
 
-| 代号 | rule_id | 算法 | 角色 |
-|---|---|---|---|
-| T1 | `P-V.5` | 从 Lagna 顺数到第一个有七曜的宫，宫数 × 12 天 | 归来／到达题的主时间 |
-| T2 | `M-XIV.85` | 从事项宫数到其宫主所在宫（含首尾）；宫主在 7–12 宫按天，在 1–6 宫按月 | 其余题型的主时间 |
-| T3 | `M-XIV.85` | Moon 下次进入事项宫主所在的星座 | 最近的触发日 |
-| T4 | `M-XIV.82` | 上升 Navamsa 主星的时间单位 × 该星在本座第几个 Navamsa | 只作参考 |
+| Code | rule_id | Algorithm | Role |
+|------|---------|-----------|------|
+| T1 | `P-V.5` | Count houses from Lagna to the first house with classical grahas; house count * 12 days | Primary timing for return / arrival queries |
+| T2 | `M-XIV.85` | Count houses from matter house to its lord's house (inclusive); lord in houses 7-12 gives days, in houses 1-6 gives months | Primary timing for all other queries |
+| T3 | `M-XIV.85` | Moon's next ingress into the sign occupied by the matter house lord | Ingress trigger day |
+| T4 | `M-XIV.82` | Time unit of rising Navamsa lord * that lord's Navamsa ordinal in sign | Reference only |
 
-**T1（P-V.5）**
-- 原文：“Count the number of rasis from the lagna to the house first occupied by a
-  planet; multiply the number by twelve… days for the person to arrive.”
-- Lagna 本身有星算 1。只数七曜，Rahu／Ketu 不计。原文“若逆行”后半句不用。
-- 只用于人的归来／到达题。
+**T1 (`P-V.5`)**
+- "Count the number of rasis from the lagna to the house first occupied by a planet; multiply the number by twelve... days for the person to arrive."
+- Graha in Lagna counts as 1. Counts classical 7 grahas only; Rahu and Ketu are excluded.
+- Used strictly for return / arrival queries.
 
-**T2（M-XIV.85）**
-- 宫数 = `((宫主落宫 − 事项宫) mod 12) + 1`，含首尾。
-- 原文只说宫主在可见半球应事快、在不可见半球应事慢。“7–12 宫按天、1–6 宫按月”
-  是 Raman 注的假设（“It is to be assumed…”），输出时要注明。
-- Raman 算例：7 宫主 Sun 在 6 宫（不可见半球），含首尾相隔 12 个星座，所以婚事
-  约在 12 个月内。
+**T2 (`M-XIV.85`)**
+- House span = `((lord_house - matter_house) mod 12) + 1`, inclusive.
+- Classical text states lord in visible hemisphere operates quickly, in invisible hemisphere operates slowly. Days vs. months division follows Raman's commentary convention.
 
-**T3（M-XIV.85）**
-- 原文：“when the Moon next transits the sign occupied by the lord of the
-  concerned Bhava”。Raman 算例中 Moon 约 24 天后进入该星座。
-- 提问时 Moon 已在该星座：取下一次重新进入，并注明“提问时已在该座”。
-- 事项宫主就是 Moon：这一条是自指，不适用，不能硬算。
+**T3 (`M-XIV.85`)**
+- "When the Moon next transits the sign occupied by the lord of the concerned Bhava."
+- If the Moon already occupies that sign at query time, take the next re-entry.
+- If the matter lord is the Moon itself, this candidate is omitted as self-referential.
 
-**T4（M-XIV.82，单位来自 XIV.81）**
-- 时间单位（Raman 注，引 *Brihat Jataka*）：Sun 6 个月（Ayana）、Moon 48 分钟
-  （Kshana）、Mars 1 周（Vasara）、Mercury 2 个月（Rithu）、Jupiter 1 个月
-  （Masa）、Venus 半个月（Ardha）、Saturn 1 年（Sama）。
-- 第几个 Navamsa 取 1–9。Raman 算例：上升 Navamsa 为 Leo，主星 Sun 在第 5 个
-  Navamsa，结果是 5 × 6 = 30 个月。
-- 主星为 Moon 时照实输出，并注明“对需要过程的事项通常过短”。
-- 只作参考，不能和主时间折中。
-
----
-
-## 3. 定序与呈现
-
-1. 归来／到达题以 T1 为主时间，其余题型以 T2 为主时间。
-2. T3 给出具体日期，作为最近的触发日。XIV.85 的 Raman 注引 Bhattotpala：原文的
-   “或”表示先看宫数、再看 Moon 过境的次序。
-3. T4 只作参考。
-4. 几个候选结果不同时并列呈现，不平均、不投票、不折中。
-5. 判读单正文把主时间和触发日转述成一句话，如“最可能在 X 前后，最近的一个节点是 Y 日”；
-   候选明细与出处放核对区。转述不改任何候选的数值。
-6. 婚恋题（结婚、表白／确立关系）另看 `M-XVII.31`“marriage takes place early”：Moon 受吉星照
-   落 3／6／7／10／11 宫；或 Venus 与 Moon 落 Lagna 或 7 宫且 Lagna 为 Gemini、Virgo、Libra、
-   Aquarius；或 Mercury、Venus、Jupiter 落角宫或 7 宫（原文“and”，按字面三星都落）。满足时
-   正文加一句“偏早”提示；不改日期，不进规则账本。原文另有“或从 Arudha 起数”，不收。
-7. 时间范围（`E` 工作流）：取象单 `time_scope` 在看盘结果前定，候选照常算、数值不改。正文只写范围内的主时间和触发日，
-   范围外的只留核对区；全在范围外时，正文不写日子，只说“盘判断不了事情是不是恰好落在这段时间里，不因此说这段时间不行”，不改档。
-   `无意义` 时正文不写时间；`不设上限` 或没填，照第 5 条写。
-
----
-
-## 4. 事项宫与模式
-
-`--matter-house` 取判定的事项宫（`prashna_verdict.json` 的 `matter_house`），`--mode` 取它的 `timing` 字段：人的归来、到达题（`matter-rules.md`
-的归来、同住归来）为 `return`，以 T1 为主时间；其余为 `general`。
-
-不运行：
-- 偏不成（含能力不足）；持平·盘面未给方向；问题的必要条件不成立（"按这个条件不能"，`judgment-rubric.md` §7）；
-- 路上顺不顺（问的是顺逆，不是何时）；
-- 考试官方已公布出结果日程：写"以官方公布为准"；
-- 查表题：描述题、天气、胎儿性别、亲属下落；描述型（`matter: 描述`）。
-
----
-
-## 5. 运行
-
-```bash
-python scripts/build_timing_overlay.py \
-  --datetime "<structured_prashna.md 元信息「脚本时刻」>" \
-  --lat <lat> --lon <lon> --tz "<IANA>" \
-  --matter-house <1-12> --mode general|return \
-  --verdict favorable|pending \
-  --out-dir "<当前 prashna_* 目录>"
-```
-
-- `--datetime/--lat/--lon/--tz` 必须与标准 builder 完全一致，不能另取处理时刻。
-- `--verdict`：`favorable` 对应偏成，`pending` 对应持平。偏不成不运行。
-- 产物是当前 `prashna_*` 目录下的 `timing_overlay.md`，不改 `structured_prashna.md`。
-
----
-
-## 6. 不收与禁止
-
-- 不收：*Prasna Marga* XIV.83／86／88、一年／一月 Prasna Dasa（理由见 `standard-layer.md`
-  核证矩阵对应行）；*Shatpanchasika* II.14–17。
-- 不使用提问盘生成的 120 年 Vimshottari、Chara Dasha、过运或 Sade Sati。
-- 不导入 Tajika 的“度差 × 12 日”，也不导入 KP 的时间。不同体系的时间不互相
-  校正；用户开了 Tajika 时，主答案以判读单 §四 为准。
-- 不把时间写进规则账本，不因时间远近改档。
-
----
-
-## 7. 自检
-
-- [ ] 内部档是偏成或持平？偏不成档没有给时间？
-- [ ] 正文是否把主时间与触发日转述成一句话，候选明细放核对区？
-- [ ] 正文只写了 `time_scope` 范围内的时间？全在范围外时照 §3 第 7 条那句说，没有改档？
-- [ ] 婚恋题的 `M-XVII.31` 是否只作“偏早”提示，没有改日期？
-- [ ] 主时间按题型选对了 T1 或 T2？
-- [ ] T2 注明了天／月分法是 Raman 的假设？
-- [ ] T3 处理了“提问时已在该座”和“宫主即 Moon”两种情况？
-- [ ] T4 只作参考，没有和主时间折中？
-- [ ] 几个候选结果不同时是并列呈现的？
-- [ ] 没有混入 Dasha、过运、Tajika 或 KP 的时间？
-- [ ] 描述题、天气、胎儿性别、亲属下落与描述型没有运行时间副层？
+**T4 (`M-XIV.82`)**
+- Unit of rising Navamsa lord * lord's Navamsa ordinal within its sign.
+- Sourced from Brihat Jataka units cited in Raman's commentary (Sun=6 months, Moon=48 min, Mars=1 week, Mercury=2 months, Jupiter=1 month, Venus=0.5 months, Saturn=1 year).
+- Kept strictly as secondary reference.

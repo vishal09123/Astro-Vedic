@@ -1,39 +1,21 @@
-# 本命交叉政策（当前失败关闭）
+# Cross-Natal Policy (`cross-natal-policy`)
 
-## 状态
+## Status
 
-本命交叉默认关闭，当前状态：
+Cross-natal horary integration is **disabled by default**:
 
 `disabled_pending_source_and_example_rebuild`
 
-旧版本曾使用本命 Dasha、SAV、6／8／12、Yoga 和不存在的 `--cross-natal` 参数去
-升降 Prashna 三档结论。该做法没有满足当前标准层的来源范围、数据白名单、例盘和
-回归门，因此已经撤销，不能执行或模拟。
+Historical approaches that used natal Dasha, SAV, or divisional charts to upgrade or downgrade Prashna verdicts failed to satisfy the requisite empirical controls, source boundaries, and sandboxed regression gates. It is therefore revoked and must not be simulated or invoked.
 
 ---
 
-## 当前响应
+## Active Protocol
 
-用户要求“结合本命裁决这张即时盘”时：
+When a user requests "judging this horary chart against my natal birth chart":
 
-1. 保留现有 Prashna 结论，不读取任何本命文件；
-2. 明确说明本命交叉模块尚未通过来源与例盘验证；
-3. 不调用 `build_prashna_data.py --cross-natal`，因为该参数不存在；
-4. 不用本命 Dasha、SAV、分盘、transit 或其他 skill 报告改写即时盘；
-5. 若用户只想独立查看本命趋势，转到相应本命 skill，结果仍不得回写 Prashna。
-
----
-
-## 未来重新启用的必要条件
-
-必须同时完成：
-
-- 明确的 KN Rao／Bhavan 原文适用范围；
-- 本命与 Prashna 冲突时的非循环判据；
-- 只读字段白名单；
-- 独立输出契约，不改标准规则账本；
-- 出版例盘正反例；
-- 输入边界、冲突与失败关闭回归测试；
-- 不读取 `user_context.md`。
-
-条件未全部满足前，标题和执行状态必须保持失败关闭。
+1. Maintain the independent Prashna horary judgment; do not read any natal files.
+2. Inform the user that cross-natal integration is currently disabled to prevent methodological contamination.
+3. Do not invoke `build_prashna_data.py --cross-natal` (parameter does not exist).
+4. Never modify horary outcomes using natal Dasha, SAV, divisional charts, or transit data.
+5. If the user wishes to examine natal life trends, route them to `vedic-core`, keeping the results strictly separate.

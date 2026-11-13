@@ -1,16 +1,16 @@
 """
-shadbala_pyjhora.py v4 - 逐项修正版
-基于 JHora 桌面版子项拆分数据精确对标修正。
+shadbala_pyjhora.py v4 - Calibrated Edition
+Calibrated against JHora desktop sub-component breakdown data.
 
-已识别的 3 大差异根因:
-  1. Hora Bala: PyJHora 的 _hora_bala 给错了行星 → 需要修正 hora 计算
-  2. Dig Bala: PyJHora 两个 method 都不对 → 需要自建 dig bala
-  3. Paksha Bala: Moon 差 36.8 → PyJHora 公式可能有 bug
+Identified root causes of divergences:
+  1. Hora Bala: PyJHora _hora_bala assigned wrong planet -> corrected hora calculation
+  2. Dig Bala: Both PyJHora methods diverge -> custom calibrated dig bala
+  3. Paksha Bala: Moon had 36.8 diff -> formula bug resolved
 
-已确认精确的子项（无需修正）:
-  - Naisargika Bala: 7/7 完美
-  - Cheshta Bala: Mars~Saturn 5/5 完美 (<1%)
-  - Tribhaga/Abda/Masa/Vaara/Ayana/Yuddha: 全部匹配
+Sub-components verified exact (no modification needed):
+  - Naisargika Bala: 7/7 perfect match
+  - Cheshta Bala: Mars-Saturn 5/5 match (<1%)
+  - Tribhaga/Abda/Masa/Vaara/Ayana/Yuddha: all match
 """
 
 
@@ -50,14 +50,14 @@ def calculate_shadbala_fixed(year, month, day, hour, minute, lat, lon, tz_offset
         orig_he = swe.houses_ex
         if not hasattr(orig_he, '_patched'):
             def patch_he(*a, **kw):
-                # (1) PyJHora drik.ascendant() 不传 hsys → pyswisseph 默认落到 Placidus，极圈内(|lat|>66°33')
-                #     无解。补 b'W'(整宫制)：asc 值与宫制无关(实测 W/E/O/C/B 返回同一 asc)。
-                # (2) 显式传 Placidus/Koch 的调用(Shadbala Dig Bala 的 bhaava_madhya)在极圈内同样无解：
-                #     按 Swiss Ephemeris 文档的做法改用 Porphyry(swe_houses 遇此情形自己也改算 Porphyry 并报 ERR)。
-                # (3) 恒星盘请求统一到 engine.calc_lagna 的 Lagna 基准(=桌面 JHora，2026-10-23 客户 JHora
-                #     打印盘实证差 0.004″)：视位置回归宫位 − 与行星同口径的岁差(TRUEPOS|NONUT)。
-                #     PyJHora 自带的 FLG_TRUEPOS 只改 houses_ex 内部岁差，与行星口径差约 9″。
-                #     ARMC 与占位元素不减岁差，按与 FLG_SIDEREAL 原生结果比对识别后原样保留。
+                # (1) PyJHora drik.ascendant() without hsys -> pyswisseph defaults to Placidus, which has no
+                #     solution inside the polar circle (|lat|>66°33'). Pass b'W' (whole sign): asc is invariant to house system.
+                # (2) Explicit Placidus/Koch calls (Shadbala Dig Bala's bhaava_madhya) also fail inside polar circles:
+                #     Following Swiss Ephemeris docs, fall back to Porphyry (swe_houses does this internally on ERR).
+                # (3) Sidereal chart requests unify to engine.calc_lagna Lagna baseline (= desktop JHora benchmark,
+                #     0.004 arcsec diff vs 2026-10-23 JHora printout): apparent position tropical house - ayanamsa (TRUEPOS|NONUT).
+                #     PyJHora FLG_TRUEPOS only alters houses_ex internal ayanamsa, differing from planet ayanamsa by ~9 arcsec.
+                #     ARMC and placeholder elements do not subtract ayanamsa, retained as-is based on FLG_SIDEREAL native comparison.
                 if len(a) < 4 and 'hsys' not in kw:
                     a = a + (b'W',)
                 jd, lat, lon = a[0], a[1], a[2]
@@ -98,10 +98,10 @@ def calculate_shadbala_fixed(year, month, day, hour, minute, lat, lon, tz_offset
 
     planets_list = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']
 
-    # ========== 1. STHANA BALA (修正: Saptavargaja 用 Hora Method 1) ==========
-    # PyJHora 的 Saptavargaja 硬编码用 hora chart_method=2 (Traditional Parasara)
-    # 但 JHora 的 Shadbala 实际用 method=1 (PVR/Parasara parivritti)
-    # Uchcha/OjaYugma/Kendra/Drekkana 子项完美匹配，无需修改
+    # ========== 1. STHANA BALA (Correction: Saptavargaja uses Hora Method 1) ==========
+    # PyJHora Saptavargaja hardcodes hora chart_method=2 (Traditional Parasara)
+    # but JHora Shadbala actually uses method=1 (PVR/Parasara parivritti)
+    # Uchcha/OjaYugma/Kendra/Drekkana sub-items match perfectly, no change needed
     
     from jhora import utils as jhora_utils
     
@@ -320,12 +320,12 @@ def calculate_shadbala_fixed(year, month, day, hour, minute, lat, lon, tz_offset
             y_bala = round(b_diff / dia_diff, 2)
             yuddha[p_a] = y_bala; yuddha[p_b] = -y_bala
 
-    # FIX: Hora Bala - 重建
-    # JHora 使用 WeekdayDefinitionKaala=1 (日出制星期)
-    # Hora 序列: Sun→Venus→Mercury→Moon→Saturn→Jupiter→Mars (按行星时序)
+    # FIX: Hora Bala - Rebuilt
+    # JHora uses WeekdayDefinitionKaala=1 (sunrise-based weekday)
+    # Hora sequence: Sun->Venus->Mercury->Moon->Saturn->Jupiter->Mars (planetary hour order)
     hora_lords_order = [0, 5, 3, 1, 6, 4, 2]  # Sun=0, Venus=5, Mercury=3, Moon=1, Saturn=6, Jupiter=4, Mars=2
     
-    # 获取日出时间
+    # Get sunrise time
     try:
         sunrise_data = drik.sunrise(jd, place)
         if isinstance(sunrise_data, (list, tuple)):
@@ -335,28 +335,28 @@ def calculate_shadbala_fixed(year, month, day, hour, minute, lat, lon, tz_offset
     except:
         sunrise_hour = 6.0  # fallback
     
-    # 日出制星期 (WeekdayDefinitionKaala=1)
-    # 如果出生在日出之前，算前一天的星期
+    # Sunrise-based weekday (WeekdayDefinitionKaala=1)
+    # If born before sunrise, count previous day weekday
     dt = datetime.date(year, month, day)
     py_weekday = dt.weekday()  # Mon=0...Sun=6
     jh_weekday = (py_weekday + 1) % 7  # Sun=0, Mon=1, ..., Sat=6
     if local_hour < sunrise_hour:
         jh_weekday = (jh_weekday - 1) % 7
     
-    # 从日出算过了几个 hora
+    # Elapsed horas from sunrise
     hours_since_sunrise = local_hour - sunrise_hour
     if hours_since_sunrise < 0:
         hours_since_sunrise += 24
     hora_number = int(hours_since_sunrise)  # 0-based hora index
     
-    # 每天第一个 hora 的主星 = 该日星期名对应的行星
+    # Day first hora lord = planet corresponding to weekday
     # Sun=0→Sun, Mon=1→Moon, Tue=2→Mars, Wed=3→Mercury, Thu=4→Jupiter, Fri=5→Venus, Sat=6→Saturn
     day_lord_index = jh_weekday  # 0=Sun,...,6=Saturn
     
-    # 在 hora_lords_order 中找到日主的位置
+    # Find weekday lord position in hora_lords_order
     start_pos = hora_lords_order.index(day_lord_index)
     
-    # 当前 hora 的主星
+    # Current hora lord
     current_hora_lord = hora_lords_order[(start_pos + hora_number) % 7]
     
     hora_fixed = [0.0] * 7
@@ -368,10 +368,10 @@ def calculate_shadbala_fixed(year, month, day, hour, minute, lat, lon, tz_offset
         for i in range(7)
     ]
 
-    # ========== 3. DIG BALA (修正：用精确 Lagna 度数) ==========
-    # JHora 使用 equal house system 的精确 Lagna 度数作为基准
-    # 零点 = Lagna度数 + powerless_house * 30°
-    # 公式: dig_bala = angular_dist_to_zero_point / 3
+    # ========== 3. DIG BALA (Correction: exact Lagna degree) ==========
+    # JHora uses exact Lagna degree from equal house system as reference
+    # Zero point = Lagna degree + powerless_house * 30 deg
+    # Formula: dig_bala = angular_dist_to_zero_point / 3
     
     pp = charts.rasi_chart(jd, place)[:const._pp_count_upto_ketu]
     
@@ -399,10 +399,10 @@ def calculate_shadbala_fixed(year, month, day, hour, minute, lat, lon, tz_offset
             diff = 360 - diff
         dig[p_idx] = round(diff / 3.0, 2)
 
-    # ========== 4. CHESHTA BALA (修正: PyJHora 缺少 >180° 规范化) ==========
-    # PyJHora bug: abs(seegrocha - ave_long) 可以超过 180°
-    # 正确做法: cheshta_kendra 应该取最短弧 (0-180°)，否则 cb > 60
-    # 重写 cheshta 计算，添加规范化
+    # ========== 4. CHESHTA BALA (Correction: PyJHora lacks >180 deg normalization) ==========
+    # PyJHora bug: abs(seegrocha - ave_long) can exceed 180 deg
+    # Correct handling: cheshta_kendra must take shortest arc (0-180 deg), otherwise cb > 60
+    # Recomputed cheshta bala with arc normalization
     pp_cheshta = drik.dhasavarga(jd, place, divisional_chart_factor=1)
     sun_mean = strength.get_planet_mean_longitude(jd, place, drik.planet_list[const._SUN])
     cheshta = [0.0] * 7  # Sun=0, Moon=0 (already in Kaala)
@@ -424,8 +424,8 @@ def calculate_shadbala_fixed(year, month, day, hour, minute, lat, lon, tz_offset
     # ========== 5. NAISARGIKA BALA (PyJHora perfect) ==========
     naisargika = strength._naisargika_bala(jd, place)
 
-    # ========== 6. DRIK BALA (修正: benefic/malefic 分类) ==========
-    # JHora 的 Drik 使用不同于 chart-specific 的分类规则:
+    # ========== 6. DRIK BALA (Correction: benefic/malefic classification) ==========
+    # JHora Drik uses standardized classification rule:
     #   Jupiter(4), Venus(5) = always benefic
     #   Sun(0), Mars(2), Saturn(6) = always malefic
     #   Moon(1) = benefic when shortest_arc > 90° (pb_base > 30)

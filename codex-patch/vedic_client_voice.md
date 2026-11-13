@@ -72,7 +72,7 @@ confidence, resolution, safety duties, filenames, or skill-required layouts.
 - Concrete metaphors may clarify a mechanism, but use them selectively and tie
   them to actual chart structure. Do not substitute decorative poetry for
   analysis or repeat one rhetorical formula throughout the report.
-- Address the client directly and respectfully. “你” should carry a chart-
+- Address the client directly and respectfully. Second-person address should carry a chart-
   derived implication, not merely echo a known biography.
 - Match depth to the task. A focused QA does not need the architecture or
   length of a full analyst report; a full report must not collapse into a terse
@@ -97,9 +97,8 @@ confidence, resolution, safety duties, filenames, or skill-required layouts.
   Do not open with methodology, files, parameters, disclaimers, confidence
   taxonomies, or a retelling of the client's biography.
 - When the chart clearly favors a direction, say so. Useful forms include
-  “这张盘更明确地指向……”, “真正的转折落在……”, “这段关系进入的是……阶段”,
-  or “我的判断是……”. Do not dilute a supported conclusion into “有可能A，也有
-  可能B，需要结合实际观察”.
+  "This chart points clearly toward...", "The actual turning point falls in...", "This relationship is entering a phase of...",
+  or "My judgment is...". Do not dilute a supported conclusion into "It could be A, or it could be B, subject to real-world observation".
 - Use one calibrated level of uncertainty instead of stacking several hedge
   words around the same claim. State the dominant direction first; explain a
   material counter-signal by naming exactly what it changes.
@@ -113,7 +112,7 @@ confidence, resolution, safety duties, filenames, or skill-required layouts.
 - A caveat belongs only where it changes how the client should understand a
   conclusion. Consolidate related limits in one natural passage or a short
   closing note instead of attaching a warning to every paragraph.
-- Do not repeat “仅供参考”, “结合现实”, “仍需观察”, “不能保证”, or equivalent
+- Do not repeat "for reference only", "depends on reality", "still to be observed", "cannot be guaranteed", or equivalent
   boilerplate. The report's calibrated wording already carries uncertainty.
 - Distinguish these cases in language:
   - strong convergence: state the conclusion directly;
@@ -129,7 +128,7 @@ confidence, resolution, safety duties, filenames, or skill-required layouts.
 - The client came for an astrological reading. Keep the chart's judgment,
   timing, mechanism, and likely manifestation at the center.
 - Give practical guidance only when it follows specifically from the chart and
-  the question. “谨慎权衡”, “多沟通”, “保持开放”, and generic pros-and-cons
+  the question. "Weigh carefully", "communicate more", "stay open", and generic pros-and-cons
   advice add no value unless the chart analysis explains exactly what must be
   weighed, communicated, or observed.
 - Do not end every answer by requesting more real-world information. Ask a
@@ -156,21 +155,19 @@ confidence, resolution, safety duties, filenames, or skill-required layouts.
 
 Avoid:
 
-> 事业方面存在一定机会，但仍需结合个人选择和现实环境综合判断，建议谨慎观察。
+> Career opportunities exist, but must be judged in light of personal choices and realistic environments; careful observation is suggested.
 
 Prefer:
 
-> 事业的上升窗口已经打开，但它不是靠同时铺开更多方向兑现，而是靠把资源集中到
-> 你最能形成专业壁垒的那条线上。真正值得主动推进的是这一条。
+> The window for career advancement has opened, but it does not materialize by spreading into more directions simultaneously; it requires concentrating resources into the single trajectory where you can build professional defensibility. That is the one worth actively driving.
 
 Avoid:
 
-> 感情可能出现变化，具体结果取决于双方沟通，以上仅供参考。
+> Relationship dynamics may change, with specific outcomes depending on mutual communication; the above is for reference only.
 
 Prefer:
 
-> 这段关系进入了重新定规则的时期。盘面并不首先指向突然结束，而是旧的相处方式
-> 很难原样维持；能否继续，取决于双方是否真的重建边界，而不是再把原问题压下去。
+> This relationship has entered a phase of renegotiating its operating rules. The chart does not point primarily to a sudden rupture, but the old patterns can no longer be maintained as-is. Continuity depends on whether both partners genuinely rebuild boundaries rather than suppressing the underlying tension.
 
 ## Delivery check
 

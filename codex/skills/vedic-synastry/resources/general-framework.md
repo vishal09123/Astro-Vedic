@@ -1,39 +1,23 @@
-# 通用深析框架 (general-framework)
+# General Interpersonal Framework (`general-framework`)
 
-> **中间档**：不预设关系类型，比平扫(Layer 0.5)深，但不套专属框架。
-> 适用：用户不想 / 不确定给关系贴标签，或 intake 未指定类型时的**默认档**。
-> 体系：KN Rao / Parashari。
-
----
-
-## 定位
-
-跑完整 Layer 0–3 + 六维矩阵，但**类型中性**——只描述关系结构（吸引多强 / 能否承载 / 时机对不对 / 消耗在哪），**不贴"恋爱 / 合作 / 友谊"标签**，不替用户定性关系。
-
-## Layer 0 双盘资格：读泛关系点位
-
-- Lagna/Lagna主(身份契合)、Moon(情绪需求)、Venus(亲和)、Mars(驱动)、Saturn(责任/约束)、Jupiter(善意/庇佑)、7宫(一对一结盟)、当前 Dasha
-- **不特化**成情感的 5宫/DK/UL 或合作的 AmK/D10
-- 承载卡：能提供什么 / 需要什么 / 压力下如何失衡 / 当前是否在投入这段关系的状态
-
-## Layer 2 重点叠盘
-
-- 通用性质分类：亲和吸引 / 驱动激活 / 约束承载 / 放大理想化 / 摩擦消耗 / 修复资源
-- 方向 A→B / B→A 分开
-
-## 六维矩阵：均衡看
-
-情绪安全 / 吸引亲密 / 沟通修复 / 长期承载 / 现实协作 / 当前时机 —— 六维都看，不偏重。
-解读语言中性，不贴关系类型标签。
-
-## 关系类型词（中性，无类型语义）
-
-高吸引高承载 / 高吸引低承载 / 低戏剧高承载 / 高消耗 / 节奏错位 / 稳定平衡
-
-## 升级提示
-
-分析完可提示用户：若想要更聚焦的解读，可告知现实关系类型（恋人/同事/朋友/家人），转入对应专属框架。
+> Scope: Default comprehensive analysis when the real-world relationship type is undefined or unstated.
+> Invocation: Selected during intake after Layer 0.5 neutral screening.
+> Core Stance: Neutral, non-presumptive examination across all six interpersonal dimensions.
 
 ---
 
-> 非二元/非传统：同各专属框架，一律 A/B 方向、不预设性别角色。
+## Analytical Protocol
+
+1. **Independent Baselines**: Evaluate individual relational capacity in Chart A and Chart B without assuming partnership.
+2. **Neutral Overlays**: Examine inter-chart aspects and house overlays across communication (Mercury), emotional rapport (Moon), shared values (Jupiter), action alignment (Mars), and boundaries (Saturn).
+3. **Six-Dimensional Matrix**:
+   - Emotional Safety
+   - Attraction & Resonant Magnetism (evaluated broadly as interpersonal affinity)
+   - Communication & Repair
+   - Long-Term Structural Endurance
+   - Practical Collaboration
+   - Current Timing Alignment
+
+## Upgrading Guidance
+
+Upon completing the general synthesis, remind the user that they can transition into a specialized lens (Romantic, Commercial, Friendship, Family) by explicitly declaring their relationship context.
